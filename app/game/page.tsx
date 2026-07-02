@@ -1,7 +1,8 @@
 "use client";
 
 import { useState } from "react";
-import Link from "next/link";
+import { decideIntensity, intensityHint } from "@/lib/intensity";
+import { savePlaythrough, TurnRecord } from "@/lib/playthrough";
 
 interface Turn {
   id: number;
@@ -9,6 +10,7 @@ interface Turn {
   spoken: string; // 阿沉说出口的话
   amoReply: string; // 阿默的回应
   intensity: "high" | "low";
+  hint: string | null; // 强度变化的叙事性提示
 }
 
 const SCENE_BRIEF = "两人第七次约会,吃完饭,账单放在桌上,阿默提议 AA。";
@@ -20,9 +22,7 @@ export default function GamePage() {
   const [loading, setLoading] = useState(false);
   const [phase, setPhase] = useState<"filter" | "npc">("filter");
   const [error, setError] = useState<string | null>(null);
-  const [intensity, setIntensity] = useState<"high" | "low">("high");
 
-  // MVP:3 轮后可结束本幕
   const MAX_TURNS = 3;
 
   async function handleSubmit(e: React.FormEvent) {
@@ -34,13 +34,17 @@ export default function GamePage() {
     setError(null);
     setPhase("filter");
     try {
+      // 隐藏判定强度:含暴露性关键词 → 低档,否则高档
+      const decided = decideIntensity(trimmed, turns.length, turns.map(t => t.inner));
+      const hint = intensityHint(decided);
+
       // 1. 调过滤器
       const filterRes = await fetch("/api/filter", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
           input: trimmed,
-          intensity,
+          intensity: decided,
           context: {
             sceneId: "act1_aa",
             sceneBrief: SCENE_BRIEF,
@@ -53,7 +57,7 @@ export default function GamePage() {
 
       setPhase("npc");
 
-      // 2. 调阿默 NPC(用过滤后的话)
+      // 2. 调阿默 NPC
       const npcRes = await fetch("/api/npc", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
@@ -62,10 +66,12 @@ export default function GamePage() {
             sceneId: "act1_aa",
             sceneBrief: SCENE_BRIEF,
             chenSpoken: filterData.spoken,
-            dialogueHistory: turns.map((t) => [
-              { role: "chen", text: t.spoken },
-              { role: "amo", text: t.amoReply },
-            ]).flat(),
+            dialogueHistory: turns
+              .map((t) => [
+                { role: "chen", text: t.spoken },
+                { role: "amo", text: t.amoReply },
+              ])
+              .flat(),
           },
         }),
       });
@@ -80,6 +86,7 @@ export default function GamePage() {
           spoken: filterData.spoken,
           amoReply: npcData.reply,
           intensity: filterData.intensity,
+          hint,
         },
       ]);
       setInput("");
@@ -101,12 +108,16 @@ export default function GamePage() {
       </header>
 
       <div className="flex-1 space-y-6">
-        {/* 开场旁白 */}
+        {/* 开场旁白 · AI 生成,见 docs/ai-generated/world-and-story.md #004 */}
         <div className="fade-in">
           <p className="text-xs text-muted mb-2">旁白</p>
           <p className="leading-relaxed text-ink/80">
-            第七次约会。吃完饭,账单放在桌上,服务员站在一旁。
-            阿默摸出手机,扫了一下二维码。
+            第七次约会。一家不算便宜也不算贵的餐厅,灯光暖,人不多。
+            账单放在桌上,白纸黑字,清清楚楚。服务员站在一旁,姿势礼貌,但没走。
+          </p>
+          <p className="leading-relaxed text-ink/80 mt-2">
+            阿默摸出手机,扫了一下二维码。动作很快——快得像是怕慢一点就会发生什么。
+            AA 是她先提出来的,每次都是。这不是现代、独立、体面,这是她给自己留的退路。
           </p>
         </div>
 
@@ -125,6 +136,9 @@ export default function GamePage() {
               下面的输入框里,写下阿沉<strong>真正想说</strong>的话。
               屏幕会同时显示两行:灰色半透明的是你的真心,正常显示的是他实际说出口的——那是你拦不住的。
             </p>
+            <p className="mt-2 text-muted">
+              (试试写出脆弱一点的词,看看过滤器会不会松动。)
+            </p>
           </div>
         )}
 
@@ -135,7 +149,7 @@ export default function GamePage() {
               — 第 {i + 1} 轮 —
             </div>
 
-            {/* 内心话(灰色半透明,只有玩家看得见) */}
+            {/* 内心话 */}
             <div className="bg-paper border border-ink/10 p-4 rounded">
               <p className="text-xs text-muted mb-2">
                 内心话 <span className="opacity-60">· 只有你看得见</span>
@@ -143,16 +157,16 @@ export default function GamePage() {
               <p className="inner-voice text-sm">{turn.inner}</p>
             </div>
 
+            {/* 强度变化的叙事性提示(替代原来的"[过滤强度:低]"标签) */}
+            {turn.hint && (
+              <p className="text-xs text-accent/70 italic text-center">
+                {turn.hint}
+              </p>
+            )}
+
             {/* 阿沉出口话 */}
             <div className="border-l-2 border-ink/30 pl-4">
-              <p className="text-xs text-muted mb-2">
-                阿沉说出口
-                {turn.intensity === "low" && (
-                  <span className="ml-2 text-accent/70 text-[10px]">
-                    [过滤强度:低 · 漏了一半]
-                  </span>
-                )}
-              </p>
+              <p className="text-xs text-muted mb-2">阿沉说出口</p>
               <p className="spoken-words leading-relaxed">"{turn.spoken}"</p>
             </div>
 
@@ -164,7 +178,6 @@ export default function GamePage() {
           </div>
         ))}
 
-        {/* 加载提示 */}
         {loading && (
           <div className="fade-in text-center text-sm text-muted py-4">
             {phase === "filter" ? "过滤器正在改写你的话……" : "阿默在想怎么回……"}
@@ -177,49 +190,45 @@ export default function GamePage() {
           </div>
         )}
 
-        {/* 本幕结束入口 */}
+        {/* 本幕结束入口 · 收尾旁白见 docs/ai-generated/world-and-story.md #006 */}
         {turns.length >= MAX_TURNS && !loading && (
           <div className="fade-in text-center pt-6 space-y-3">
             <p className="text-sm text-muted leading-relaxed">
-              账单清清楚楚地分完了。你们走出餐厅,夜风有点凉。
+              账单清清楚楚地分完了。两个人各自付了各自的那份,不亏不欠。
             </p>
-            <Link
-              href="/ending"
-              className="inline-block py-2 px-8 border border-ink/30 hover:border-ink hover:bg-ink hover:text-paper transition-colors text-sm tracking-widest"
+            <p className="text-sm text-muted/70 leading-relaxed">
+              走出餐厅的时候,夜风有点凉。阿默走在半步之外的距离——正好够不碰到肩膀,正好够不说心里话。
+            </p>
+            <button
+              type="button"
+              onClick={() => {
+                const records: TurnRecord[] = turns.map((t) => ({
+                  inner: t.inner,
+                  spoken: t.spoken,
+                  amoReply: t.amoReply,
+                  intensity: t.intensity,
+                }));
+                savePlaythrough({
+                  sceneId: "act1_aa",
+                  sceneName: "幕一 · AA 制",
+                  turns: records,
+                  finishedAt: new Date().toISOString(),
+                });
+                window.location.href = "/ending";
+              }}
+              className="inline-block mt-2 py-2 px-8 border border-ink/30 hover:border-ink hover:bg-ink hover:text-paper transition-colors text-sm tracking-widest"
             >
               结 束 本 幕
-            </Link>
+            </button>
           </div>
         )}
       </div>
 
       {/* 输入区 */}
       <footer className="mt-8 pt-6 border-t border-ink/10">
-        <div className="mb-3 flex items-center gap-3 text-xs text-muted">
-          <span>过滤强度(MVP 调试):</span>
-          <button
-            type="button"
-            onClick={() => setIntensity("high")}
-            className={`px-2 py-1 border ${
-              intensity === "high"
-                ? "border-ink bg-ink text-paper"
-                : "border-ink/30"
-            }`}
-          >
-            高
-          </button>
-          <button
-            type="button"
-            onClick={() => setIntensity("low")}
-            className={`px-2 py-1 border ${
-              intensity === "low"
-                ? "border-ink bg-ink text-paper"
-                : "border-ink/30"
-            }`}
-          >
-            低
-          </button>
-          <span className="ml-auto opacity-60">
+        <div className="mb-3 flex items-center justify-between text-xs text-muted">
+          <span className="opacity-70">写下阿沉真正想说的话</span>
+          <span className="opacity-60">
             第 {turns.length} / {MAX_TURNS} 轮
           </span>
         </div>
