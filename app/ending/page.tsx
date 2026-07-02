@@ -24,8 +24,7 @@ export default function EndingPage() {
     setMounted(true);
   }, []);
 
-  // 没有数据时(直接访问 /ending)
-  if (mounted && !play) {
+  if (mounted && (!play || play.scenes.length === 0)) {
     return (
       <main className="min-h-screen flex flex-col items-center justify-center px-6 py-12 max-w-xl mx-auto text-center">
         <p className="text-sm text-muted mb-6">
@@ -57,22 +56,33 @@ export default function EndingPage() {
           <p className="text-xs tracking-widest text-muted uppercase">结局</p>
           <h2 className="text-4xl font-serif tracking-wider">风 化</h2>
           <p className="text-xs text-muted/70">
-            {play.sceneName} · {new Date(play.finishedAt).toLocaleString("zh-CN")}
+            完成了 {report.totalScenes} 幕 · {report.totalTurns} 次开口
           </p>
         </header>
 
         {/* 结局文本 */}
         <section className="space-y-4 leading-relaxed text-ink/80">
           <p>
-            账算得清清楚楚。你们各自付了各自的那份,走出餐厅。
+            没有争吵,没有摔门,没有一句重话。
           </p>
           <p className="text-muted">
-            之后还有无数次这样的"清清楚楚"。关系没有结束——它只是没有活下去。
+            关系没有结束——它只是没有活下去。谁也说不清是哪天结束的,这才是最窒息的部分。
           </p>
-          {/* 幕一金句 · AI 生成,见 docs/ai-generated/world-and-story.md #005 */}
-          <p className="text-center text-sm text-accent/80 italic pt-4 border-t border-ink/10">
-            "账算得越清的两个人,越不敢欠对方一句真话。"
-          </p>
+        </section>
+
+        {/* 各幕金句回响 */}
+        <section className="border-t border-ink/10 pt-8 space-y-4">
+          <p className="text-xs text-muted tracking-widest">这一路,你留下的句子</p>
+          <div className="space-y-3">
+            {report.goldenQuotes.map((g, i) => (
+              <div key={i} className="border-l-2 border-accent/40 pl-4">
+                <p className="text-[10px] text-muted tracking-widest mb-1">
+                  {g.sceneName}
+                </p>
+                <p className="text-sm text-accent/90 italic">"{g.quote}"</p>
+              </div>
+            ))}
+          </div>
         </section>
 
         {/* 过滤器报告 */}
@@ -80,7 +90,7 @@ export default function EndingPage() {
           <div>
             <p className="text-xs text-muted tracking-widest mb-2">你的过滤器报告</p>
             <h3 className="text-xl font-serif">
-              这一幕里,你的回避画像
+              这一路,你的回避画像
             </h3>
           </div>
 
@@ -149,35 +159,38 @@ export default function EndingPage() {
           )}
         </section>
 
-        {/* 对照列表:真心话 vs 出口话 */}
-        <section className="border-t border-ink/10 pt-8 space-y-4">
+        {/* 全程对照列表 */}
+        <section className="border-t border-ink/10 pt-8 space-y-6">
           <p className="text-xs text-muted tracking-widest">
-            全程对照 · 你说的 vs 你说出口的
+            全程对照 · 你想的 vs 你说出口的
           </p>
-          <div className="space-y-3">
-            {play.turns.map((t, i) => (
-              <div
-                key={i}
-                className="grid grid-cols-1 md:grid-cols-2 gap-3 border border-ink/10 p-4 rounded"
-              >
-                <div>
-                  <p className="text-[10px] text-muted mb-1 tracking-widest">
-                    你想的
-                  </p>
-                  <p className="inner-voice text-sm">{t.inner}</p>
+          {play.scenes.map((sc, si) => (
+            <div key={si} className="space-y-3">
+              <p className="text-xs text-accent/70 tracking-widest">{sc.sceneName}</p>
+              {sc.turns.map((t, i) => (
+                <div
+                  key={i}
+                  className="grid grid-cols-1 md:grid-cols-2 gap-3 border border-ink/10 p-4 rounded"
+                >
+                  <div>
+                    <p className="text-[10px] text-muted mb-1 tracking-widest">
+                      你想的
+                    </p>
+                    <p className="inner-voice text-sm">{t.inner}</p>
+                  </div>
+                  <div className="md:border-l md:border-ink/10 md:pl-4">
+                    <p className="text-[10px] text-muted mb-1 tracking-widest">
+                      你说的
+                      {t.intensity === "low" && (
+                        <span className="ml-1 text-accent/60">· 漏了一半</span>
+                      )}
+                    </p>
+                    <p className="spoken-words text-sm">"{t.spoken}"</p>
+                  </div>
                 </div>
-                <div className="md:border-l md:border-ink/10 md:pl-4">
-                  <p className="text-[10px] text-muted mb-1 tracking-widest">
-                    你说的
-                    {t.intensity === "low" && (
-                      <span className="ml-1 text-accent/60">· 漏了一半</span>
-                    )}
-                  </p>
-                  <p className="spoken-words text-sm">"{t.spoken}"</p>
-                </div>
-              </div>
-            ))}
-          </div>
+              ))}
+            </div>
+          ))}
         </section>
 
         {/* 行动按钮 */}
@@ -198,7 +211,6 @@ export default function EndingPage() {
           </Link>
         </section>
 
-        {/* 截图提示 */}
         <p className="text-center text-xs text-muted/60">
           截图分享你的过滤器报告 · #CodeBuddy #腾讯云黑客松
         </p>
