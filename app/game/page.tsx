@@ -1,19 +1,29 @@
 "use client";
 
 import { useState } from "react";
+import Link from "next/link";
 
-interface Exchange {
-  inner: string;
-  spoken: string;
+interface Turn {
+  id: number;
+  inner: string; // 阿沉的真心话(只有玩家看得见)
+  spoken: string; // 阿沉说出口的话
+  amoReply: string; // 阿默的回应
   intensity: "high" | "low";
 }
 
+const SCENE_BRIEF = "两人第七次约会,吃完饭,账单放在桌上,阿默提议 AA。";
+const AMOS_OPENING = "扫这个吧,我们 AA。";
+
 export default function GamePage() {
   const [input, setInput] = useState("");
-  const [exchanges, setExchanges] = useState<Exchange[]>([]);
+  const [turns, setTurns] = useState<Turn[]>([]);
   const [loading, setLoading] = useState(false);
+  const [phase, setPhase] = useState<"filter" | "npc">("filter");
   const [error, setError] = useState<string | null>(null);
   const [intensity, setIntensity] = useState<"high" | "low">("high");
+
+  // MVP:3 轮后可结束本幕
+  const MAX_TURNS = 3;
 
   async function handleSubmit(e: React.FormEvent) {
     e.preventDefault();
@@ -22,8 +32,10 @@ export default function GamePage() {
 
     setLoading(true);
     setError(null);
+    setPhase("filter");
     try {
-      const res = await fetch("/api/filter", {
+      // 1. 调过滤器
+      const filterRes = await fetch("/api/filter", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
@@ -31,21 +43,43 @@ export default function GamePage() {
           intensity,
           context: {
             sceneId: "act1_aa",
-            sceneBrief:
-              "两人第七次约会,吃完饭,账单放在桌上,阿默提议 AA。",
-            amosLastLine: "扫这个吧,我们 AA。",
+            sceneBrief: SCENE_BRIEF,
+            amosLastLine: AMOS_OPENING,
           },
         }),
       });
-      const data = await res.json();
-      if (!data.ok) throw new Error(data.error || "过滤器调用失败");
+      const filterData = await filterRes.json();
+      if (!filterData.ok) throw new Error(filterData.error || "过滤器调用失败");
 
-      setExchanges((prev) => [
+      setPhase("npc");
+
+      // 2. 调阿默 NPC(用过滤后的话)
+      const npcRes = await fetch("/api/npc", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          context: {
+            sceneId: "act1_aa",
+            sceneBrief: SCENE_BRIEF,
+            chenSpoken: filterData.spoken,
+            dialogueHistory: turns.map((t) => [
+              { role: "chen", text: t.spoken },
+              { role: "amo", text: t.amoReply },
+            ]).flat(),
+          },
+        }),
+      });
+      const npcData = await npcRes.json();
+      if (!npcData.ok) throw new Error(npcData.error || "NPC 调用失败");
+
+      setTurns((prev) => [
         ...prev,
         {
-          inner: data.inner,
-          spoken: data.spoken,
-          intensity: data.intensity,
+          id: Date.now(),
+          inner: filterData.inner,
+          spoken: filterData.spoken,
+          amoReply: npcData.reply,
+          intensity: filterData.intensity,
         },
       ]);
       setInput("");
@@ -54,6 +88,7 @@ export default function GamePage() {
       setError(msg);
     } finally {
       setLoading(false);
+      setPhase("filter");
     }
   }
 
@@ -77,11 +112,11 @@ export default function GamePage() {
 
         <div className="fade-in border-l-2 border-accent/40 pl-4">
           <p className="text-xs text-muted mb-2">阿默</p>
-          <p className="leading-relaxed">"扫这个吧,我们 AA。"</p>
+          <p className="leading-relaxed">"{AMOS_OPENING}"</p>
         </div>
 
-        {/* 教学提示:第一次输入前显示 */}
-        {exchanges.length === 0 && (
+        {/* 教学提示 */}
+        {turns.length === 0 && !loading && (
           <div className="fade-in bg-paper border border-accent/30 p-4 rounded text-sm text-ink/70 leading-relaxed">
             <p className="text-xs text-accent tracking-widest mb-2">
               教学提示
@@ -93,39 +128,73 @@ export default function GamePage() {
           </div>
         )}
 
-        {/* 历次交换记录:内心话 vs 出口话并置 */}
-        {exchanges.map((ex, i) => (
-          <div key={i} className="fade-in space-y-2">
+        {/* 对话流 */}
+        {turns.map((turn, i) => (
+          <div key={turn.id} className="fade-in space-y-3">
+            <div className="text-center text-[10px] text-muted/50 tracking-widest">
+              — 第 {i + 1} 轮 —
+            </div>
+
+            {/* 内心话(灰色半透明,只有玩家看得见) */}
             <div className="bg-paper border border-ink/10 p-4 rounded">
               <p className="text-xs text-muted mb-2">
                 内心话 <span className="opacity-60">· 只有你看得见</span>
               </p>
-              <p className="inner-voice text-sm">{ex.inner}</p>
+              <p className="inner-voice text-sm">{turn.inner}</p>
             </div>
+
+            {/* 阿沉出口话 */}
             <div className="border-l-2 border-ink/30 pl-4">
               <p className="text-xs text-muted mb-2">
                 阿沉说出口
-                {ex.intensity === "low" && (
+                {turn.intensity === "low" && (
                   <span className="ml-2 text-accent/70 text-[10px]">
                     [过滤强度:低 · 漏了一半]
                   </span>
                 )}
               </p>
-              <p className="spoken-words leading-relaxed">"{ex.spoken}"</p>
+              <p className="spoken-words leading-relaxed">"{turn.spoken}"</p>
+            </div>
+
+            {/* 阿默的回应 */}
+            <div className="border-l-2 border-accent/40 pl-4">
+              <p className="text-xs text-muted mb-2">阿默</p>
+              <p className="leading-relaxed">"{turn.amoReply}"</p>
             </div>
           </div>
         ))}
+
+        {/* 加载提示 */}
+        {loading && (
+          <div className="fade-in text-center text-sm text-muted py-4">
+            {phase === "filter" ? "过滤器正在改写你的话……" : "阿默在想怎么回……"}
+          </div>
+        )}
 
         {error && (
           <div className="text-sm text-red-700/80 border border-red-300/50 p-3 rounded">
             {error}
           </div>
         )}
+
+        {/* 本幕结束入口 */}
+        {turns.length >= MAX_TURNS && !loading && (
+          <div className="fade-in text-center pt-6 space-y-3">
+            <p className="text-sm text-muted leading-relaxed">
+              账单清清楚楚地分完了。你们走出餐厅,夜风有点凉。
+            </p>
+            <Link
+              href="/ending"
+              className="inline-block py-2 px-8 border border-ink/30 hover:border-ink hover:bg-ink hover:text-paper transition-colors text-sm tracking-widest"
+            >
+              结 束 本 幕
+            </Link>
+          </div>
+        )}
       </div>
 
       {/* 输入区 */}
       <footer className="mt-8 pt-6 border-t border-ink/10">
-        {/* MVP 调试用:强度切换。后续阶段会做成隐藏数值 */}
         <div className="mb-3 flex items-center gap-3 text-xs text-muted">
           <span>过滤强度(MVP 调试):</span>
           <button
@@ -150,6 +219,9 @@ export default function GamePage() {
           >
             低
           </button>
+          <span className="ml-auto opacity-60">
+            第 {turns.length} / {MAX_TURNS} 轮
+          </span>
         </div>
 
         <form onSubmit={handleSubmit}>
@@ -159,12 +231,12 @@ export default function GamePage() {
             placeholder="此刻阿沉心里真正想说的话……"
             className="w-full bg-transparent border border-ink/20 p-3 text-sm resize-none focus:outline-none focus:border-ink/50"
             rows={3}
-            disabled={loading}
+            disabled={loading || turns.length >= MAX_TURNS}
             maxLength={500}
           />
           <button
             type="submit"
-            disabled={loading || !input.trim()}
+            disabled={loading || !input.trim() || turns.length >= MAX_TURNS}
             className="mt-2 w-full py-2 border border-ink/30 hover:border-ink hover:bg-ink hover:text-paper transition-colors text-sm tracking-widest disabled:opacity-40 disabled:hover:bg-transparent disabled:hover:text-ink"
           >
             {loading ? "过滤中……" : "说 出 口"}
