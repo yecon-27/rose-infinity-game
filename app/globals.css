@@ -40,3 +40,87 @@ body {
 .fade-in {
   animation: fadeIn 0.6s ease-out forwards;
 }
+
+/* 慢速淡入:标题页/序章的大字 */
+@keyframes fadeInSlow {
+  from {
+    opacity: 0;
+  }
+  to {
+    opacity: 1;
+  }
+}
+
+.fade-in-slow {
+  animation: fadeInSlow 1.8s ease-out forwards;
+}
+
+/* 延迟淡入:配合 animation-delay 做逐行浮现,初始不可见 */
+.fade-in-delayed {
+  opacity: 0;
+  animation: fadeIn 1s ease-out forwards;
+}
+
+/* Ken Burns:背景极缓慢推近,静止画面产生"镜头感" */
+@keyframes kenBurns {
+  from {
+    transform: scale(1);
+  }
+  to {
+    transform: scale(1.08);
+  }
+}
+
+.ken-burns {
+  animation: kenBurns 45s ease-in-out infinite alternate;
+}
+
+/* 章节卡:黑场 → 幕名浮现 → 淡出 */
+@keyframes chapterCard {
+  0% {
+    opacity: 1;
+  }
+  75% {
+    opacity: 1;
+  }
+  100% {
+    opacity: 0;
+  }
+}
+
+.chapter-card {
+  animation: chapterCard 2.8s ease-in-out forwards;
+}
+
+@keyframes chapterTitle {
+  0% {
+    opacity: 0;
+    letter-spacing: 0.6em;
+  }
+  35% {
+    opacity: 1;
+  }
+  100% {
+    opacity: 1;
+    letter-spacing: 0.35em;
+  }
+}
+
+.chapter-title {
+  animation: chapterTitle 2.2s ease-out forwards;
+}
+
+/* 呼吸闪烁:'点击继续'指示 */
+@keyframes softPulse {
+  0%,
+  100% {
+    opacity: 0.35;
+  }
+  50% {
+    opacity: 0.9;
+  }
+}
+
+.soft-pulse {
+  animation: softPulse 2.2s ease-in-out infinite;
+}

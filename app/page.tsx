@@ -1,40 +1,70 @@
 import Link from "next/link";
+import Image from "next/image";
 
 export default function Home() {
   return (
-    <main className="min-h-screen flex flex-col items-center justify-center px-6 py-12">
-      <div className="max-w-xl text-center space-y-8 fade-in">
-        <p className="text-sm tracking-widest text-muted uppercase">
-          腾讯云黑客松 2026 · 叙事游戏
+    <main className="relative min-h-screen overflow-hidden flex flex-col items-center justify-center px-6 py-12">
+      {/* 背景:标题主视觉(AI 生成素材合成,两人分立两侧,中间是距离) */}
+      <div className="fixed inset-0 z-0">
+        <Image
+          src="/images/scenes/title_keyart.png"
+          alt=""
+          fill
+          priority
+          className="object-cover ken-burns"
+        />
+        <div className="absolute inset-0 bg-gradient-to-b from-black/40 via-transparent to-black/60" />
+      </div>
+
+      <div className="relative z-10 max-w-xl text-center space-y-8">
+        <p
+          className="fade-in-delayed text-xs tracking-[0.4em] text-white/40 uppercase"
+          style={{ animationDelay: "0.3s" }}
+        >
+          一段没有争吵的关系,是怎么结束的
         </p>
 
-        <h1 className="text-5xl font-serif tracking-wider">过滤器</h1>
-        <p className="text-sm text-muted tracking-[0.3em]">THE FILTER</p>
+        <div className="fade-in-slow space-y-3">
+          <h1 className="text-6xl font-serif tracking-[0.25em] text-white/95">
+            过滤器
+          </h1>
+          <p className="text-xs text-white/50 tracking-[0.5em]">THE FILTER</p>
+        </div>
 
-        <div className="space-y-4 text-left leading-relaxed text-ink/80">
-          <p>
-            两个回避型依恋的人相爱,是一场没有凶手的慢性死亡。
+        <div className="space-y-3 leading-loose text-white/70 text-sm">
+          <p className="fade-in-delayed" style={{ animationDelay: "1.2s" }}>
+            你心里有话。
           </p>
-          <p>
-            没有争吵,没有背叛,没有任何一个可以归罪的瞬间。
+          <p className="fade-in-delayed" style={{ animationDelay: "2s" }}>
+            说出口的,却永远是别的。
           </p>
-          <p className="text-muted">
-            你心里有话,出口的却是别的。你拦不住自己。
+          <p
+            className="fade-in-delayed text-white/45"
+            style={{ animationDelay: "2.8s" }}
+          >
+            你拦不住自己。
           </p>
         </div>
 
-        <div className="pt-6 space-y-3">
+        <div
+          className="fade-in-delayed pt-6 space-y-3"
+          style={{ animationDelay: "3.6s" }}
+        >
           <Link
-            href="/game"
-            className="block w-full py-3 px-6 border border-ink/30 hover:border-ink hover:bg-ink hover:text-paper transition-colors tracking-widest text-sm"
+            href="/prologue"
+            className="block w-full py-3 px-6 border border-white/30 text-white/90 hover:border-white hover:bg-white hover:text-ink transition-colors duration-500 tracking-[0.5em] text-sm"
           >
             开 始
           </Link>
-          <p className="text-xs text-muted/70">
-            建议在安静的环境下游玩 · 约 5-10 分钟
+          <p className="text-xs text-white/35">
+            建议戴耳机 · 在安静的环境下游玩 · 约 10 分钟
           </p>
         </div>
       </div>
+
+      <p className="absolute bottom-6 z-10 text-[10px] text-white/25 tracking-widest">
+        腾讯云黑客松 2026 · 叙事游戏
+      </p>
     </main>
   );
 }

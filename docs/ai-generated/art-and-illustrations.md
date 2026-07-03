@@ -199,3 +199,27 @@ very quiet, slightly suffocating in its ordinariness.
 - [ ] 第三视角合集的视觉差异化(去色/扁平化,对应"白描"风格)
 - [ ] 结局报告页的视觉装饰
 - [ ] UI 美术(按钮、对话框边框等)
+
+---
+
+### #IMG-010 · 标题页主视觉(合成)
+
+**文件**:`public/images/scenes/title_keyart.png`(1920x1080)
+**用途**:标题页全屏背景
+**生成方式**:用已有 AI 生成素材(#IMG-001 阿沉立绘、#IMG-002 阿默立绘、#IMG-004 餐厅场景)通过 `scripts/make-title-art.mjs` 程序化排版合成——两人分立画面两侧,中间留出大片空白给标题。**中间的空隙就是"距离",构图本身即主题**。
+**处理参数**:背景 blur(3) + 亮度 0.55;立绘裁透明边、压暗至 0.72、底部下沉 90px 只露头肩;叠加纵向渐变 + 径向暗角。
+**复现**:`pnpm exec node scripts/make-title-art.mjs`
+
+**后续替换方案(单张重新生成)**:如需一张一体化 key art,在 CodeBuddy ImageGen 中用以下 prompt 生成后直接覆盖同名文件即可:
+
+```
+Hand-drawn watercolor illustration, game title key art, cinematic wide composition.
+Two people sitting at opposite ends of a long restaurant table at night,
+a wide empty space between them, warm dim lighting, large window behind
+showing a quiet street. Both figures calm, not looking at each other.
+Soft muted palette, warm beige/grey with dusty rose accents. Loose brushwork,
+melancholic and atmospheric, reminiscent of Florence / To the Moon game art.
+Large negative space in the upper-middle area for title text.
+16:9 landscape, 1920x1080.
+```
+
