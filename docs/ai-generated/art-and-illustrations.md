@@ -255,3 +255,36 @@ quiet and intimate, Florence / To the Moon game art style. No people.
 16:9 landscape.
 ```
 
+
+---
+
+### #IMG-017 · 阿沉立绘重制(明确男性,替换 neutral 版)
+
+> 设计变更(2026-07-03):角色确定为异性恋情侣——阿沉(男)× 阿默(女)。
+> 原 #IMG-001 系列 prompt 用了 "neutral gender presentation",立绘偏中性,需重新生成。
+> **在 CodeBuddy 同一段对话里连续生成三张**(保持同脸同发型同衣服),分别覆盖:
+> `public/images/characters/chen.png` / `chen-avoidant.png` / `chen-vulnerable.png`
+
+**基础 Prompt(chen.png · 平静)**:
+
+```
+Hand-drawn watercolor illustration style character portrait, half-body,
+a young man (clearly male) in his late 20s named Chen. Short dark hair,
+gentle tired eyes, calm reserved expression with restrained emotion.
+Soft muted color palette, warm beige and grey-blue tones. Loose brushwork,
+emotional and atmospheric, Florence / To the Moon game art style.
+Simple casual clothing: plain shirt with a light open jacket.
+Plain solid light background, character only, no scene.
+Vertical portrait composition.
+```
+
+**差分 2(chen-avoidant.png · 回避)**:同一人、同发型同衣服,替换表情描述为:
+`polite distant half-smile, eyes looking slightly away, guarded posture`
+
+**差分 3(chen-vulnerable.png · 脆弱)**:同一人,替换表情描述为:
+`guard finally down, lips slightly parted as if about to speak, glistening eyes, vulnerable`
+
+**替换后的两步收尾**(本地执行):
+1. `pnpm exec node scripts/remove-bg.mjs` — 抠掉背景(ImageGen 不出真透明)
+2. `pnpm exec node scripts/make-title-art.mjs` — 用新立绘重新合成标题主视觉
+
