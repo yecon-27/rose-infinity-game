@@ -7,9 +7,11 @@ import { useRouter } from "next/navigation";
 import {
   loadPlaythrough,
   loadRelationship,
+  loadEndingKind,
   clearPlaythrough,
   buildReport,
   decideEnding,
+  unlockHerNight,
   EndingKind,
   Playthrough,
   FilterReport,
@@ -90,8 +92,10 @@ export default function EndingPage() {
     if (p) {
       setPlay(p);
       setReport(buildReport(p));
+      unlockHerNight(); // 走到过结局,二周目解锁
     }
-    setEnding(decideEnding(loadRelationship()));
+    // 结局归属在终幕已锁定(二周目支线不改写);无锁定值再实时计算
+    setEnding(loadEndingKind() ?? decideEnding(loadRelationship()));
     setMounted(true);
   }, []);
 
@@ -336,6 +340,21 @@ export default function EndingPage() {
             ))}
           </div>
         </section>
+
+        {/* 二周目:她的视角(不清存档——她那晚要回放你的原话) */}
+        {!play.scenes.some((s) => s.sceneId === "amo_act5") && (
+          <section className="text-center">
+            <Link
+              href="/game?scene=amo_act5"
+              className="inline-block py-2.5 px-8 border border-accent/50 text-accent hover:bg-accent hover:text-ink transition-colors text-xs tracking-[0.35em]"
+            >
+              换 她 的 眼 睛,再 走 一 遍 那 晚 →
+            </Link>
+            <p className="mt-2 text-[10px] text-white/30">
+              二周目 · 你将扮演阿默;那晚你说过的话,会原样回到你耳边
+            </p>
+          </section>
+        )}
 
         {/* 行动 */}
         <section className="flex justify-center gap-3 pt-1">

@@ -35,6 +35,7 @@ export async function POST(req: NextRequest) {
     const safeIntensity: FilterIntensity =
       intensity === "low" || intensity === "anxious" ? intensity : "high";
     const fullContext: FilterContext = {
+      persona: context.persona === "amo" ? "amo" : "chen",
       sceneId: context.sceneId ?? "act1_aa",
       sceneBrief:
         context.sceneBrief ??

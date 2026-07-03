@@ -99,7 +99,12 @@ export type Moment =
   | { kind: "activity"; activity: ActivitySpec }
   | { kind: "talk"; talk: TalkSpec }
   /** 剧情冲击:静默地推动天平(负=向焦虑,正=向回避)。心被砸了一下,玩家在天平上看得见 */
-  | { kind: "shift"; delta: number };
+  | { kind: "shift"; delta: number }
+  /**
+   * 回声(二周目专用):回放玩家上一周目在 sceneRef 第 turn 轮真实说出口的话。
+   * 你将站在接收端,听见你自己被过滤后的那句。无存档时用 fallback。
+   */
+  | { kind: "echo"; sceneRef: string; turn: number; fallback: string };
 
 export interface Scene {
   id: string;
@@ -113,6 +118,12 @@ export interface Scene {
   amoPortrait?: string;
   /** 尾声(无开口节拍,不存档) */
   isEpilogue?: boolean;
+  /** 玩家扮演的角色(默认阿沉;"amo" = 二周目她的视角) */
+  playerRole?: "amo";
+  /** 支线周目(结束后直接回结局页,不改写结局归属) */
+  isSideRoute?: boolean;
+  /** 本幕天平起点覆盖(她的过滤器更厚:+60 深回避区) */
+  startBalance?: number;
   /**
    * 她那边 · 幕间碎片(暗线):本幕结束后的黑场插页,1-2 句,只描述动作不解释。
    * 只给谜面不给谜底——结局的对称揭示是最后一块拼图,不是第一次亮相。
@@ -789,6 +800,125 @@ export const SCENES: Record<string, Scene> = {
     goldenQuote: "不是推。",
     background: "/images/scenes/act2_konbini.png",
     aiGeneratedRef: "#016",
+  },
+
+  /* ─────────────── 二周目 · 她的那一晚(通关解锁) ─────────────── */
+  amo_act5: {
+    id: "amo_act5",
+    name: "她的那一晚",
+    brief:
+      "二周目:同一个晚上,阿默的视角。深圳的 offer 下个月入职,开口的话她练习了三十遍。",
+    playerRole: "amo",
+    isSideRoute: true,
+    startBalance: 60,
+    script: [
+      { kind: "narr", text: "这一次,你是她。" },
+      {
+        kind: "hint",
+        text: "【二周目】天平从深处的回避区开始——她的过滤器,比他的厚。接下来他说的某些话,是你上一个周目真实说出口的。",
+      },
+      {
+        kind: "narr",
+        text: "周末,天气很好。收拾东西的人是你。",
+      },
+      {
+        kind: "activity",
+        activity: {
+          type: "pick",
+          title: "收拾袋子",
+          instruction:
+            "挑四样带走。有些东西带走了,就真的什么都没留下了。",
+          picks: 4,
+          items: [
+            { name: "牙刷", hers: true },
+            { name: "洗面奶", hers: true },
+            { name: "针织衫", hers: true },
+            { name: "充电线", hers: true },
+            { name: "他送的书", avoid: true },
+            { name: "拍立得合照", avoid: true },
+          ],
+          good: {
+            lines: [
+              {
+                speaker: "narr",
+                text: "书留在了床头。你告诉自己,是忘了。",
+              },
+            ],
+            centering: 12,
+          },
+          bad: {
+            lines: [
+              {
+                speaker: "narr",
+                text: "袋子装得很满。满得像要把七个月一次搬空。",
+              },
+            ],
+            centering: -8,
+          },
+        },
+      },
+      {
+        kind: "talk",
+        talk: {
+          prompt: "他在阳台收衣服,背对着你。你心里想说——",
+          situation:
+            "阿默收拾好了袋子。深圳的 offer 下个月入职,这句话她练习了三十遍,每一遍都说不出口。",
+          amoDirection:
+            "对面是阿沉:偏安全型,他敢往前半步,被拒就退回。听到客套他会沉默地接受;听到真话他会往前一步。但今晚他也会被砸懵。",
+          impulses: [
+            "我不想一个人去深圳。你说'别去',或者说'一起去',哪句都行。",
+            "下个月我要走了。这句话,怎么说才能不像告别?",
+            "最近好像都挺忙的……要不,先这样?",
+          ],
+          timerSeconds: 12,
+        },
+      },
+      {
+        kind: "echo",
+        sceneRef: "act5_end",
+        turn: 0,
+        fallback: "……也行。最近确实都挺忙的。",
+      },
+      {
+        kind: "narr",
+        text: "灯光把两个人的影子叠在地板上,又分开。",
+      },
+      {
+        kind: "narr",
+        text: "你提起袋子。开门。走廊的灯应声亮了。",
+      },
+      {
+        kind: "talk",
+        talk: {
+          prompt: "只要他叫你的名字,你就回头。你心里想说——",
+          situation:
+            "她站在门口,背对着他。声控灯亮着。她在心里数三个数——只要他开口,她就回头。",
+          amoDirection:
+            "对面是阿沉。那晚他在门口说了什么,你的上一个周目已经决定了。他偏安全型:如果她给他一句真话,他接得住。",
+          impulses: [
+            "回头说:其实我在等你开口。这一步我先迈了七个月,该你了。",
+            "(站着。数到三。一……二……三。)",
+            "那我走啦。",
+          ],
+          timerSeconds: 8,
+        },
+      },
+      {
+        kind: "echo",
+        sceneRef: "act5_end",
+        turn: 1,
+        fallback: "路上小心。",
+      },
+      { kind: "narr", text: "现在,两边的沉默,你都听过了。" },
+      {
+        kind: "narr",
+        text: "走廊的灯灭了。那晚数到三的人,不止一个。",
+      },
+    ],
+    goldenQuote: "数到三的人,不止一个。",
+    background: "/images/scenes/act5_room.png",
+    amoPortrait: "/images/characters/amo-resigned.png",
+    aiGeneratedRef: "#011 / #012 / #013",
   },
 
   epilogue_weathered: {

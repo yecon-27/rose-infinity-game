@@ -1,6 +1,10 @@
 import { NextRequest, NextResponse } from "next/server";
 import { chat } from "@/lib/hunyuan";
-import { buildAmoSystemPrompt, NpcContext } from "@/lib/npc-prompt";
+import {
+  buildAmoSystemPrompt,
+  buildChenSystemPrompt,
+  NpcContext,
+} from "@/lib/npc-prompt";
 
 export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
@@ -71,6 +75,7 @@ export async function POST(req: NextRequest) {
     }
 
     const fullContext: NpcContext = {
+      persona: context.persona === "chen" ? "chen" : "amo",
       sceneId: context.sceneId ?? "act1_aa",
       sceneBrief:
         context.sceneBrief ??
@@ -84,7 +89,10 @@ export async function POST(req: NextRequest) {
       pierced: context.pierced === true,
     };
 
-    const systemPrompt = buildAmoSystemPrompt(fullContext);
+    const systemPrompt =
+      fullContext.persona === "chen"
+        ? buildChenSystemPrompt(fullContext)
+        : buildAmoSystemPrompt(fullContext);
 
     let reply: string;
     let inner: string;

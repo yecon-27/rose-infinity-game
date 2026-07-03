@@ -8,6 +8,9 @@
 
 const STORAGE_KEY = "the-filter:playthrough";
 const RELATIONSHIP_KEY = "the-filter:relationship";
+const ENDING_KIND_KEY = "the-filter:ending-kind";
+/** 二周目"她的那一晚"解锁标记(跨周目保留,不随 clearPlaythrough 清除) */
+const HER_NIGHT_KEY = "the-filter:her-night-unlocked";
 
 /**
  * 一次开口的性质:
@@ -111,6 +114,8 @@ export function clearPlaythrough(): void {
   try {
     localStorage.removeItem(STORAGE_KEY);
     localStorage.removeItem(RELATIONSHIP_KEY);
+    localStorage.removeItem(ENDING_KIND_KEY);
+    // HER_NIGHT_KEY 刻意保留:二周目解锁跨周目有效
   } catch (err) {
     console.error("[playthrough] 清除失败:", err);
   }
@@ -123,6 +128,43 @@ export function decideEnding(rel: RelationshipState): EndingKind {
   if (rel.pierced && rel.pierceExposed) return "door-open";
   if (rel.pierced) return "wasted-pierce";
   return "weathered";
+}
+
+/** 终幕定局时锁定结局归属,二周目支线不再改写 */
+export function saveEndingKind(kind: EndingKind): void {
+  if (typeof window === "undefined") return;
+  try {
+    localStorage.setItem(ENDING_KIND_KEY, kind);
+  } catch {}
+}
+
+export function loadEndingKind(): EndingKind | null {
+  if (typeof window === "undefined") return null;
+  try {
+    const v = localStorage.getItem(ENDING_KIND_KEY);
+    return v === "weathered" || v === "wasted-pierce" || v === "door-open"
+      ? v
+      : null;
+  } catch {
+    return null;
+  }
+}
+
+/** 二周目解锁 */
+export function unlockHerNight(): void {
+  if (typeof window === "undefined") return;
+  try {
+    localStorage.setItem(HER_NIGHT_KEY, "1");
+  } catch {}
+}
+
+export function isHerNightUnlocked(): boolean {
+  if (typeof window === "undefined") return false;
+  try {
+    return localStorage.getItem(HER_NIGHT_KEY) === "1";
+  } catch {
+    return false;
+  }
 }
 
 /**

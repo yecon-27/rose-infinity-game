@@ -16,8 +16,11 @@ import {
   PIERCE_THRESHOLD,
 } from "@/lib/intensity";
 import {
+  decideEnding,
+  loadPlaythrough,
   loadRelationship,
   RelationshipState,
+  saveEndingKind,
   saveRelationship,
   saveSceneRecord,
   TurnIntensity,
@@ -160,9 +163,19 @@ function GameInner() {
     return () => clearTimeout(t);
   }, [sceneId]);
 
-  /* 关系状态:幕一 = 新的一局 */
+  /* 关系状态:幕一 = 新的一局;二周目支线 = 她的天平起点(更深的回避区) */
   useEffect(() => {
-    if (sceneId === ACT_SEQUENCE[0].id) {
+    if (scene.isSideRoute) {
+      const fresh: RelationshipState = {
+        balance: scene.startBalance ?? 60,
+        distance: 50,
+        exposureCount: 0,
+        pierced: false,
+        pierceExposed: false,
+      };
+      saveRelationship(fresh);
+      setRel(fresh);
+    } else if (sceneId === ACT_SEQUENCE[0].id) {
       const fresh: RelationshipState = {
         balance: 40,
         distance: 50,
@@ -178,6 +191,11 @@ function GameInner() {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [sceneId]);
 
+  /* 角色:默认玩家=阿沉;二周目"她的那一晚"玩家=阿默 */
+  const playerIsAmo = scene.playerRole === "amo";
+  const playerSpeaker: "chen" | "amo" = playerIsAmo ? "amo" : "chen";
+  const npcSpeaker: "chen" | "amo" = playerIsAmo ? "chen" : "amo";
+
   const balance = rel?.balance ?? 40;
   const cracks = rel?.exposureCount ?? 0;
 
@@ -192,7 +210,7 @@ function GameInner() {
   const pierceActive =
     !!activeTalk?.pierceable && cracks >= PIERCE_THRESHOLD;
 
-  /* 立绘 */
+  /* 立绘(玩家在左可走动,NPC 在右隔着过滤器) */
   const lastTurn = turns[turns.length - 1];
   const chenPortrait = !lastTurn
     ? "/images/characters/chen.png"
@@ -200,6 +218,10 @@ function GameInner() {
       ? "/images/characters/chen-avoidant.png"
       : "/images/characters/chen-vulnerable.png";
   const amoPortrait = scene.amoPortrait ?? "/images/characters/amo.png";
+  const playerPortrait = playerIsAmo ? amoPortrait : chenPortrait;
+  const npcPortrait = playerIsAmo
+    ? "/images/characters/chen.png"
+    : amoPortrait;
 
   function updateRel(mut: (r: RelationshipState) => RelationshipState) {
     setRel((prev) => {
@@ -247,6 +269,25 @@ function GameInner() {
         }));
         setIdx((i) => i + 1);
         break;
+      case "echo": {
+        // 回声:回放玩家上一周目在该场景该轮真实说出口的话
+        const rec = loadPlaythrough()?.scenes.find(
+          (s) => s.sceneId === m.sceneRef
+        )?.turns[m.turn];
+        const text = rec?.spoken ?? m.fallback;
+        setPending([
+          {
+            speaker: npcSpeaker,
+            text,
+            note: rec
+              ? "——这句话,是你上一个周目真实说出口的。"
+              : undefined,
+          },
+        ]);
+        historyRef.current.push({ role: npcSpeaker, text });
+        setIdx((i) => i + 1);
+        break;
+      }
       case "explore":
         setFocusIdx(0);
         setMode("explore");
@@ -423,12 +464,13 @@ function GameInner() {
             input: trimmed,
             intensity: apiIntensity,
             context: {
+              persona: playerSpeaker,
               sceneId: scene.id,
               sceneBrief: scene.brief,
               situation: activeTalk.situation,
               amosLastLine: [...historyRef.current]
                 .reverse()
-                .find((h) => h.role === "amo")?.text,
+                .find((h) => h.role === npcSpeaker)?.text,
             },
           }),
         });
@@ -438,13 +480,14 @@ function GameInner() {
         spoken = filterData.spoken;
       }
 
-      historyRef.current.push({ role: "chen", text: spoken });
+      historyRef.current.push({ role: playerSpeaker, text: spoken });
 
       const npcRes = await fetch("/api/npc", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
           context: {
+            persona: npcSpeaker,
             sceneId: scene.id,
             sceneBrief: scene.brief,
             situation: activeTalk.situation,
@@ -461,7 +504,7 @@ function GameInner() {
       if (!npcData.ok) throw new Error(npcData.error || "NPC 调用失败");
       const amoReply: string = npcData.reply;
       const amoInner: string = npcData.inner ?? "";
-      historyRef.current.push({ role: "amo", text: amoReply });
+      historyRef.current.push({ role: npcSpeaker, text: amoReply });
 
       /* 关系状态更新 */
       const exposedTruth =
@@ -492,11 +535,11 @@ function GameInner() {
         { inner, spoken, amoReply, amoInner, intensity: kind },
       ]);
 
-      /* 播放本轮:内心 → 出口 → 她的回应 */
+      /* 播放本轮:内心 → 出口 → 对方的回应 */
       const seq: DisplayLine[] = [
         { speaker: "inner", label: "你心里想的", text: inner },
-        { speaker: "chen", note, text: spoken },
-        { speaker: "amo", text: amoReply },
+        { speaker: playerSpeaker, note, text: spoken },
+        { speaker: npcSpeaker, text: amoReply },
       ];
 
       /* 穿透且说了真话:替换默认收尾 */
@@ -550,7 +593,8 @@ function GameInner() {
 
   function navigateNext() {
     setHerSideShow(false);
-    if (scene.isEpilogue) {
+    if (scene.isSideRoute || scene.isEpilogue) {
+      // 二周目支线不改写结局归属(结局在终幕已锁定)
       router.push("/ending");
       return;
     }
@@ -558,8 +602,9 @@ function GameInner() {
     if (next) {
       router.push(`/game?scene=${next.id}`);
     } else {
-      // 终幕结束 → 按结果选尾声
+      // 终幕结束 → 锁定结局归属,按结果选尾声
       const r = rel ?? loadRelationship();
+      saveEndingKind(decideEnding(r));
       const epilogue =
         r.pierced && r.pierceExposed ? "epilogue_open" : "epilogue_weathered";
       router.push(`/game?scene=${epilogue}`);
@@ -729,8 +774,8 @@ function GameInner() {
           }}
         >
           <Image
-            src={chenPortrait}
-            alt="阿沉"
+            src={playerPortrait}
+            alt={playerIsAmo ? "阿默" : "阿沉"}
             fill
             className="object-contain object-bottom drop-shadow-2xl transition-opacity duration-700"
           />
@@ -749,8 +794,8 @@ function GameInner() {
           }}
         >
           <Image
-            src={amoPortrait}
-            alt="阿默"
+            src={npcPortrait}
+            alt={playerIsAmo ? "阿沉" : "阿默"}
             fill
             className="object-contain object-bottom drop-shadow-2xl"
           />
