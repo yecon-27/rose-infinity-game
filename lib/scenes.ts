@@ -146,7 +146,7 @@ export const SCENES: Record<string, Scene> = {
             observation:
               "白纸黑字,小数点后两位都分得清。你们连误差都不肯欠对方。",
             unlocksImpulse:
-              "其实这顿我想请。下次你请回来——这样我们就一直有下次了。",
+              "这顿我请,下次你请。这样我们就一直有下次。",
           },
           {
             id: "qrcode",
@@ -175,7 +175,7 @@ export const SCENES: Record<string, Scene> = {
           amoDirection:
             "她在等他扫码。他照做,她松口气顺势聊轻松的;他说想请客或别的,她愣一下,然后用玩笑把分量卸掉——但不会不高兴,她其实吃这套。",
           impulses: [
-            "第七次了,每次都这么客气,我们是在处对象还是在拼单?",
+            "这顿我想请你。就这一次,别跟我算。",
             "行,AA 挺好的,清楚。",
           ],
         },
@@ -192,19 +192,25 @@ export const SCENES: Record<string, Scene> = {
             lines: [
               {
                 speaker: "narr",
-                text: "你把手机推了过去。她的付款码举在半空,愣了一秒。",
+                text: "你把手机推了过去。她的付款码举在半空。",
               },
+              { speaker: "amo", text: "……干嘛啊。" },
               {
-                speaker: "amo",
-                text: "……你干嘛。行吧,那,下次我请。说好了啊。",
+                speaker: "narr",
+                text: "过了几秒,她把手机收了回去,没再坚持。",
               },
+              { speaker: "amo", text: "下次我请。" },
             ],
             centering: 14,
           },
           bad: {
             lines: [
               { speaker: "narr", text: "你扫了码。金额一人一半,分毫不差。" },
-              { speaker: "amo", text: "痛快。就喜欢你这么上道。" },
+              { speaker: "amo", text: "嗯。" },
+              {
+                speaker: "narr",
+                text: "她把小票折成一个小方块,收进包里。她的包里,有很多这样的方块。",
+              },
             ],
             centering: -6,
           },
@@ -224,7 +230,7 @@ export const SCENES: Record<string, Scene> = {
           amoDirection:
             "她用'下次'维持轻松。他接得轻松,她就眉飞色舞地聊火锅蘸料;他把话题引向两个人,她接一半,拐回食物——但嘴角是翘的。",
           impulses: [
-            "可以啊。不过下次的下次呢?我先预订了。",
+            "你说'下次'的时候,能不能看着我说。",
             "行啊,火锅可以,下次你定时间。",
           ],
         },
@@ -257,11 +263,11 @@ export const SCENES: Record<string, Scene> = {
       {
         kind: "line",
         speaker: "amo",
-        text: "我猜你没吃饭。关东煮我请——预算二十,超了你补。",
+        text: "我在你楼下。你肯定又没吃饭。",
       },
       {
         kind: "narr",
-        text: "她比你先到,正扒着玻璃柜看汤锅冒热气。白炽灯下,她比在任何餐厅里都放松。",
+        text: "她比你先到,手里已经拿好了两个纸杯,正扒着玻璃柜看汤锅冒热气。白炽灯下,她比在任何餐厅里都放松。",
       },
       {
         kind: "activity",
@@ -281,23 +287,20 @@ export const SCENES: Record<string, Scene> = {
           ],
           good: {
             lines: [
-              { speaker: "amo", text: "……你怎么知道我想吃溏心蛋。" },
+              { speaker: "amo", text: "……巧了。我正想拿这个。" },
               {
                 speaker: "narr",
-                text: "她假装在看汤勺,耳朵红了一点。可能是热气熏的。",
+                text: "她的耳朵红了一点。可能是热气熏的。",
               },
             ],
             centering: 14,
           },
           bad: {
             lines: [
-              {
-                speaker: "amo",
-                text: "阿沉。我们认识七个月了。我,不,吃,香,菜。",
-              },
+              { speaker: "amo", text: "我不吃香菜。" },
               {
                 speaker: "narr",
-                text: "她把那颗丸子夹进你的杯子,动作快得像销毁证据。",
+                text: "她把那颗丸子夹进你的杯子,没有说第二句。这句话,七个月里她说过四次了。",
               },
             ],
             centering: -8,
@@ -327,7 +330,7 @@ export const SCENES: Record<string, Scene> = {
             y: 78,
             observation:
               "一只橘猫路过。她小声'咝咝'地唤它,唤了三次。你第一次听见她用这种声音说话。",
-            unlocksImpulse: "你刚才唤猫的声音,能不能也分我一点?",
+            unlocksImpulse: "你对猫说话的声音,没对我用过。",
           },
           {
             id: "reflection",
@@ -348,8 +351,8 @@ export const SCENES: Record<string, Scene> = {
           amoDirection:
             "安稳时刻,她是正常人模式:会接梗、会主动讲白天的事、会宠人。他说了真话她会意外然后笨拙地接住;他开玩笑她会回敬一个更狠的。",
           impulses: [
-            "今天这样就很好。我是说,和你蹲在马路牙子上吃丸子这件事。",
-            "你也有猜别人没吃饭的时候啊,阿默同学。",
+            "现在这样,比哪一次约会都好。",
+            "你怎么每次都知道我没吃饭。",
             "萝卜不错,入味。",
           ],
         },
@@ -357,7 +360,7 @@ export const SCENES: Record<string, Scene> = {
       {
         kind: "line",
         speaker: "amo",
-        text: "最后一个丸子给你。……别想多,我是吃饱了。",
+        text: "最后一个给你。我饱了。",
       },
       {
         kind: "narr",
@@ -394,8 +397,8 @@ export const SCENES: Record<string, Scene> = {
           amoDirection:
             "人前模式:得体、会接梗。他讲得动情她用玩笑接住,讲得敷衍她帮着补两句,讲得好笑她笑得最大声——总之不让任何真东西在饭桌上落地,但气氛是暖的。",
           impulses: [
-            "她加我好友之后三天没说话,第四天发来一句'在吗,我需要一个人陪我骂甲方'。",
-            "哈,就……朋友介绍,挺自然的,没什么好讲的。",
+            "她加我好友之后三天没说话,第四天发来一句:'在吗,陪我骂甲方。'",
+            "就……朋友介绍,挺自然的,没什么好讲的。",
           ],
         },
       },
@@ -413,10 +416,13 @@ export const SCENES: Record<string, Scene> = {
           target: 8,
           good: {
             lines: [
-              { speaker: "amo", text: "可以啊你。这串比老板烤得都专业。" },
               {
                 speaker: "narr",
-                text: "她咬了一口,冲桌上扬了扬下巴:'这串谁也不许抢。'",
+                text: "她接过去,咬了一口,没有评价。",
+              },
+              {
+                speaker: "narr",
+                text: "但那串吃完了。签子和别的分开放。",
               },
             ],
             centering: 12,
@@ -424,9 +430,10 @@ export const SCENES: Record<string, Scene> = {
           bad: {
             lines: [
               { speaker: "narr", text: "那串肉在你手里冒起了不该有的烟。" },
+              { speaker: "amo", text: "糊了。" },
               {
-                speaker: "amo",
-                text: "噗——阿沉,它已经殉职了。给我吧,糊的我吃,你重烤一串。",
+                speaker: "narr",
+                text: "她把那串抽走,咬了一口糊的,把新的签子递到你手里。",
               },
             ],
             centering: 6,
@@ -448,7 +455,7 @@ export const SCENES: Record<string, Scene> = {
             y: 70,
             observation:
               "影子被路灯拉长,又在下一盏灯前缩短。像你们:一靠近,就急着退回去。",
-            unlocksImpulse: "刚才桌上那个你,和现在的你,我都想要。贪心吗?",
+            unlocksImpulse: "刚才桌上那个你,和现在的你,哪个是真的?",
           },
           {
             id: "alley",
@@ -516,15 +523,15 @@ export const SCENES: Record<string, Scene> = {
           seconds: 18,
           during: [
             { at: 30, speaker: "amo", text: "伞歪了。" },
-            { at: 60, speaker: "amo", text: "……你半边肩膀都湿了,傻子。" },
+            { at: 60, speaker: "amo", text: "……你肩膀湿了。" },
             { at: 85, speaker: "narr", text: "她往你这边靠了半步。就半步。" },
           ],
           good: {
             lines: [
-              { speaker: "amo", text: "下次……记得自己带伞。" },
+              { speaker: "amo", text: "下次记得自己带伞。" },
               {
                 speaker: "narr",
-                text: "她说这话的时候,没有看你,看着雨。",
+                text: "她说这话的时候没有看你。但她的手在你湿掉的袖子上,停了一下。",
               },
             ],
             centering: 16,
