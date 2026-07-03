@@ -104,7 +104,9 @@ export type Moment =
    * 回声(二周目专用):回放玩家上一周目在 sceneRef 第 turn 轮真实说出口的话。
    * 你将站在接收端,听见你自己被过滤后的那句。无存档时用 fallback。
    */
-  | { kind: "echo"; sceneRef: string; turn: number; fallback: string };
+  | { kind: "echo"; sceneRef: string; turn: number; fallback: string }
+  /** 日记页(全屏纸页,追溯回避的源头)。date 为小字日期,lines 为正文 */
+  | { kind: "diary"; date?: string; lines: string[] };
 
 export interface Scene {
   id: string;
@@ -122,6 +124,8 @@ export interface Scene {
   playerRole?: "amo";
   /** 支线周目(结束后直接回结局页,不改写结局归属) */
   isSideRoute?: boolean;
+  /** 本幕结束后强制进入的下一幕(支线串接用,优先于默认流程) */
+  nextSceneId?: string;
   /** 本幕天平起点覆盖(她的过滤器更厚:+60 深回避区) */
   startBalance?: number;
   /**
@@ -802,6 +806,77 @@ export const SCENES: Record<string, Scene> = {
     aiGeneratedRef: "#016",
   },
 
+  /* ─────────────── 二周目序 · 夹在书里的几页纸(回避的源头) ─────────────── */
+  amo_diary: {
+    id: "amo_diary",
+    name: "夹在书里的几页纸",
+    brief:
+      "二周目序:阿沉在那本书里发现她留下的几页日记——她的回避是从哪里开始的。",
+    isSideRoute: true,
+    nextSceneId: "amo_act5",
+    script: [
+      {
+        kind: "narr",
+        text: "那本他送的书,留在床头。你是后来才翻开的。",
+      },
+      {
+        kind: "narr",
+        text: "书页中间,夹着几页对折的纸。她的字,写得很小,像怕被听见。",
+      },
+      {
+        kind: "diary",
+        date: "很多年前",
+        lines: [
+          "十岁,我在校门口等妈妈,等到天黑。",
+          "回家以后她问我今天怎么样,我说:没事。",
+          "她跟别人说:这孩子真省心。",
+          "——我记住了这两个字。",
+        ],
+      },
+      {
+        kind: "diary",
+        date: "前年",
+        lines: [
+          "他说过,我最大的优点是不麻烦人。",
+          "分手那天他说:和你在一起,像一个人住。",
+          "两句话,都是同一个人说的。",
+        ],
+      },
+      {
+        kind: "diary",
+        date: "今年春天",
+        lines: [
+          "阿沉记得我不吃香菜。",
+          "第四次帮我把丸子夹走的时候,我差点说出那句话。",
+          "这种事最危险——记得,是有期限的。",
+        ],
+      },
+      {
+        kind: "diary",
+        date: "上个月",
+        lines: [
+          "offer 下来那天,我第一个想告诉的人是他。",
+          "所以我谁也没告诉。",
+          "让他等我,或者让他跟我走——我配吗?",
+          "写到这里,答案还是没有。",
+        ],
+      },
+      {
+        kind: "diary",
+        lines: ["如果有一天他看到这些——"],
+      },
+      { kind: "narr", text: "这一页,只有半句。" },
+      {
+        kind: "narr",
+        text: "省心的孩子,不麻烦人的恋人。她不是学会了回避——她是被表扬着长成了这样。",
+      },
+      { kind: "narr", text: "现在,回到那个晚上。这一次,你是她。" },
+    ],
+    goldenQuote: "她的字写得很小,像怕被听见。",
+    background: "/images/scenes/act5_room.png",
+    aiGeneratedRef: "#018(日记文本,AI 生成剧情)",
+  },
+
   /* ─────────────── 二周目 · 她的那一晚(通关解锁) ─────────────── */
   amo_act5: {
     id: "amo_act5",
@@ -812,7 +887,6 @@ export const SCENES: Record<string, Scene> = {
     isSideRoute: true,
     startBalance: 60,
     script: [
-      { kind: "narr", text: "这一次,你是她。" },
       {
         kind: "hint",
         text: "【二周目】天平从深处的回避区开始——她的过滤器,比他的厚。接下来他说的某些话,是你上一个周目真实说出口的。",
@@ -936,6 +1010,10 @@ export const SCENES: Record<string, Scene> = {
       {
         kind: "narr",
         text: "一句没有经过任何过滤的话。你说得很慢,但说完整了。",
+      },
+      {
+        kind: "narr",
+        text: "回家的路上你想起:她留下的那本书,你还没有翻开过。",
       },
     ],
     goldenQuote: "你说得很慢,但说完整了。",

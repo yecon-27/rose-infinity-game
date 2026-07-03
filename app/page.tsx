@@ -84,7 +84,7 @@ export default function Home() {
           </Link>
           {herNight && (
             <Link
-              href="/game?scene=amo_act5"
+              href="/game?scene=amo_diary"
               className="block w-full py-2.5 px-6 border border-accent/40 text-accent/90 hover:border-accent hover:bg-accent hover:text-ink transition-colors duration-500 tracking-[0.4em] text-xs"
             >
               她 的 那 一 晚 · 二周目

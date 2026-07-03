@@ -113,6 +113,11 @@ function GameInner() {
   const [idx, setIdx] = useState(0);
   const [pending, setPending] = useState<DisplayLine[]>([]);
   const [mode, setMode] = useState<Mode>("flow");
+  /** 日记页(全屏纸页,读完点击继续) */
+  const [diaryEntry, setDiaryEntry] = useState<{
+    date?: string;
+    lines: string[];
+  } | null>(null);
   const [chapterCard, setChapterCard] = useState(true);
   const [rel, setRel] = useState<RelationshipState | null>(null);
   const [turns, setTurns] = useState<TurnRecord[]>([]);
@@ -155,6 +160,7 @@ function GameInner() {
     setChenX(18);
     setWalking(false);
     setFreeInput(false);
+    setDiaryEntry(null);
     setInput("");
     historyRef.current = [];
     piercedExitRef.current = false;
@@ -240,7 +246,13 @@ function GameInner() {
 
   /* ── 引擎:pending 清空且处于 flow 时,消化下一个时刻 ── */
   useEffect(() => {
-    if (chapterCard || loading || pending.length > 0 || mode !== "flow")
+    if (
+      chapterCard ||
+      loading ||
+      pending.length > 0 ||
+      mode !== "flow" ||
+      diaryEntry
+    )
       return;
     const m = script[idx];
     if (!m) {
@@ -267,6 +279,10 @@ function GameInner() {
           ...r,
           balance: Math.max(-100, Math.min(100, r.balance + m.delta)),
         }));
+        setIdx((i) => i + 1);
+        break;
+      case "diary":
+        setDiaryEntry({ date: m.date, lines: m.lines });
         setIdx((i) => i + 1);
         break;
       case "echo": {
@@ -593,6 +609,11 @@ function GameInner() {
 
   function navigateNext() {
     setHerSideShow(false);
+    // 支线串接优先(日记 → 她的那一晚)
+    if (scene.nextSceneId) {
+      router.push(`/game?scene=${scene.nextSceneId}`);
+      return;
+    }
     if (scene.isSideRoute || scene.isEpilogue) {
       // 二周目支线不改写结局归属(结局在终幕已锁定)
       router.push("/ending");
@@ -620,6 +641,15 @@ function GameInner() {
     )
       return;
     if (chapterCard || loading) return;
+
+    /* 日记页:任意推进键合上这一页 */
+    if (diaryEntry) {
+      if (e.key === "Enter" || e.code === "Space") {
+        e.preventDefault();
+        setDiaryEntry(null);
+      }
+      return;
+    }
 
     /* 她那边插页:任意推进键离开 */
     if (herSideShow) {
@@ -729,6 +759,41 @@ function GameInner() {
           >
             空格 / 点击 继续
           </p>
+        </div>
+      )}
+
+      {/* 日记页:全屏纸页 */}
+      {diaryEntry && (
+        <div
+          className="fixed inset-0 z-[60] bg-black/90 flex items-center justify-center px-6 cursor-pointer select-none"
+          onClick={() => setDiaryEntry(null)}
+        >
+          <div className="fade-in-slow max-w-md w-full bg-[#f2ede1] text-ink rounded-sm shadow-2xl px-8 py-10 rotate-[-0.5deg]">
+            {diaryEntry.date && (
+              <p className="text-[10px] tracking-[0.4em] text-ink/40 mb-5">
+                {diaryEntry.date}
+              </p>
+            )}
+            <div className="space-y-3">
+              {diaryEntry.lines.map((line, i) => (
+                <p
+                  key={i}
+                  className="fade-in-delayed text-sm leading-loose text-ink/80 font-serif"
+                  style={{ animationDelay: `${0.4 + i * 0.9}s` }}
+                >
+                  {line}
+                </p>
+              ))}
+            </div>
+            <p
+              className="fade-in-delayed text-right text-[10px] text-ink/30 mt-8 tracking-[0.3em]"
+              style={{
+                animationDelay: `${0.4 + diaryEntry.lines.length * 0.9}s`,
+              }}
+            >
+              空格 / 点击 合上这一页
+            </p>
+          </div>
         </div>
       )}
 

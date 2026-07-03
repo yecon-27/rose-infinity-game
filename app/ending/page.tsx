@@ -345,13 +345,13 @@ export default function EndingPage() {
         {!play.scenes.some((s) => s.sceneId === "amo_act5") && (
           <section className="text-center">
             <Link
-              href="/game?scene=amo_act5"
+              href="/game?scene=amo_diary"
               className="inline-block py-2.5 px-8 border border-accent/50 text-accent hover:bg-accent hover:text-ink transition-colors text-xs tracking-[0.35em]"
             >
-              换 她 的 眼 睛,再 走 一 遍 那 晚 →
+              那 本 书 里,夹 着 几 页 纸 →
             </Link>
             <p className="mt-2 text-[10px] text-white/30">
-              二周目 · 你将扮演阿默;那晚你说过的话,会原样回到你耳边
+              二周目 · 她留下的日记,和她的那一晚;你说过的话,会原样回到你耳边
             </p>
           </section>
         )}
