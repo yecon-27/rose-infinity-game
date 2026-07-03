@@ -421,7 +421,16 @@ function GameInner() {
       e.target instanceof HTMLInputElement
     )
       return;
-    if (chapterCard || loading || sceneDone) return;
+    if (chapterCard || loading) return;
+
+    // 本幕结束:Enter/空格 进入下一幕或结局
+    if (sceneDone) {
+      if (e.key === "Enter" || e.code === "Space") {
+        e.preventDefault();
+        handleFinishScene();
+      }
+      return;
+    }
 
     if (!fullyRevealed) {
       if (e.code === "Space" || e.key === "Enter") {
@@ -731,6 +740,7 @@ function GameInner() {
               className="inline-block mt-2 py-2 px-8 border border-white/40 hover:border-white hover:bg-white hover:text-ink transition-colors text-sm tracking-widest text-white"
             >
               {isLastScene ? "看 见 结 局" : "进 入 下 一 幕"}
+              <span className="ml-2 text-[10px] text-white/40">Enter</span>
             </button>
           </div>
         )}
@@ -841,8 +851,16 @@ function GameInner() {
                   <textarea
                     value={input}
                     onChange={(e) => setInput(e.target.value)}
+                    onKeyDown={(e) => {
+                      if (e.key === "Enter" && !e.shiftKey) {
+                        e.preventDefault();
+                        submitTurn(input);
+                      } else if (e.key === "Escape") {
+                        setFreeInput(false);
+                      }
+                    }}
                     autoFocus
-                    placeholder="此刻真正想说的话……(倒计时不会停)"
+                    placeholder="此刻真正想说的话……(Enter 说出口 · Esc 收起 · 倒计时不会停)"
                     className={`w-full bg-white/5 border p-3 text-sm text-white placeholder:text-white/30 resize-none focus:outline-none rounded ${
                       pierceActive
                         ? "border-white/70 focus:border-white"
