@@ -79,7 +79,8 @@ export async function POST(req: NextRequest) {
       amoDirection: context.amoDirection,
       chenSpoken: context.chenSpoken.slice(0, 500),
       dialogueHistory: context.dialogueHistory,
-      distance: typeof context.distance === "number" ? context.distance : 50,
+      balance: typeof context.balance === "number" ? context.balance : 0,
+      spokenTone: context.spokenTone,
       pierced: context.pierced === true,
     };
 

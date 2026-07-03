@@ -33,7 +33,7 @@ export async function POST(req: NextRequest) {
     // 安全截断,防止玩家输入过长撑爆 prompt
     const safeInput = input.trim().slice(0, 500);
     const safeIntensity: FilterIntensity =
-      intensity === "low" ? "low" : "high";
+      intensity === "low" || intensity === "anxious" ? intensity : "high";
     const fullContext: FilterContext = {
       sceneId: context.sceneId ?? "act1_aa",
       sceneBrief:

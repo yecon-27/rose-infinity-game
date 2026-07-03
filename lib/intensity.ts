@@ -12,14 +12,45 @@
  * 后续扩展(prd 四档):加入"暴露时刻"累积系统、穿透特殊触发
  */
 
-export type FilterIntensity = "high" | "low";
+export type FilterIntensity = "high" | "low" | "anxious";
 
 /**
- * 穿透触发阈值:整局累积的"暴露时刻"(低强度轮次)达到该值,
- * 终幕最后一拍过滤器碎裂,玩家的话原样说出——prd 2.2 的"穿透"档。
- * 努力的方向不是说服对方,而是卸下自己的防御:卸得够多,最后才有资格说真话。
+ * 穿透触发阈值:整局累积的"真话时刻"(在安稳区把原话说出去的次数,
+ * 视觉上=过滤器上的裂纹数)达到该值,终幕最后一刻过滤器碎裂。
+ * 努力的方向不是说服对方,而是把自己带回安稳、说出真话。
  */
 export const PIERCE_THRESHOLD = 3;
+
+/**
+ * 情绪天平:-100(焦虑) ←— 0(安稳) —→ +100(回避)。
+ * 回避型的人不是永远回避:被逼近时回避,被冷落时闪出焦虑,安稳时是个正常人。
+ * 过滤器是"双向失真器":天平在哪个区,话就往哪个方向变形;安稳区原话直出。
+ */
+export const SECURE_BAND = 25;
+
+export type BalanceZone = "anxious" | "secure" | "avoid";
+
+export function zoneOf(balance: number): BalanceZone {
+  if (balance > SECURE_BAND) return "avoid";
+  if (balance < -SECURE_BAND) return "anxious";
+  return "secure";
+}
+
+/**
+ * 向心/离心地移动天平。
+ * centering > 0:向安稳区拉近该幅度;centering < 0:向当前所在的边推远。
+ */
+export function applyCentering(balance: number, centering: number): number {
+  let next: number;
+  if (centering >= 0) {
+    if (balance > 0) next = Math.max(0, balance - centering);
+    else next = Math.min(0, balance + centering);
+  } else {
+    const dir = balance >= 0 ? 1 : -1;
+    next = balance + dir * -centering;
+  }
+  return Math.max(-100, Math.min(100, next));
+}
 
 /**
  * 暴露性关键词词典。

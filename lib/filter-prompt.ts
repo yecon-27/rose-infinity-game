@@ -7,7 +7,7 @@
  *   - low   接近原话,漏出一半,但立刻找补
  */
 
-export type FilterIntensity = "high" | "low";
+export type FilterIntensity = "high" | "low" | "anxious";
 
 export interface FilterContext {
   /** 当前场景标识,例如 "act1_aa" */
@@ -42,8 +42,18 @@ export function buildFilterSystemPrompt(
   ].join(";\n");
 
   const intensityRule =
-    intensity === "high"
-      ? `【强度:高】
+    intensity === "anxious"
+      ? `【模式:焦虑失真】
+- 阿沉此刻在焦虑区:话不是被压小,是被放大、变尖。请求变成质问,温柔变成试探,不确定被无限放大。
+- 加入"是不是""到底""从来""每次都"这类词;把想要安抚的心情说成带刺的话。
+- 说出口的话会伤人,但底色是怕失去——外人听得出这是在乎,只是姿势难看。
+
+改写示例(焦虑失真):
+- 真心:"你在忙吗,我有点想你" → 出口:"你是不是把我消息设了免打扰?"
+- 真心:"今天很开心,谢谢你来" → 出口:"你今天是不是就是来走个过场的?"
+- 真心:"我想让你多陪陪我" → 出口:"行,你忙,反正你从来都很忙。"`
+      : intensity === "high"
+        ? `【强度:高】
 - 真心话的核心情感内容必须被完全改写,不能直接出现。
 - 改写后的句子看起来要自然、得体、甚至体贴,让外人挑不出毛病。
 - 绝对不能让阿默从这句话里听出阿沉的真实情绪。
@@ -110,6 +120,14 @@ export function fallbackFilter(
   intensity: FilterIntensity
 ): string {
   const truth = input.trim();
+
+  // 焦虑失真兜底:把话变尖
+  if (intensity === "anxious") {
+    if (/想你|想见|陪/.test(truth)) return "你是不是把我消息设了免打扰?";
+    if (/开心|谢谢|很好/.test(truth)) return "你是不是就是客气一下?";
+    if (/忙|累/.test(truth)) return "行,你忙,反正你从来都很忙。";
+    return "算了,你从来也没真的想听。";
+  }
 
   // 关键词词典:真心话 → 出口话
   const map: Array<[RegExp, string, string]> = [

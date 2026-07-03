@@ -49,8 +49,10 @@ const ALL_ENDINGS: Array<{ kind: EndingKind; title: string; hint: string }> = [
 ];
 
 const INTENSITY_LABEL: Record<TurnRecord["intensity"], string> = {
-  high: "完全过滤",
+  high: "被过滤器拧弯",
   low: "漏出一半",
+  anxious: "被焦虑说尖",
+  secure: "原话说出",
   pierce: "穿透",
 };
 
@@ -254,9 +256,13 @@ export default function EndingPage() {
                         className={`w-4 h-4 rounded-full border-2 transition-all ${
                           t.intensity === "high"
                             ? "border-white/30 bg-white/10"
-                            : t.intensity === "low"
-                              ? "border-accent bg-accent/40"
-                              : "border-white bg-white"
+                            : t.intensity === "anxious"
+                              ? "border-red-300 bg-red-300/30"
+                              : t.intensity === "low"
+                                ? "border-accent bg-accent/40"
+                                : t.intensity === "secure"
+                                  ? "border-accent bg-accent"
+                                  : "border-white bg-white"
                         } ${
                           active
                             ? "ring-2 ring-white/80 ring-offset-2 ring-offset-black scale-110"
@@ -270,7 +276,9 @@ export default function EndingPage() {
             </div>
           ))}
           <p className="pl-20 text-[10px] text-white/30">
-            ○ 完全过滤 · <span className="text-accent">●</span> 漏出一半 · ● 穿透
+            ○ 被拧弯 · <span className="text-red-300">●</span> 说尖了 ·{" "}
+            <span className="text-accent">◐</span> 漏一半 ·{" "}
+            <span className="text-accent">●</span> 原话 · ● 穿透
             <span className="ml-3 text-white/20">← → 或点击节点</span>
           </p>
         </section>

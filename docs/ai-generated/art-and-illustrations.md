@@ -223,3 +223,35 @@ Large negative space in the upper-middle area for title text.
 16:9 landscape, 1920x1080.
 ```
 
+
+---
+
+### #IMG-014 · 幕二 · 便利店夜宵 场景背景(占位待替换)
+
+**文件**:`public/images/scenes/act2_konbini.png`(当前为现有素材调色占位,`scripts/make-scene-placeholders.mjs` 生成)
+**正式版 ImageGen Prompt**:
+
+```
+Hand-drawn watercolor illustration, game background, night scene.
+A small convenience store at 11:30 pm, warm white fluorescent light
+spilling onto the sidewalk, steam rising from an oden pot visible
+through the glass, an orange cat passing by. Two cups of oden on
+the curb. Soft muted palette with warm light against cool night.
+Loose brushwork, cozy and atmospheric, Florence / To the Moon game
+art style. No people. 16:9 landscape.
+```
+
+### #IMG-015 · 幕四 · 一把伞 场景背景(占位待替换)
+
+**文件**:`public/images/scenes/act4_umbrella.png`(当前为现有素材调色+雨丝占位)
+**正式版 ImageGen Prompt**:
+
+```
+Hand-drawn watercolor illustration, game background, rainy night street.
+Wet asphalt reflecting streetlights, rain streaks, a subway station
+entrance glowing warmly in the distance (600m away feeling), puddles.
+Muted blue-grey palette with one warm light source. Loose brushwork,
+quiet and intimate, Florence / To the Moon game art style. No people.
+16:9 landscape.
+```
+

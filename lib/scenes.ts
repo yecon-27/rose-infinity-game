@@ -1,97 +1,142 @@
 /**
- * 场景数据结构 · 节拍(Beat)驱动
+ * 场景数据 · 时刻流(Moment Script)
  *
- * 底特律式结构:每幕由编剧写好的"节拍"推进——
- * 每个节拍 = 旁白推进剧情 + 阿默的锚点台词 + 玩家一次输入。
- * LLM 负责在节拍之间"表演"(过滤改写 + 阿默的即兴回应),
- * 但剧情的骨架永远在编剧手里,场景不会原地打转。
+ * 每幕是一条"时刻"序列,活动驱动而非阅读驱动:
+ *   line     底部对话框里的一句台词/旁白(传统 VN 气泡)
+ *   explore  场景检视(光点 + 阿沉走近物件)
+ *   activity 手上的事(分关东煮/刷酱/控伞/按住不放)——玩法即叙事
+ *   talk     开口节拍(情绪天平决定话被怎样失真)
+ *
+ * 情绪弧线:微冷(AA,演成喜剧) → 暖(便利店) → 热闹(烧烤) → 最暖(共伞) → 轻(先这样) → 暖(尾声)
+ * 旁白原则:只描述画面,不解释人心——深意全靠留白。
  */
 
-/** 场景中可检视的物件(底特律式探索点) */
+/** 场景中可检视的物件 */
 export interface Hotspot {
   id: string;
-  /** 显示名,如 "账单" */
   name: string;
   /** 相对背景图的百分比坐标 */
   x: number;
   y: number;
-  /** 检视时阿沉的内心观察(哲理藏在这里,不在对话里) */
+  /** 检视时阿沉的内心观察 */
   observation: string;
-  /** 检视后解锁的更深一层真心话(会出现在抉择选项里,标 ◆) */
+  /** 检视后为下一个开口节拍解锁的更真的话(标 ◆) */
   unlocksImpulse?: string;
 }
 
-export interface Beat {
-  /** 本拍开始前的旁白,把剧情推进到这个节点(第一拍通常由 openingNarration 承担,可省略) */
-  narration?: string[];
-  /** 阿默在本拍的编剧台词锚点(省略 = 她在沉默中等你开口) */
-  amoLine?: string;
-  /** 此刻正在发生什么——喂给过滤器和阿默的 LLM,保证对话贴着场景走 */
+/** 开口节拍 */
+export interface TalkSpec {
+  /** 输入引导语 */
+  prompt: string;
   situation: string;
-  /** 阿默此刻的内心状态与反应方向(给 NPC LLM 的表演指示) */
   amoDirection: string;
-  /** 输入框引导语,把玩家按进这个瞬间 */
-  inputPrompt: string;
-  /**
-   * 此刻涌上来的念头:预设真心话,点选即说,降低自由输入的压力。
-   * 默认只有中间/回避两条——最暴露的那句往往藏在场景检视点里(unlocksImpulse),
-   * 探索得越深,能说出的话越真。
-   */
+  /** 预设念头(2-3 条,含幽默/日常向) */
   impulses: string[];
-  /** 本拍可检视的场景物件 */
-  hotspots: Hotspot[];
+  /** 终幕最后一次开口,裂纹足够时穿透 */
+  pierceable?: boolean;
 }
 
+/** 活动结果的一侧(好/坏) */
+export interface ActivityOutcome {
+  /** 结果台词(依次在对话框播放) */
+  lines: Array<{ speaker: "amo" | "chen" | "narr"; text: string }>;
+  /** 天平向心力:正=拉回安稳,负=推离安稳 */
+  centering: number;
+}
+
+export type ActivitySpec =
+  | {
+      type: "hold";
+      title: string;
+      /** 操作说明,如"按住空格 = 把手机推过去" */
+      instruction: string;
+      seconds: number;
+      good: ActivityOutcome; // 坚持到底
+      bad: ActivityOutcome; // 提前松手/没按
+    }
+  | {
+      type: "pick";
+      title: string;
+      instruction: string;
+      picks: number;
+      items: Array<{
+        name: string;
+        /** 她的心头好 */
+        hers?: boolean;
+        /** 雷(她不吃) */
+        avoid?: boolean;
+      }>;
+      good: ActivityOutcome; // 命中喜好且没踩雷
+      bad: ActivityOutcome; // 踩雷或全没记住
+    }
+  | {
+      type: "brush";
+      title: string;
+      instruction: string;
+      /** 理想刷酱次数,超过太多=糊 */
+      target: number;
+      good: ActivityOutcome;
+      bad: ActivityOutcome; // 刷过头烤糊了
+    }
+  | {
+      type: "balance";
+      title: string;
+      instruction: string;
+      seconds: number;
+      /** 过程中浮现的台词,at 为进度百分比 */
+      during?: Array<{ at: number; speaker: "amo" | "narr"; text: string }>;
+      good: ActivityOutcome; // 大部分时间伞偏向她
+      bad: ActivityOutcome;
+    };
+
+export type Moment =
+  | { kind: "narr"; text: string }
+  | { kind: "line"; speaker: "amo" | "chen"; text: string }
+  | { kind: "hint"; text: string }
+  | { kind: "explore"; hotspots: Hotspot[]; hint?: string }
+  | { kind: "activity"; activity: ActivitySpec }
+  | { kind: "talk"; talk: TalkSpec }
+  /** 剧情冲击:静默地推动天平(负=向焦虑,正=向回避)。心被砸了一下,玩家在天平上看得见 */
+  | { kind: "shift"; delta: number };
+
 export interface Scene {
-  /** 唯一标识 */
   id: string;
-  /** 显示名,如 "幕一 · AA 制" */
   name: string;
-  /** 场景简述,喂给 LLM 当上下文 */
   brief: string;
-  /** 开场旁白(多段) */
-  openingNarration: string[];
-  /** 教学提示(可选,首幕才显示) */
-  teachingHint?: string;
-  /** 本幕节拍脚本,长度即本幕轮数 */
-  beats: Beat[];
-  /** 收尾旁白(多段) */
-  closingNarration: string[];
-  /** 穿透结局专用收尾旁白(仅终幕使用) */
-  piercedClosingNarration?: string[];
-  /** 本幕金句(结局页回响用) */
+  script: Moment[];
+  /** 穿透结局专用的替换收尾(仅终幕,替换 script 末尾的连续 narr) */
+  piercedClosing?: string[];
   goldenQuote: string;
-  /** 场景背景图路径 */
   background: string;
-  /** 阿默在该幕的立绘(可选,默认 amo.png) */
   amoPortrait?: string;
-  /** AI 生成内容留痕 ID,对应 docs/ai-generated/world-and-story.md */
+  /** 尾声(无开口节拍,不存档) */
+  isEpilogue?: boolean;
   aiGeneratedRef: string;
 }
 
 export const SCENES: Record<string, Scene> = {
+  /* ─────────────── 幕一 · 第七次约会(教学,微冷但演成喜剧) ─────────────── */
   act1_aa: {
     id: "act1_aa",
-    name: "幕一 · AA 制",
+    name: "幕一 · 第七次约会",
     brief: "两人第七次约会,吃完饭,账单放在桌上,阿默提议 AA。",
-    openingNarration: [
-      "第七次约会。一家不算便宜也不算贵的餐厅,灯光暖,人不多。账单放在桌上,白纸黑字,清清楚楚。服务员站在一旁,姿势礼貌,但没走。",
-      "阿默摸出手机,调出二维码。动作很快——快得像是怕慢一点就会发生什么。AA 是她先提出来的,每次都是。",
-    ],
-    teachingHint:
-      "场景里亮着几个光点——用鼠标点击(或 ←→ 选择 + E)检视它们,有些细节会让你找到更真的话(◆)。准备好了就按 Enter 开口:开口后有倒计时,犹豫太久,话会自己咽回去。灰色的是你的真心,正常显示的是阿沉实际说出口的——那是你拦不住的。",
-    beats: [
+    script: [
       {
-        amoLine: "扫这个吧,我们 AA。",
-        situation:
-          "账单在桌上,服务员站在旁边等,阿默举着付款码等阿沉扫,态度自然得像这是天经地义的事。",
-        amoDirection:
-          "她在等他扫码。如果他照做,她会松一口气,顺势聊点轻松的;如果他说想请客或者流露出别的意思,她会愣一下,然后用玩笑把这件事的分量卸掉。",
-        inputPrompt: "服务员还站在旁边。你心里想说——",
-        impulses: [
-          "第七次了。每次都是扫码、AA、各回各家,像在走流程。",
-          "行,AA 挺好的,清楚。",
-        ],
+        kind: "narr",
+        text: "第七次约会。这家店的灯光很暖,暖到连账单看起来都没那么锋利。",
+      },
+      {
+        kind: "narr",
+        text: "服务员把账单放在桌上,站在一旁,姿势礼貌,但没走。",
+      },
+      { kind: "line", speaker: "amo", text: "扫这个吧,我们 AA。" },
+      {
+        kind: "hint",
+        text: "【玩法】场景里亮着光点:点击(或 ←→ 选 + E)检视,有些细节会让你找到更真的话(◆)。顶部的天平是你此刻的心:在安稳区,话会原样说出;偏到回避或焦虑,话会被拧成别的样子——那是你拦不住的。",
+      },
+      {
+        kind: "explore",
+        hint: "服务员还没走。先看看这一桌。",
         hotspots: [
           {
             id: "bill",
@@ -101,7 +146,7 @@ export const SCENES: Record<string, Scene> = {
             observation:
               "白纸黑字,小数点后两位都分得清。你们连误差都不肯欠对方。",
             unlocksImpulse:
-              "我怕再这样清清楚楚下去,我们之间就真的谁也不欠谁了。",
+              "其实这顿我想请。下次你请回来——这样我们就一直有下次了。",
           },
           {
             id: "qrcode",
@@ -109,7 +154,7 @@ export const SCENES: Record<string, Scene> = {
             x: 68,
             y: 48,
             observation:
-              "付款码已经亮了。她总是比你快一步——快到像是在抢着把'两清'说出口。",
+              "付款码已经亮了。她总是比你快一步——快得像在抢答。",
           },
           {
             id: "window",
@@ -117,217 +162,284 @@ export const SCENES: Record<string, Scene> = {
             x: 18,
             y: 28,
             observation:
-              "路口有一对情侣在分一杯奶茶。你想不起来,你们上一次共用同一样东西是什么时候。",
+              "路口有一对情侣在分一杯奶茶,一人一口。你想不起来你们上次共用一样东西是什么时候。",
           },
         ],
       },
       {
-        narration: [
-          "钱付完了。金额清清楚楚,一人一半,小数点后两位都没差。",
-          "服务员走了。阿默把手机收回口袋,顺手把纸巾推给你一张,像是奖励你的配合。",
-        ],
-        amoLine: "这家还行吧?下次可以试试他们家新出的火锅。",
-        situation:
-          "账刚结完,两人还坐在桌边。阿默在聊'下次吃什么'——聊的是餐厅,不是你们。",
-        amoDirection:
-          "她用'下次'维持轻松,但那个词只敢落在餐厅上。如果他把话题引向两个人的关系,她会接一半,然后拐回食物、天气、路线这种安全区。",
-        inputPrompt: "'下次'这个词在你耳朵里停了一下。你心里想说——",
-        impulses: [
-          "你每次都把'下次'说得那么顺,好像我们只是固定的饭搭子。",
-          "行啊,火锅可以,下次你定时间。",
-        ],
-        hotspots: [
-          {
-            id: "napkin",
-            name: "推过来的纸巾",
-            x: 55,
-            y: 70,
-            observation:
-              "她递东西永远用推的,不用给的。隔着一张桌面的距离,刚好碰不到手。",
-          },
-          {
-            id: "plates",
-            name: "空盘子",
-            x: 35,
-            y: 62,
-            observation:
-              "吃完了。像每一次一样:准时,干净,没有剩下任何需要两个人一起处理的东西。",
-            unlocksImpulse:
-              "别聊火锅了。我想聊聊我们之间——你说'下次'的时候,里面有我们吗?",
-          },
-          {
-            id: "her-eyes",
-            name: "她的视线",
-            x: 72,
-            y: 35,
-            observation:
-              "她说'下次'的时候在看菜单,不看你。'下次'是个安全的词——因为它永远不用兑现。",
-          },
-        ],
+        kind: "talk",
+        talk: {
+          prompt: "服务员还站在旁边。你心里想说——",
+          situation:
+            "账单在桌上,服务员在等,阿默举着付款码等阿沉扫,态度自然得像天经地义。",
+          amoDirection:
+            "她在等他扫码。他照做,她松口气顺势聊轻松的;他说想请客或别的,她愣一下,然后用玩笑把分量卸掉——但不会不高兴,她其实吃这套。",
+          impulses: [
+            "第七次了,每次都这么客气,我们是在处对象还是在拼单?",
+            "行,AA 挺好的,清楚。",
+          ],
+        },
       },
       {
-        narration: [
-          "走出餐厅,夜风有点凉。她走在你旁边半步之外的距离——正好够不碰到肩膀。",
-          "路口的红灯很长。她看着对面,忽然说:",
-        ],
-        amoLine: "你不用送我,地铁就在那边。",
-        situation:
-          "路口等红灯,快到分开的岔路。阿默主动提出不用送,两人马上要各自回家。",
-        amoDirection:
-          "她给了他一个'不用负责'的台阶,其实在看他接不接。他要是顺着说好,她会点头说那走啦;他要是坚持送、或者说了别的什么,她会推辞一下,推辞得不太用力。",
-        inputPrompt: "绿灯快亮了。你心里想说——",
-        impulses: [
-          "你总是这样,什么都替我安排好,连'不用送'都替我说了。",
-          "也行,那你路上小心。",
-        ],
-        hotspots: [
-          {
-            id: "light",
-            name: "红绿灯",
-            x: 50,
-            y: 22,
-            observation:
-              "红灯很长。长得够你把那句话说完,也长得够你把它咽回去三次。",
+        kind: "activity",
+        activity: {
+          type: "hold",
+          title: "结账",
+          instruction:
+            "按住空格(或长按按钮)= 把自己的手机推过去,这顿我来 · 提前松手 = 扫她的码",
+          seconds: 3,
+          good: {
+            lines: [
+              {
+                speaker: "narr",
+                text: "你把手机推了过去。她的付款码举在半空,愣了一秒。",
+              },
+              {
+                speaker: "amo",
+                text: "……你干嘛。行吧,那,下次我请。说好了啊。",
+              },
+            ],
+            centering: 14,
           },
-          {
-            id: "subway",
-            name: "地铁站口",
-            x: 80,
-            y: 45,
-            observation:
-              "她指的方向灯火通明。所有'不麻烦你了'的话,都亮得像出口的指示牌。",
-            unlocksImpulse: "我想陪你走到地铁站。别把这十分钟也省了。",
+          bad: {
+            lines: [
+              { speaker: "narr", text: "你扫了码。金额一人一半,分毫不差。" },
+              { speaker: "amo", text: "痛快。就喜欢你这么上道。" },
+            ],
+            centering: -6,
           },
-          {
-            id: "profile",
-            name: "她的侧脸",
-            x: 30,
-            y: 40,
-            observation:
-              "她在看对面,你在看她。你们总是这样错开,像两班永远不同时进站的车。",
-          },
-        ],
+        },
+      },
+      {
+        kind: "line",
+        speaker: "amo",
+        text: "这家还行吧?下次可以试试他们家新出的火锅。",
+      },
+      {
+        kind: "talk",
+        talk: {
+          prompt: "'下次'这个词在你耳朵里停了一下。你心里想说——",
+          situation:
+            "账结完了,两人还坐在桌边。阿默在聊'下次吃什么'——聊的是餐厅,不是你们。",
+          amoDirection:
+            "她用'下次'维持轻松。他接得轻松,她就眉飞色舞地聊火锅蘸料;他把话题引向两个人,她接一半,拐回食物——但嘴角是翘的。",
+          impulses: [
+            "可以啊。不过下次的下次呢?我先预订了。",
+            "行啊,火锅可以,下次你定时间。",
+          ],
+        },
+      },
+      {
+        kind: "narr",
+        text: "走出餐厅,夜风把灯光吹得晃了晃。路口,她的地铁进站了。",
+      },
+      {
+        kind: "narr",
+        text: "你手里还捏着没递出去的那半句话。",
       },
     ],
-    closingNarration: [
-      "绿灯亮了。你们在路口分开,一个往地铁站,一个往公交站。",
-      "你回头的时候,她已经走出去很远,没有回头。那天晚上的账,谁也不欠谁——包括那句没说出口的话。",
-    ],
-    goldenQuote: "账算得越清的两个人,越不敢欠对方一句真话。",
+    goldenQuote: "她的地铁进站了。你手里还捏着没递出去的半句话。",
     background: "/images/scenes/act1_restaurant.png",
     aiGeneratedRef: "#004 / #005 / #006",
   },
 
-  act2_bbq: {
-    id: "act2_bbq",
-    name: "幕二 · 烧烤局",
+  /* ─────────────── 幕二 · 便利店夜宵(暖) ─────────────── */
+  act2_konbini: {
+    id: "act2_konbini",
+    name: "幕二 · 便利店夜宵",
     brief:
-      "阿默的朋友攒的烧烤局,阿沉第一次以对象身份出席。人前默契十足,散场后一路无话。",
-    openingNarration: [
-      "阿默的朋友攒了个烧烤局。她问你去不去的时候,语气很轻,像是无论你怎么答都行。",
-      "你去了。她把你介绍给朋友的时候,笑容恰到好处——不过分热络,也不显得敷衍。她在人前总是这样,得体得像排练过。",
-      "饭桌上话题来回飞,有人起哄:'讲讲呗,你俩怎么在一起的?'所有人的眼睛突然都亮起来,看向你们俩。",
-    ],
-    beats: [
+      "十一点半,阿沉加班结束,阿默约在他家楼下的便利店吃关东煮。她的正常人模式。",
+    script: [
       {
-        amoLine: "问他,他记性比我好。",
-        situation:
-          "烧烤局上,朋友起哄问两人怎么在一起的,全桌人都在看。阿默笑着把问题踢给了阿沉。",
-        amoDirection:
-          "人前模式:得体、会接梗,把亲密表演得恰到好处。他讲什么她都能圆回来,讲得动情她就用玩笑接住,讲得敷衍她就帮着补两句——总之不让任何真东西在饭桌上落地。",
-        inputPrompt: "所有人都在等你开口。你心里想说——",
-        impulses: [
-          "你把话踢给我,自己倒轻松。你从来不肯自己讲我们的事。",
-          "哈,就……朋友介绍,挺自然的,没什么好讲的。",
-        ],
-        hotspots: [
-          {
-            id: "friends",
-            name: "起哄的朋友们",
-            x: 25,
-            y: 45,
-            observation:
-              "一桌子起哄的人。他们眼里的你们,比你们敢承认的你们,要亲密得多。",
-            unlocksImpulse:
-              "其实我一直在等一个机会,当着所有人的面,说我有多喜欢你。",
-          },
-          {
-            id: "grill",
-            name: "烤架",
-            x: 50,
-            y: 68,
-            observation: "炭火噼啪响。有观众在的时候,连火都显得热闹。",
-          },
-          {
-            id: "her-smile",
-            name: "她的笑",
-            x: 72,
-            y: 38,
-            observation:
-              "她笑得恰到好处。你忽然想知道:这个笑,在没有人看的时候,还剩多少。",
-          },
-        ],
+        kind: "narr",
+        text: "十一点半,加班结束。手机震了一下,是她发来的定位:你家楼下的便利店。",
       },
       {
-        narration: [
-          "不管你说了什么,桌上都笑成一团。有人举杯,喊'祝你们长长久久',一圈人跟着起哄。",
-          "阿默笑着碰了杯。然后她给你烤了一串,刷酱、撒料、放进你盘里,动作熟稔得像做过一百次。全桌都看见了。",
-        ],
-        amoLine: "他不能吃太辣,我给他刷的蒜蓉的。",
-        situation:
-          "酒过三巡,阿默在朋友面前对阿沉体贴入微,朋友们看在眼里,气氛热闹。",
-        amoDirection:
-          "人前的体贴是熟练的、真实的,但它需要观众。有人看着,她就敢对他好。他此刻说的任何话,她都会当着朋友的面漂亮地接住——接得越漂亮,越不用回应里面的真心。",
-        inputPrompt: "这串确实好吃。你心里想说——",
-        impulses: [
-          "全桌都看着呢,你现在倒是很会当对象。",
-          "谢啦。你也吃,别光顾着烤。",
-        ],
+        kind: "line",
+        speaker: "amo",
+        text: "我猜你没吃饭。关东煮我请——预算二十,超了你补。",
+      },
+      {
+        kind: "narr",
+        text: "她比你先到,正扒着玻璃柜看汤锅冒热气。白炽灯下,她比在任何餐厅里都放松。",
+      },
+      {
+        kind: "activity",
+        activity: {
+          type: "pick",
+          title: "挑关东煮",
+          instruction:
+            "挑四样,你们俩分。记不记得她爱吃什么、不吃什么,就看这一杯了。",
+          picks: 4,
+          items: [
+            { name: "白萝卜", hers: true },
+            { name: "溏心蛋", hers: true },
+            { name: "昆布结", hers: true },
+            { name: "香菜牛肉丸", avoid: true },
+            { name: "年糕" },
+            { name: "鱼豆腐" },
+          ],
+          good: {
+            lines: [
+              { speaker: "amo", text: "……你怎么知道我想吃溏心蛋。" },
+              {
+                speaker: "narr",
+                text: "她假装在看汤勺,耳朵红了一点。可能是热气熏的。",
+              },
+            ],
+            centering: 14,
+          },
+          bad: {
+            lines: [
+              {
+                speaker: "amo",
+                text: "阿沉。我们认识七个月了。我,不,吃,香,菜。",
+              },
+              {
+                speaker: "narr",
+                text: "她把那颗丸子夹进你的杯子,动作快得像销毁证据。",
+              },
+            ],
+            centering: -8,
+          },
+        },
+      },
+      {
+        kind: "narr",
+        text: "你们蹲在店门口的马路牙子上,一人一杯。热气糊在脸上。",
+      },
+      {
+        kind: "explore",
+        hint: "夜里的便利店门口,有很多小东西在发光。",
         hotspots: [
           {
-            id: "skewer",
-            name: "她放进你盘里的那串",
-            x: 48,
-            y: 66,
-            observation:
-              "她记得你不能吃辣。有些在乎,只敢用这种不用开口的方式说。",
-            unlocksImpulse:
-              "你在人前对我这么好,散了场还会这样吗?我有点怕这个问题的答案。",
-          },
-          {
-            id: "glass",
-            name: "碰过的酒杯",
-            x: 65,
-            y: 55,
-            observation:
-              "刚才碰杯,她的杯子只抬到一半。所有人都尽兴,只有你看见了她的克制。",
-          },
-          {
-            id: "empty-seat",
-            name: "空出来的座位",
+            id: "lightbox",
+            name: "灯箱",
             x: 20,
-            y: 60,
+            y: 30,
             observation:
-              "有人去了洗手间,桌上空出一个位置。你想:散场以后,你们中间也会空出来一个。",
+              "便利店的灯永远这么亮,亮得像不打烊的白天。她在这种光里说话,声音都比平时软。",
+          },
+          {
+            id: "cat",
+            name: "路过的橘猫",
+            x: 75,
+            y: 78,
+            observation:
+              "一只橘猫路过。她小声'咝咝'地唤它,唤了三次。你第一次听见她用这种声音说话。",
+            unlocksImpulse: "你刚才唤猫的声音,能不能也分我一点?",
+          },
+          {
+            id: "reflection",
+            name: "玻璃上的倒影",
+            x: 50,
+            y: 40,
+            observation:
+              "玻璃上映着你们俩,肩挨着肩。倒影里的距离,比真的近。",
           },
         ],
       },
       {
-        narration: [
-          "散场了。朋友们各自打车走,起哄声还留在巷子口。",
-          "只剩你们俩,并排走在回家的路上。夜风把烧烤味吹散。她忽然安静下来——和刚才桌上那个会笑会接话的人,像两个人。",
-          "走了很久,她开口:",
-        ],
-        amoLine: "今天……还挺累的哈。",
-        situation:
-          "散场后两人独处,并排走夜路。刚才的热闹反衬出此刻的安静,阿默用一句'累'给沉默找了个台阶。",
-        amoDirection:
-          "观众走了,她收起表演,退回安全距离。'累'是个台阶,也是个试探——他要是顺着说'是挺累的',今晚就这样了;他要是问'刚才和现在,哪个是真的你',她会慌,会先否认,但脚步会慢下来。",
-        inputPrompt: "路灯把两个影子拉得很长。你心里想说——",
-        impulses: [
-          "你给我刷酱的时候,我差点当真了。",
-          "是有点晚了。明天你还上班吧?",
-        ],
+        kind: "talk",
+        talk: {
+          prompt: "萝卜还烫着。你心里想说——",
+          situation:
+            "深夜便利店门口,两人蹲着分食关东煮,气氛松弛。这是七个月来少有的、不需要表演的时刻。",
+          amoDirection:
+            "安稳时刻,她是正常人模式:会接梗、会主动讲白天的事、会宠人。他说了真话她会意外然后笨拙地接住;他开玩笑她会回敬一个更狠的。",
+          impulses: [
+            "今天这样就很好。我是说,和你蹲在马路牙子上吃丸子这件事。",
+            "你也有猜别人没吃饭的时候啊,阿默同学。",
+            "萝卜不错,入味。",
+          ],
+        },
+      },
+      {
+        kind: "line",
+        speaker: "amo",
+        text: "最后一个丸子给你。……别想多,我是吃饱了。",
+      },
+      {
+        kind: "narr",
+        text: "她把竹签插回空杯,插得整整齐齐。那晚的风,是热汤味的。",
+      },
+    ],
+    goldenQuote: "最后一个丸子,她推给你。用的还是'推'。",
+    background: "/images/scenes/act2_konbini.png",
+    aiGeneratedRef: "#014(待生成:深夜便利店门口,水彩)",
+  },
+
+  /* ─────────────── 幕三 · 烧烤局(热闹) ─────────────── */
+  act3_bbq: {
+    id: "act3_bbq",
+    name: "幕三 · 烧烤局",
+    brief:
+      "阿默的朋友攒的烧烤局,阿沉第一次以对象身份出席。人前热闹,散场后安静。",
+    script: [
+      {
+        kind: "narr",
+        text: "阿默的朋友攒了个烧烤局。她把你介绍给所有人,笑容恰到好处,像排练过。",
+      },
+      {
+        kind: "narr",
+        text: "炭火噼啪响。有人起哄:'讲讲呗,你俩怎么在一起的?'全桌的眼睛都亮了。",
+      },
+      { kind: "line", speaker: "amo", text: "问他,他记性比我好。" },
+      {
+        kind: "talk",
+        talk: {
+          prompt: "所有人都在等你开口。你心里想说——",
+          situation:
+            "烧烤局上朋友起哄问两人怎么在一起的,全桌人都在看,阿默笑着把问题踢给了阿沉。",
+          amoDirection:
+            "人前模式:得体、会接梗。他讲得动情她用玩笑接住,讲得敷衍她帮着补两句,讲得好笑她笑得最大声——总之不让任何真东西在饭桌上落地,但气氛是暖的。",
+          impulses: [
+            "她加我好友之后三天没说话,第四天发来一句'在吗,我需要一个人陪我骂甲方'。",
+            "哈,就……朋友介绍,挺自然的,没什么好讲的。",
+          ],
+        },
+      },
+      {
+        kind: "narr",
+        text: "不管你说了什么,桌上都笑成一团。有人举杯喊'长长久久',一圈人跟着起哄。",
+      },
+      {
+        kind: "activity",
+        activity: {
+          type: "brush",
+          title: "给她烤一串",
+          instruction:
+            "她不吃辣。连点(或连按空格)给这串刷蒜蓉酱——刷够了就收手,贪多会糊。",
+          target: 8,
+          good: {
+            lines: [
+              { speaker: "amo", text: "可以啊你。这串比老板烤得都专业。" },
+              {
+                speaker: "narr",
+                text: "她咬了一口,冲桌上扬了扬下巴:'这串谁也不许抢。'",
+              },
+            ],
+            centering: 12,
+          },
+          bad: {
+            lines: [
+              { speaker: "narr", text: "那串肉在你手里冒起了不该有的烟。" },
+              {
+                speaker: "amo",
+                text: "噗——阿沉,它已经殉职了。给我吧,糊的我吃,你重烤一串。",
+              },
+            ],
+            centering: 6,
+          },
+        },
+      },
+      {
+        kind: "narr",
+        text: "散场了。朋友们各自打车走,笑声还挂在巷子口。只剩你们俩,并排走夜路。",
+      },
+      {
+        kind: "explore",
+        hint: "夜路很长。她忽然安静下来。",
         hotspots: [
           {
             id: "streetlamp",
@@ -336,8 +448,7 @@ export const SCENES: Record<string, Scene> = {
             y: 70,
             observation:
               "影子被路灯拉长,又在下一盏灯前缩短。像你们:一靠近,就急着退回去。",
-            unlocksImpulse:
-              "刚才那个会给我刷酱的你,散场就收走了。说真的,我有点难过。",
+            unlocksImpulse: "刚才桌上那个你,和现在的你,我都想要。贪心吗?",
           },
           {
             id: "alley",
@@ -356,129 +467,283 @@ export const SCENES: Record<string, Scene> = {
           },
         ],
       },
+      { kind: "line", speaker: "amo", text: "今天……还挺累的哈。" },
+      { kind: "shift", delta: -12 },
+      {
+        kind: "talk",
+        talk: {
+          prompt: "路灯把两个影子拉得很长。你心里想说——",
+          situation:
+            "散场后两人独处走夜路,刚才的热闹反衬出安静。她用一句'累'给沉默找了个台阶。",
+          amoDirection:
+            "观众走了,她收起表演,退回安全距离。'累'是台阶也是试探:他顺着说是,今晚就这样了;他说了真话,她会慌半拍,脚步慢下来。",
+          impulses: [
+            "你给我刷酱的时候,我差点当真了。",
+            "是有点晚了。明天你还上班吧?",
+          ],
+        },
+      },
+      {
+        kind: "narr",
+        text: "到楼下了。门禁'滴'的一声。巷子里,烧烤味淡下去,只剩夜的味道。",
+      },
     ],
-    closingNarration: [
-      "到楼下了。她说'那我上去了',你说'嗯'。",
-      "门禁'滴'的一声之后,巷子里安静得能听见刚才的笑声还留在耳朵里。人前那么近,人后这么远。",
-    ],
-    goldenQuote: "人前的默契是表演,表演是安全的;人后的沉默才是真的。",
+    goldenQuote: "人前那么近,人后这半步,谁也没有跨过去。",
     background: "/images/scenes/act2_bbq.png",
     amoPortrait: "/images/characters/amo-distant.png",
     aiGeneratedRef: "#008 / #009 / #010",
   },
 
+  /* ─────────────── 幕四 · 一把伞(最暖,近乎无对话) ─────────────── */
+  act4_umbrella: {
+    id: "act4_umbrella",
+    name: "幕四 · 一把伞",
+    brief:
+      "说好只是顺路送她。雨下起来,伞只有一把,在阿沉手里。距离第一次交到玩家手上。",
+    script: [
+      {
+        kind: "narr",
+        text: "说好只是顺路。雨下起来的时候,你们离地铁站还有六百米。",
+      },
+      { kind: "narr", text: "伞只有一把。在你手里。" },
+      {
+        kind: "activity",
+        activity: {
+          type: "balance",
+          title: "撑伞",
+          instruction:
+            "按住 ← → 控制伞的倾向。往她那边偏,你的肩膀会淋湿——你自己决定。",
+          seconds: 18,
+          during: [
+            { at: 30, speaker: "amo", text: "伞歪了。" },
+            { at: 60, speaker: "amo", text: "……你半边肩膀都湿了,傻子。" },
+            { at: 85, speaker: "narr", text: "她往你这边靠了半步。就半步。" },
+          ],
+          good: {
+            lines: [
+              { speaker: "amo", text: "下次……记得自己带伞。" },
+              {
+                speaker: "narr",
+                text: "她说这话的时候,没有看你,看着雨。",
+              },
+            ],
+            centering: 16,
+          },
+          bad: {
+            lines: [
+              {
+                speaker: "narr",
+                text: "伞一路端得很正,谁也没多淋一滴。像 AA 制的雨。",
+              },
+              { speaker: "amo", text: "快到了。前面就是。" },
+            ],
+            centering: -6,
+          },
+        },
+      },
+      {
+        kind: "explore",
+        hint: "雨声把整条街的声音都盖掉了。伞下很安静。",
+        hotspots: [
+          {
+            id: "drops",
+            name: "伞骨上的水珠",
+            x: 50,
+            y: 20,
+            observation:
+              "水珠顺着伞骨滚下来,在你们中间连成一道透明的帘子。",
+          },
+          {
+            id: "her-shoulder",
+            name: "她的左肩",
+            x: 68,
+            y: 45,
+            observation: "她的左肩也湿了。原来她也一直,往你这边偏。",
+            unlocksImpulse: "雨可以再下久一点。",
+          },
+          {
+            id: "puddle",
+            name: "水洼",
+            x: 30,
+            y: 80,
+            observation:
+              "水洼里映着一把伞和四只脚。从这个角度看,你们像一个整体。",
+          },
+        ],
+      },
+      {
+        kind: "talk",
+        talk: {
+          prompt: "地铁站的灯就在前面了。你心里想说——",
+          situation:
+            "雨中共伞,快到地铁站。伞下的十几分钟,是七个月里两人离得最近的一次。",
+          amoDirection:
+            "伞下的安静让她卸了一半防。他说真话,她会沉默两秒,然后说一句接近真心的话再找补;他客套,她就顺势道别——但走之前会回头看一眼伞。",
+          impulses: [
+            "其实这条路不顺。我家在反方向,第一次送你就是。",
+            "到了。……那,路上小心?",
+          ],
+        },
+      },
+      { kind: "narr", text: "雨停在她进站的前一分钟。谁都没说可惜。" },
+    ],
+    goldenQuote: "她的左肩也湿了。原来她也一直往你这边偏。",
+    background: "/images/scenes/act4_umbrella.png",
+    aiGeneratedRef: "#015(待生成:雨夜街道一把伞,水彩)",
+  },
+
+  /* ─────────────── 幕五 · 先这样(轻,不哭喊) ─────────────── */
   act5_end: {
     id: "act5_end",
-    name: "幕五 · 没有争吵的结束",
+    name: "幕五 · 先这样",
     brief:
-      "普通的一天,没有导火索。一句'最近好像都挺忙的',关系就走到了门口——没有人说出'分手'两个字。",
-    openingNarration: [
-      "又是一个普通的周末。没有什么特别的事发生。",
-      "阿默在收拾东西,动作不快不慢。留在你这里的几件东西,她叠好,放进一个袋子。她忽然停下来,看了一眼窗外,像在想什么,又像什么都没想。",
-      "然后她转过头,说出了那句话。语气很轻,轻到像是怕砸坏什么。",
-    ],
-    beats: [
+      "普通的一天,没有导火索。一句'最近好像都挺忙的',关系走到了门口。",
+    script: [
       {
-        amoLine: "最近好像都挺忙的……要不,先这样?",
-        situation:
-          "阿默收拾好了东西,说出了那句轻得像怕砸坏什么的话。'先这样'三个字里没有'分手',但两个人都听懂了。",
-        amoDirection:
-          "她在等他挽留,同时已经预习好了他不挽留。无论他说什么,她都会用体面接住:他客套,她就点头;他挽留,她会说'别这样,挺好的',但手会停下来。她不会先崩溃,她从不先崩溃。",
-        inputPrompt: "她把袋子的提手攥在手里。你心里想说——",
-        impulses: [
-          "'先这样'是什么意思?你能不能把一句话说完整一次?",
-          "……也行。最近确实都挺忙的。",
-        ],
-        hotspots: [
-          {
-            id: "bag",
-            name: "那个袋子",
-            x: 60,
-            y: 68,
-            observation:
-              "几件衣服,一支牙刷,一本你送的书。七个月,叠起来只有一个袋子这么轻。",
-            unlocksImpulse:
-              "别。我不同意'先这样'。我们需要谈谈——把这七个月没说的话都说了。",
-          },
-          {
-            id: "window5",
-            name: "窗外",
-            x: 22,
-            y: 30,
-            observation:
-              "天气很好。结束的日子居然天气很好——连一个下雨的借口都不给你。",
-          },
-          {
-            id: "her-hand",
-            name: "她攥着提手的手",
-            x: 55,
-            y: 55,
-            observation:
-              "她的指节有点白。她也在用力——你第一次看清这件事。",
-          },
-        ],
+        kind: "narr",
+        text: "一个普通的周末。天气很好——连一个下雨的借口都不给你。",
       },
       {
-        narration: [
-          "她点点头,没再说什么,弯腰提起了那个袋子。",
-          "拉开门的时候,走廊的声控灯亮了。她站在门口,背对着你,停了一秒。",
-        ],
-        situation:
-          "阿默站在敞开的门口,背对着阿沉,声控灯亮着。这是最后几秒钟。",
-        amoDirection:
-          "这是最后的窗口。她那一秒的停顿不是犹豫要不要走,是在给他最后一次开口的机会——虽然她自己都不承认。如果听到的还是客套,她会说'那我走啦',然后走。如果听到的是一句没有防御的真话,她会第一次僵在原地,很久,连体面都忘了捡。",
-        inputPrompt: "声控灯快灭了。你心里想说——",
-        impulses: [
-          "别走。留下来。我们之间还没有完。",
-          "你在等我说什么,对吧?我知道你在等。",
-          "路上小心。到家发个消息。",
-        ],
-        hotspots: [
-          {
-            id: "sensor-light",
-            name: "声控灯",
-            x: 75,
-            y: 18,
-            observation: "灯是声控的。只要有人说话,它就不会灭。",
+        kind: "narr",
+        text: "阿默在收拾东西。留在你这里的几件衣服、一支牙刷、一本你送的书,叠好,放进一个袋子。七个月,只有一个袋子这么轻。",
+      },
+      {
+        kind: "line",
+        speaker: "amo",
+        text: "最近好像都挺忙的……要不,先这样?",
+      },
+      { kind: "shift", delta: -55 },
+      {
+        kind: "talk",
+        talk: {
+          prompt: "她把袋子的提手攥在手里,指节有点白。你心里想说——",
+          situation:
+            "阿默收拾好了东西,说出了那句轻得像怕砸坏什么的话。'先这样'三个字里没有'分手',但两个人都听懂了。",
+          amoDirection:
+            "她在等他挽留,同时已经预习好了他不挽留。他客套,她点头;他挽留,她说'别这样,挺好的',但手会停;他带刺,她会疼一下然后更平静。她不会先崩溃。",
+          impulses: [
+            "'先这样'是什么意思?你能不能把一句话说完整一次?",
+            "……也行。最近确实都挺忙的。",
+          ],
+        },
+      },
+      {
+        kind: "narr",
+        text: "她点点头,提起袋子。拉开门,走廊的声控灯亮了。",
+      },
+      {
+        kind: "activity",
+        activity: {
+          type: "hold",
+          title: "门口",
+          instruction: "按住空格,不要松手。",
+          seconds: 5,
+          good: {
+            lines: [
+              {
+                speaker: "narr",
+                text: "你伸手,攥住了她的袖子。她停下来。声控灯把两个影子钉在地上。",
+              },
+            ],
+            centering: 20,
           },
-          {
-            id: "her-back",
-            name: "她的背影",
-            x: 50,
-            y: 45,
-            observation:
-              "她停了一秒。一秒,是她能给的全部,也是她敢给的全部。",
+          bad: {
+            lines: [
+              {
+                speaker: "narr",
+                text: "你的手抬了一半,又放下去了。她在门口站着,背对着你,停了一秒。",
+              },
+            ],
+            centering: -10,
           },
-        ],
+        },
+      },
+      {
+        kind: "talk",
+        talk: {
+          prompt: "声控灯快灭了。你心里想说——",
+          situation:
+            "阿默站在敞开的门口,这是最后几秒钟。灯是声控的——只要有人说话,它就不会灭。",
+          amoDirection:
+            "最后的窗口。听到的还是客套,她说'那我走啦',然后走;听到一句没有防御的真话,她会僵在原地,很久,连体面都忘了捡。",
+          impulses: [
+            "别走。留下来。我们之间还没有完。",
+            "你在等我说什么,对吧?我知道你在等。",
+            "路上小心。到家发个消息。",
+          ],
+          pierceable: true,
+        },
+      },
+      { kind: "narr", text: "你说完了。她等了一秒,也许两秒。" },
+      {
+        kind: "narr",
+        text: "然后她说'那我走啦',声音很稳。门关上的时候很轻,轻到不像一次结束。",
       },
     ],
-    closingNarration: [
-      "你说完了。她等了一秒,也许两秒。",
-      "然后她说'那我走啦',声音很稳。门关上的时候很轻,轻到不像一次结束。",
-      "你们没有吵架,没有摔东西,没有一句重话。谁也说不清是哪天结束的——这才是最窒息的部分。",
-    ],
-    piercedClosingNarration: [
+    piercedClosing: [
       "你说完的时候,声控灯正好灭了。黑暗里,你听见她没有动。",
       "灯再亮起来,她转过身,看着你。很久。",
-      "七个月来,你们第一次同时不说话,却都知道对方在想什么。",
       "这一次,门没有关上。",
     ],
-    goldenQuote: "他们的爱情没有死因。它只是没有活下去。",
+    goldenQuote: "灯是声控的。只要有人说话,它就不会灭。",
     background: "/images/scenes/act5_room.png",
     amoPortrait: "/images/characters/amo-resigned.png",
     aiGeneratedRef: "#011 / #012 / #013",
   },
+
+  /* ─────────────── 尾声(半年后,Florence 式成长收尾) ─────────────── */
+  epilogue_open: {
+    id: "epilogue_open",
+    name: "尾声 · 半年后",
+    brief: "门没有关上的那条线。还是那家便利店。",
+    isEpilogue: true,
+    script: [
+      { kind: "narr", text: "半年后。还是那家便利店,还是十一点半。" },
+      { kind: "line", speaker: "amo", text: "溏心蛋,要两个吗?" },
+      { kind: "narr", text: "她把丸子递给你——手,递到你手里。" },
+      { kind: "narr", text: "不是推。" },
+    ],
+    goldenQuote: "不是推。",
+    background: "/images/scenes/act2_konbini.png",
+    aiGeneratedRef: "#016",
+  },
+
+  epilogue_weathered: {
+    id: "epilogue_weathered",
+    name: "尾声 · 半年后",
+    brief: "风化的那条线。还是那家便利店,一个人。",
+    isEpilogue: true,
+    script: [
+      {
+        kind: "narr",
+        text: "半年后。还是那家便利店,还是十一点半。你一个人。",
+      },
+      { kind: "narr", text: "店员问:'要加热吗?'" },
+      { kind: "line", speaker: "chen", text: "要,谢谢。今天有点冷。" },
+      {
+        kind: "narr",
+        text: "一句没有经过任何过滤的话。你说得很慢,但说完整了。",
+      },
+    ],
+    goldenQuote: "你说得很慢,但说完整了。",
+    background: "/images/scenes/act2_konbini.png",
+    aiGeneratedRef: "#016",
+  },
 };
 
-/** 游戏流程:幕一 → 幕二 → 幕五 */
-export const ACT_SEQUENCE: Scene[] = [SCENES.act1_aa, SCENES.act2_bbq, SCENES.act5_end];
+/** 主线流程(尾声由终幕结果动态选择,不在序列里) */
+export const ACT_SEQUENCE: Scene[] = [
+  SCENES.act1_aa,
+  SCENES.act2_konbini,
+  SCENES.act3_bbq,
+  SCENES.act4_umbrella,
+  SCENES.act5_end,
+];
 
-/** 根据 URL 参数或 ID 查找场景 */
 export function getScene(id: string): Scene | undefined {
   return SCENES[id];
 }
 
-/** 下一幕 */
 export function nextScene(currentId: string): Scene | undefined {
   const idx = ACT_SEQUENCE.findIndex((s) => s.id === currentId);
   if (idx === -1 || idx >= ACT_SEQUENCE.length - 1) return undefined;

@@ -9,7 +9,12 @@
 const STORAGE_KEY = "the-filter:playthrough";
 const RELATIONSHIP_KEY = "the-filter:relationship";
 
-export type TurnIntensity = "high" | "low" | "pierce";
+/**
+ * 一次开口的性质:
+ * secure=安稳区原话直出 / high=回避改写 / low=回避但漏出一半 /
+ * anxious=焦虑失真(变尖) / pierce=穿透(终幕不设防)
+ */
+export type TurnIntensity = "high" | "low" | "anxious" | "secure" | "pierce";
 
 export interface TurnRecord {
   inner: string;
@@ -34,9 +39,11 @@ export interface Playthrough {
 
 /** 贯穿整局的关系状态 */
 export interface RelationshipState {
-  /** 距离 0-100,越高越疏离。初始 50 */
+  /** 情绪天平 -100(焦虑)~0(安稳)~+100(回避)。初始 +40:开局偏回避 */
+  balance: number;
+  /** 距离 0-100(旧字段,保留兼容) */
   distance: number;
-  /** 累积的暴露时刻(低强度轮次数),达到阈值终幕触发穿透 */
+  /** 真话时刻数(=过滤器裂纹数):在安稳区把原话说出去的次数,达阈值终幕穿透 */
   exposureCount: number;
   /** 终幕是否触发了穿透 */
   pierced: boolean;
@@ -45,6 +52,7 @@ export interface RelationshipState {
 }
 
 const DEFAULT_RELATIONSHIP: RelationshipState = {
+  balance: 40,
   distance: 50,
   exposureCount: 0,
   pierced: false,
@@ -164,9 +172,14 @@ const SPOKEN_HABIT_LEXICON = [
 export function buildReport(play: Playthrough): FilterReport {
   const allTurns = play.scenes.flatMap((s) => s.turns);
   const totalTurns = allTurns.length;
-  const highCount = allTurns.filter((t) => t.intensity === "high").length;
+  // 统计口径:high/anxious 都算"被失真",low 算半失真,secure/pierce 算真话
+  const highCount = allTurns.filter(
+    (t) => t.intensity === "high" || t.intensity === "anxious"
+  ).length;
   const lowCount = allTurns.filter((t) => t.intensity === "low").length;
-  const pierceCount = allTurns.filter((t) => t.intensity === "pierce").length;
+  const pierceCount = allTurns.filter(
+    (t) => t.intensity === "pierce" || t.intensity === "secure"
+  ).length;
 
   const exposedSet = new Set<string>();
   for (const t of allTurns) {
