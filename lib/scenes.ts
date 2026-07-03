@@ -34,6 +34,8 @@ export interface TalkSpec {
   impulses: string[];
   /** 终幕最后一次开口,裂纹足够时穿透 */
   pierceable?: boolean;
+  /** 本次开口的倒计时秒数(默认 20;终幕压缩到 12/8,戏在逼近) */
+  timerSeconds?: number;
 }
 
 /** 活动结果的一侧(好/坏) */
@@ -111,6 +113,11 @@ export interface Scene {
   amoPortrait?: string;
   /** 尾声(无开口节拍,不存档) */
   isEpilogue?: boolean;
+  /**
+   * 她那边 · 幕间碎片(暗线):本幕结束后的黑场插页,1-2 句,只描述动作不解释。
+   * 只给谜面不给谜底——结局的对称揭示是最后一块拼图,不是第一次亮相。
+   */
+  herSide?: string[];
   aiGeneratedRef: string;
 }
 
@@ -163,6 +170,14 @@ export const SCENES: Record<string, Scene> = {
             y: 28,
             observation:
               "路口有一对情侣在分一杯奶茶,一人一口。你想不起来你们上次共用一样东西是什么时候。",
+          },
+          {
+            id: "phone-down",
+            name: "扣在桌上的手机",
+            x: 58,
+            y: 72,
+            observation:
+              "刚才有条通知在她锁屏上亮了一下。她翻过手机扣在桌上——这个动作,比她掏付款码还快。",
           },
         ],
       },
@@ -245,6 +260,10 @@ export const SCENES: Record<string, Scene> = {
       },
     ],
     goldenQuote: "她的地铁进站了。你手里还捏着没递出去的半句话。",
+    herSide: [
+      "她到家了。今天的小票折成方块,放进一个铁盒。",
+      "铁盒里已经很满了。她数过,但没跟任何人说过这个数字。",
+    ],
     background: "/images/scenes/act1_restaurant.png",
     aiGeneratedRef: "#004 / #005 / #006",
   },
@@ -349,7 +368,7 @@ export const SCENES: Record<string, Scene> = {
           situation:
             "深夜便利店门口,两人蹲着分食关东煮,气氛松弛。这是七个月来少有的、不需要表演的时刻。",
           amoDirection:
-            "安稳时刻,她是正常人模式:会接梗、会主动讲白天的事、会宠人。他说了真话她会意外然后笨拙地接住;他开玩笑她会回敬一个更狠的。",
+            "安稳时刻,她是正常人模式:会接梗、会主动讲白天的事。他说了真话她会意外然后笨拙地接住;他开玩笑她会回敬一个更狠的。她心里压着一件没说的事(外地的 offer,她还没决定),偶尔会走神半秒——这件事只允许出现在她的 inner 里,嘴上绝不提。",
           impulses: [
             "现在这样,比哪一次约会都好。",
             "你怎么每次都知道我没吃饭。",
@@ -363,11 +382,24 @@ export const SCENES: Record<string, Scene> = {
         text: "最后一个给你。我饱了。",
       },
       {
+        kind: "line",
+        speaker: "amo",
+        text: "这家店挺好的。……没什么。",
+      },
+      {
+        kind: "narr",
+        text: "她话说了半截,自己咽了回去。你没有追问——你们从不追问。",
+      },
+      {
         kind: "narr",
         text: "她把竹签插回空杯,插得整整齐齐。那晚的风,是热汤味的。",
       },
     ],
     goldenQuote: "最后一个丸子,她推给你。用的还是'推'。",
+    herSide: [
+      "她到家后,把两根竹签从外套口袋里拿出来。",
+      "抽屉里有一枚旧的电影票根。竹签放在了它旁边。",
+    ],
     background: "/images/scenes/act2_konbini.png",
     aiGeneratedRef: "#014(待生成:深夜便利店门口,水彩)",
   },
@@ -442,6 +474,14 @@ export const SCENES: Record<string, Scene> = {
       },
       {
         kind: "narr",
+        text: "散场前,她的朋友把她拉到一边,低声说了句什么。你只听见半句——'……那边到底定了没?'",
+      },
+      {
+        kind: "narr",
+        text: "她摇了摇头,朝你这边看了一眼。看见你在看,她笑了一下,把杯里的酒喝完了。",
+      },
+      {
+        kind: "narr",
         text: "散场了。朋友们各自打车走,笑声还挂在巷子口。只剩你们俩,并排走夜路。",
       },
       {
@@ -496,6 +536,10 @@ export const SCENES: Record<string, Scene> = {
       },
     ],
     goldenQuote: "人前那么近,人后这半步,谁也没有跨过去。",
+    herSide: [
+      "夜里,她在朋友群里打了一行字:'别乱说话。'",
+      "发出去之前,她删了,改成一个笑脸。",
+    ],
     background: "/images/scenes/act2_bbq.png",
     amoPortrait: "/images/characters/amo-distant.png",
     aiGeneratedRef: "#008 / #009 / #010",
@@ -576,6 +620,14 @@ export const SCENES: Record<string, Scene> = {
             observation:
               "水洼里映着一把伞和四只脚。从这个角度看,你们像一个整体。",
           },
+          {
+            id: "billboard",
+            name: "站口的灯箱",
+            x: 84,
+            y: 30,
+            observation:
+              "灯箱上是城际列车的广告:'一小时,到另一种生活。'她看了很久。你以为她在躲雨。",
+          },
         ],
       },
       {
@@ -585,7 +637,7 @@ export const SCENES: Record<string, Scene> = {
           situation:
             "雨中共伞,快到地铁站。伞下的十几分钟,是七个月里两人离得最近的一次。",
           amoDirection:
-            "伞下的安静让她卸了一半防。他说真话,她会沉默两秒,然后说一句接近真心的话再找补;他客套,她就顺势道别——但走之前会回头看一眼伞。",
+            "伞下的安静让她卸了一半防。他说真话,她会沉默两秒,然后说一句接近真心的话再找补;他客套,她就顺势道别——但走之前会回头看一眼伞。她刚在灯箱前想起那个没答复的 offer(只出现在 inner,嘴上不提):如果走,这把伞怎么办。",
           impulses: [
             "其实这条路不顺。我家在反方向,第一次送你就是。",
             "到了。……那,路上小心?",
@@ -595,6 +647,10 @@ export const SCENES: Record<string, Scene> = {
       { kind: "narr", text: "雨停在她进站的前一分钟。谁都没说可惜。" },
     ],
     goldenQuote: "她的左肩也湿了。原来她也一直往你这边偏。",
+    herSide: [
+      "进站以后,她没有坐下。湿的左肩贴着车门。",
+      "手机里,那封没回复的邮件她又读了一遍。标题里有'入职时间'四个字。",
+    ],
     background: "/images/scenes/act4_umbrella.png",
     aiGeneratedRef: "#015(待生成:雨夜街道一把伞,水彩)",
   },
@@ -632,11 +688,30 @@ export const SCENES: Record<string, Scene> = {
             "'先这样'是什么意思?你能不能把一句话说完整一次?",
             "……也行。最近确实都挺忙的。",
           ],
+          timerSeconds: 12,
         },
       },
       {
         kind: "narr",
-        text: "她点点头,提起袋子。拉开门,走廊的声控灯亮了。",
+        text: "她点了点头。然后,像是终于下了什么决心,她开口了。",
+      },
+      {
+        kind: "line",
+        speaker: "amo",
+        text: "有件事。下个月,我去深圳。",
+      },
+      {
+        kind: "narr",
+        text: "她说得很平,像在念别人的行程。餐厅里扣下的手机、便利店说了半截的话、她朋友那半句'那边定了没'、灯箱前那两分钟——都在这一刻对上了。",
+      },
+      {
+        kind: "line",
+        speaker: "amo",
+        text: "本来想早点说的。可是让你等我,或者让你跟我走——我凭什么呢。",
+      },
+      {
+        kind: "narr",
+        text: "她提起袋子。拉开门,走廊的声控灯亮了。",
       },
       {
         kind: "activity",
@@ -672,13 +747,14 @@ export const SCENES: Record<string, Scene> = {
           situation:
             "阿默站在敞开的门口,这是最后几秒钟。灯是声控的——只要有人说话,它就不会灭。",
           amoDirection:
-            "最后的窗口。听到的还是客套,她说'那我走啦',然后走;听到一句没有防御的真话,她会僵在原地,很久,连体面都忘了捡。",
+            "最后的窗口。秘密已经摊开了:她要去深圳,她不确定自己有什么资格要求他。听到的还是客套,她说'那我走啦',然后走;听到一句没有防御的真话(留下/跟她走/别先这样),她会僵在原地,很久,连体面都忘了捡。",
           impulses: [
-            "别走。留下来。我们之间还没有完。",
-            "你在等我说什么,对吧?我知道你在等。",
-            "路上小心。到家发个消息。",
+            "别走。或者,带我走。哪个都行,别'先这样'。",
+            "你不是在告诉我,你是在问我。对吧?",
+            "……深圳挺好的。到了发个消息。",
           ],
           pierceable: true,
+          timerSeconds: 8,
         },
       },
       { kind: "narr", text: "你说完了。她等了一秒,也许两秒。" },

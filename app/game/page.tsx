@@ -253,7 +253,7 @@ function GameInner() {
         setMode("activity");
         break;
       case "talk":
-        setTimeLeft(CHOICE_SECONDS);
+        setTimeLeft(m.talk.timerSeconds ?? CHOICE_SECONDS);
         setMode("talk");
         break;
     }
@@ -525,6 +525,8 @@ function GameInner() {
   silenceRef.current = () => submitTalk("", { silence: true });
 
   /* ── 本幕结束 ── */
+  const [herSideShow, setHerSideShow] = useState(false);
+
   function finishScene() {
     if (turns.length > 0) {
       saveSceneRecord({
@@ -535,6 +537,16 @@ function GameInner() {
         finishedAt: new Date().toISOString(),
       });
     }
+    // 暗线:她那边的幕间碎片,先看,再走
+    if (!scene.isEpilogue && scene.herSide && !herSideShow) {
+      setHerSideShow(true);
+      return;
+    }
+    navigateNext();
+  }
+
+  function navigateNext() {
+    setHerSideShow(false);
     if (scene.isEpilogue) {
       router.push("/ending");
       return;
@@ -560,6 +572,15 @@ function GameInner() {
     )
       return;
     if (chapterCard || loading) return;
+
+    /* 她那边插页:任意推进键离开 */
+    if (herSideShow) {
+      if (e.key === "Enter" || e.code === "Space") {
+        e.preventDefault();
+        navigateNext();
+      }
+      return;
+    }
 
     /* 对话框有内容:空格/Enter 推进(活动模式的空格留给活动) */
     if (pending.length > 0) {
@@ -616,12 +637,42 @@ function GameInner() {
   /* ────────────────────────── 渲染 ────────────────────────── */
 
   const sceneIndex = ACT_SEQUENCE.findIndex((s) => s.id === scene.id) + 1;
-  const timerPct = (timeLeft / CHOICE_SECONDS) * 100;
+  const timerTotal = activeTalk?.timerSeconds ?? CHOICE_SECONDS;
+  const timerPct = (timeLeft / timerTotal) * 100;
   const needlePct = ((balance + 100) / 200) * 100;
   const closingPierced = piercedExitRef.current;
 
   return (
     <main className="relative min-h-screen overflow-hidden">
+      {/* 她那边 · 幕间碎片(暗线) */}
+      {herSideShow && scene.herSide && (
+        <div
+          className="fixed inset-0 z-[60] bg-black flex flex-col items-center justify-center px-8 cursor-pointer select-none"
+          onClick={navigateNext}
+        >
+          <p className="text-[10px] tracking-[0.5em] text-accent/70 mb-8">
+            她 那 边
+          </p>
+          <div className="max-w-md text-center space-y-4">
+            {scene.herSide.map((line, i) => (
+              <p
+                key={i}
+                className="fade-in-delayed text-sm leading-loose text-white/70"
+                style={{ animationDelay: `${0.6 + i * 1.4}s` }}
+              >
+                {line}
+              </p>
+            ))}
+          </div>
+          <p
+            className="fade-in-delayed fixed bottom-10 text-[10px] tracking-[0.3em] text-white/30 soft-pulse"
+            style={{ animationDelay: `${0.6 + scene.herSide.length * 1.4}s` }}
+          >
+            空格 / 点击 继续
+          </p>
+        </div>
+      )}
+
       {/* 章节卡 */}
       {chapterCard && (
         <div className="chapter-card fixed inset-0 z-50 bg-black flex flex-col items-center justify-center">
