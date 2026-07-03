@@ -128,6 +128,8 @@ function GameInner() {
   const [freeInput, setFreeInput] = useState(false);
   const [input, setInput] = useState("");
   const [timeLeft, setTimeLeft] = useState(CHOICE_SECONDS);
+  /** 键盘高亮的选项序号(↑↓ 移动,Enter 确认) */
+  const [optIdx, setOptIdx] = useState(0);
 
   const toastTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
   const walkTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
@@ -254,6 +256,7 @@ function GameInner() {
         break;
       case "talk":
         setTimeLeft(m.talk.timerSeconds ?? CHOICE_SECONDS);
+        setOptIdx(0);
         setMode("talk");
         break;
     }
@@ -622,6 +625,17 @@ function GameInner() {
       if (n >= 1 && n <= talkOptions.length) {
         e.preventDefault();
         submitTalk(talkOptions[n - 1]);
+      } else if (e.key === "ArrowDown" || e.key === "ArrowRight") {
+        e.preventDefault();
+        setOptIdx((i) => (i + 1) % talkOptions.length);
+      } else if (e.key === "ArrowUp" || e.key === "ArrowLeft") {
+        e.preventDefault();
+        setOptIdx(
+          (i) => (i - 1 + talkOptions.length) % talkOptions.length
+        );
+      } else if (e.key === "Enter") {
+        e.preventDefault();
+        if (talkOptions[optIdx]) submitTalk(talkOptions[optIdx]);
       } else if (e.key.toLowerCase() === "t") {
         e.preventDefault();
         setFreeInput(true);
@@ -898,23 +912,33 @@ function GameInner() {
                   ? "过滤器碎了。说什么,就是什么。"
                   : activeTalk.prompt}
               </span>
-              <span>犹豫太久,话会自己咽回去</span>
+              <span>↑↓ 选 · Enter 说出口 · 数字直选</span>
             </div>
             <div className="space-y-1.5">
               {talkOptions.map((im, i) => {
                 const isUnlocked = unlocked.includes(im);
+                const focused = i === optIdx;
                 return (
                   <button
                     key={im}
                     type="button"
                     onClick={() => submitTalk(im)}
+                    onMouseEnter={() => setOptIdx(i)}
                     className={`block w-full text-left text-xs leading-relaxed transition-colors px-3 py-2 rounded border backdrop-blur-md ${
                       isUnlocked
-                        ? "text-accent border-accent/50 bg-black/60 hover:bg-accent hover:text-ink"
-                        : "text-white/80 border-white/15 bg-black/60 hover:border-accent/70 hover:text-white"
+                        ? "text-accent border-accent/50 bg-black/60"
+                        : "text-white/80 border-white/15 bg-black/60"
+                    } ${
+                      focused
+                        ? "ring-1 ring-white/70 border-white/60 bg-white/10 text-white"
+                        : ""
                     }`}
                   >
-                    <span className="text-white/35 mr-2">{i + 1}</span>
+                    <span
+                      className={`mr-2 ${focused ? "text-white" : "text-white/35"}`}
+                    >
+                      {focused ? "▸" : i + 1}
+                    </span>
                     {isUnlocked && <span className="mr-1">◆</span>}
                     {im}
                   </button>
@@ -1257,7 +1281,7 @@ function HoldActivity({
   );
 }
 
-/** 挑选:选够数量后结算;命中她的喜好≥2 且没踩雷 = good */
+/** 挑选:选够数量后结算;命中她的喜好≥2 且没踩雷 = good。全键盘可玩 */
 function PickActivity({
   spec,
   onResolve,
@@ -1266,6 +1290,9 @@ function PickActivity({
   onResolve: (good: boolean) => void;
 }) {
   const [picked, setPicked] = useState<string[]>([]);
+  const [focus, setFocus] = useState(0);
+  const stateRef = useRef({ picked, focus });
+  stateRef.current = { picked, focus };
 
   function toggle(name: string) {
     setPicked((prev) =>
@@ -1278,31 +1305,64 @@ function PickActivity({
   }
 
   function confirm() {
-    if (picked.length < spec.picks) return;
+    const cur = stateRef.current.picked;
+    if (cur.length < spec.picks) return;
     const hersHit = spec.items.filter(
-      (it) => it.hers && picked.includes(it.name)
+      (it) => it.hers && cur.includes(it.name)
     ).length;
     const mineHit = spec.items.some(
-      (it) => it.avoid && picked.includes(it.name)
+      (it) => it.avoid && cur.includes(it.name)
     );
     onResolve(hersHit >= 2 && !mineHit);
   }
 
+  /* 键盘:方向键移动 · 空格/E 选中 · Enter 确认 */
+  useEffect(() => {
+    const cols = 3;
+    const n = spec.items.length;
+    function onKey(e: KeyboardEvent) {
+      if (e.key === "ArrowRight") {
+        e.preventDefault();
+        setFocus((f) => (f + 1) % n);
+      } else if (e.key === "ArrowLeft") {
+        e.preventDefault();
+        setFocus((f) => (f - 1 + n) % n);
+      } else if (e.key === "ArrowDown") {
+        e.preventDefault();
+        setFocus((f) => (f + cols) % n);
+      } else if (e.key === "ArrowUp") {
+        e.preventDefault();
+        setFocus((f) => (f - cols + n) % n);
+      } else if (e.code === "Space" || e.key.toLowerCase() === "e") {
+        e.preventDefault();
+        toggle(spec.items[stateRef.current.focus].name);
+      } else if (e.key === "Enter") {
+        e.preventDefault();
+        confirm();
+      }
+    }
+    window.addEventListener("keydown", onKey);
+    return () => window.removeEventListener("keydown", onKey);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [spec]);
+
   return (
     <div className="space-y-3">
       <div className="grid grid-cols-3 gap-2">
-        {spec.items.map((it) => {
+        {spec.items.map((it, i) => {
           const on = picked.includes(it.name);
+          const focused = i === focus;
           return (
             <button
               key={it.name}
               type="button"
               onClick={() => toggle(it.name)}
+              onMouseEnter={() => setFocus(i)}
               className={`py-2.5 px-2 text-xs rounded border transition-colors ${
                 on
                   ? "border-accent bg-accent/20 text-white"
-                  : "border-white/20 text-white/70 hover:border-white/50"
-              }`}
+                  : "border-white/20 text-white/70"
+              } ${focused ? "ring-1 ring-white/70 border-white/60" : ""}`}
             >
               {it.name}
             </button>
@@ -1316,7 +1376,11 @@ function PickActivity({
         className="w-full py-2 border border-white/30 text-xs tracking-[0.3em] text-white rounded disabled:opacity-40 hover:border-accent hover:bg-accent hover:text-ink transition-colors"
       >
         就 这 几 样({picked.length}/{spec.picks})
+        <span className="ml-2 text-[10px] opacity-50">Enter</span>
       </button>
+      <p className="text-[10px] text-white/35 text-center">
+        方向键 移动 · 空格 选中 · Enter 确认
+      </p>
     </div>
   );
 }

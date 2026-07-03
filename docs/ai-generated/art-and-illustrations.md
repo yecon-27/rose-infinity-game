@@ -226,9 +226,10 @@ Large negative space in the upper-middle area for title text.
 
 ---
 
-### #IMG-014 · 幕二 · 便利店夜宵 场景背景(占位待替换)
+### #IMG-014 · 幕二 · 便利店夜宵 场景背景
 
-**文件**:`public/images/scenes/act2_konbini.png`(当前为现有素材调色占位,`scripts/make-scene-placeholders.mjs` 生成)
+**文件**:`public/images/scenes/act2_konbini.png`
+**生成日期**:2026-07-03(正式版由 CodeBuddy ImageGen 生成,替换原占位)
 **正式版 ImageGen Prompt**:
 
 ```
