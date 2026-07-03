@@ -242,9 +242,10 @@ Loose brushwork, cozy and atmospheric, Florence / To the Moon game
 art style. No people. 16:9 landscape.
 ```
 
-### #IMG-015 · 幕四 · 一把伞 场景背景(占位待替换)
+### #IMG-015 · 幕四 · 一把伞 场景背景
 
-**文件**:`public/images/scenes/act4_umbrella.png`(当前为现有素材调色+雨丝占位)
+**文件**:`public/images/scenes/act4_umbrella.png`
+**生成日期**:2026-07-03(正式版由 CodeBuddy ImageGen 生成,替换原占位)
 **正式版 ImageGen Prompt**:
 
 ```
@@ -288,4 +289,36 @@ Vertical portrait composition.
 **替换后的两步收尾**(本地执行):
 1. `pnpm exec node scripts/remove-bg.mjs` — 抠掉背景(ImageGen 不出真透明)
 2. `pnpm exec node scripts/make-title-art.mjs` — 用新立绘重新合成标题主视觉
+
+**生成记录**(2026-07-03):
+- 基础版 `chen.png`(平静表情)→ 由 ImageGen 文本生成,size 1024x1024,无水印
+- 差分 `chen-avoidant.png`(回避表情)→ image-to-image 当前配置不可用,改用同 prompt 策略:保留完全一致的外貌/发型/衣服描述,仅替换表情段为 `polite distant half-smile, eyes looking slightly away, guarded posture`,并追加 "Same character, same hair, same clothes as companion portrait" 提示。**首次生成被模型画成女性**,返工时加强男性特征描述 `masculine facial features, defined jawline, slight stubble shadow` 后重新生成
+- 差分 `chen-vulnerable.png`(脆弱表情)→ 同上策略,表情段为 `guard finally down, lips slightly parted as if about to speak, glistening eyes, vulnerable`
+- 三张均无水印,已覆盖原 neutral 版文件
+- 已执行 `remove-bg.mjs` 抠图(基于 flood fill 连通性检测,自动识别背景色)
+- 已执行 `make-title-art.mjs` 用新立绘重新合成标题主视觉
+
+---
+
+### #IMG-018 · 阿默立绘重制(明确女性,替换 neutral 版)
+
+> 设计变更(2026-07-03):角色确定为异性恋情侣——阿沉(男)× 阿默(女)。
+> 原 #IMG-002 系列 prompt 用了 "neutral gender presentation",立绘偏中性,需重新生成。
+> **在 CodeBuddy 同一段对话里连续生成三张**(保持同脸同发型同衣服),分别覆盖:
+> `public/images/characters/amo.png` / `amo-distant.png` / `amo-resigned.png`
+
+**固定描述(三张一致)**:`a young woman (clearly female) in her late 20s named Mo. Shoulder-length soft dark hair` / `Simple casual clothing: a soft cream blouse with a light cardigan` / `warm beige and dusty rose tones` / `Florence / To the Moon game art style`
+
+**表情差分**:
+- `amo.png`(默认):`gentle composed smile that looks slightly practiced, eyes with a hint of distance, gentle and put-together but with underlying emotional reserve`
+- `amo-distant.png`(幕二·人前表演):`brighter social smile more practiced and performed, eyes clearly distant and emotionally detached`
+- `amo-resigned.png`(幕五·沉默决断):`no smile, lips pressed into a thin line, calm decisive withdrawal, eyes flat and resigned`
+
+**生成记录**(2026-07-03):
+- image-to-image 当前配置不可用,改用同 prompt 策略:三张保留完全一致的外貌/发型/衣服描述,仅替换表情段,并追加 "Same character, same hair, same clothes as companion portrait" 提示
+- 三张均无水印,size 1024x1024,已覆盖原 neutral 版文件
+- 已执行 `remove-bg.mjs` 抠图
+- 已执行 `make-title-art.mjs` 用新立绘重新合成标题主视觉
+
+**设计意图**:对应 prd 1.2 节"阿默看起来云淡风轻,实际同样在等、在退、在自我合理化"。三张表情差分呈现回避型人物的不同切面:默认"略显刻意的笑容"→ 人前"更用力的表演性微笑"→ 终幕"笑容消失、嘴抿成线"——视觉化呈现"从表演到放弃"的弧线。
 
