@@ -110,6 +110,56 @@ body {
   animation: chapterTitle 2.2s ease-out forwards;
 }
 
+/* 过滤器裂纹:暴露一次,玻璃裂一道 */
+@keyframes crackIn {
+  0% {
+    opacity: 0;
+    transform: scale(0.5);
+  }
+  30% {
+    opacity: 0.95;
+  }
+  100% {
+    opacity: 0.55;
+    transform: scale(1);
+  }
+}
+
+.crack-in {
+  animation: crackIn 0.7s ease-out forwards;
+}
+
+/* 穿透:整层玻璃碎开,裂纹飞散消失 */
+@keyframes shatterOut {
+  0% {
+    opacity: 0.85;
+    transform: scale(1);
+  }
+  100% {
+    opacity: 0;
+    transform: scale(1.6);
+  }
+}
+
+.shatter-out {
+  animation: shatterOut 0.9s ease-in forwards;
+}
+
+/* 走路的轻微起伏(包含水平居中位移,与定位配合) */
+@keyframes walkBob {
+  0%,
+  100% {
+    transform: translate(-50%, 0);
+  }
+  50% {
+    transform: translate(-50%, -6px);
+  }
+}
+
+.walk-bob {
+  animation: walkBob 0.45s ease-in-out infinite;
+}
+
 /* 呼吸闪烁:'点击继续'指示 */
 @keyframes softPulse {
   0%,

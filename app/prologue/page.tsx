@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
 
 /**
@@ -34,6 +34,20 @@ export default function ProloguePage() {
     }
   }
 
+  // 键盘:空格/Enter 推进,Esc 跳过
+  useEffect(() => {
+    function onKey(e: KeyboardEvent) {
+      if (e.code === "Space" || e.key === "Enter") {
+        e.preventDefault();
+        advance();
+      } else if (e.key === "Escape") {
+        router.push("/game");
+      }
+    }
+    window.addEventListener("keydown", onKey);
+    return () => window.removeEventListener("keydown", onKey);
+  });
+
   return (
     <main
       className="min-h-screen bg-black flex flex-col items-center justify-center px-8 cursor-pointer select-none"
@@ -48,7 +62,7 @@ export default function ProloguePage() {
         }}
         className="fixed top-6 right-6 text-[10px] tracking-widest text-white/25 hover:text-white/60 transition-colors"
       >
-        跳过 ▸
+        跳过(Esc) ▸
       </button>
 
       <div
@@ -66,7 +80,7 @@ export default function ProloguePage() {
       </div>
 
       <p className="fixed bottom-10 text-[10px] tracking-[0.3em] text-white/30 soft-pulse">
-        {idx >= SCREENS.length - 1 ? "▼ 推开那扇门" : "点击继续"}
+        {idx >= SCREENS.length - 1 ? "▼ 推开那扇门" : "空格 / 点击 继续"}
       </p>
 
       <p className="fixed bottom-4 text-[10px] text-white/15 tracking-widest">

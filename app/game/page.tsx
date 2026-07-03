@@ -52,6 +52,24 @@ interface Observation {
 /** 抉择倒计时(秒)。超时 = 沉默,过滤器替你说"没事" */
 const CHOICE_SECONDS = 20;
 
+/**
+ * 过滤器裂纹的落点(屏幕百分比,集中在阿默那一侧)。
+ * 每一次暴露(低强度轮)裂一道;穿透时整层碎开。
+ */
+const CRACK_SPOTS = [
+  { x: 63, y: 40, r: 10, s: 1 },
+  { x: 71, y: 56, r: -40, s: 0.75 },
+  { x: 56, y: 30, r: 65, s: 0.9 },
+  { x: 76, y: 38, r: 150, s: 1.1 },
+  { x: 66, y: 64, r: 210, s: 0.8 },
+  { x: 59, y: 50, r: 100, s: 0.7 },
+];
+
+const CRACK_PATHS = [
+  "M50 50 L60 41 L64 42 M50 50 L41 42 L39 34 M50 50 L58 60 L66 63 M50 50 L42 58 L36 59 M50 50 L51 63",
+  "M50 50 L63 47 M50 50 L44 39 L45 31 M50 50 L39 55 M50 50 L55 62 L53 70 M50 50 L58 55 L67 58",
+];
+
 /** 待揭示的内容块:旁白段落 / 阿默锚点台词 / 教学提示 */
 type Block =
   | { kind: "narr"; text: string; label?: string }
@@ -108,8 +126,12 @@ function GameInner() {
   const [choosing, setChoosing] = useState(false);
   const [timeLeft, setTimeLeft] = useState(CHOICE_SECONDS);
   const [freeInput, setFreeInput] = useState(false);
+  /** 阿沉的站位(屏宽 %):检视时走近物件,空间感来自这里 */
+  const [chenX, setChenX] = useState(16);
+  const [walking, setWalking] = useState(false);
 
   const toastTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
+  const walkTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
 
   // 每次进入新的一幕:黑场章节卡 + 重置本幕状态
   useEffect(() => {
@@ -124,6 +146,9 @@ function GameInner() {
     setFocusIdx(0);
     setChoosing(false);
     setFreeInput(false);
+    setChenX(16);
+    setWalking(false);
+    if (walkTimer.current) clearTimeout(walkTimer.current);
     const t = setTimeout(() => setChapterCard(false), 2900);
     return () => clearTimeout(t);
   }, [sceneId]);
@@ -220,8 +245,31 @@ function GameInner() {
     if (!fullyRevealed && !loading && !chapterCard) setRevealed((r) => r + 1);
   }
 
-  /** 检视场景物件:产出观察,可能解锁更深的念头 */
+  /** 进入抉择:取消进行中的走动/检视 */
+  function openChoose() {
+    if (walkTimer.current) clearTimeout(walkTimer.current);
+    setWalking(false);
+    setChoosing(true);
+  }
+
+  /** 检视场景物件:阿沉先走过去,站到跟前才看得清 */
   function examine(h: Hotspot) {
+    if (examined.includes(h.id) || walking || loading) return;
+    const target = Math.min(72, Math.max(6, h.x - 5));
+    if (Math.abs(target - chenX) < 3) {
+      doExamine(h);
+      return;
+    }
+    setWalking(true);
+    setChenX(target);
+    walkTimer.current = setTimeout(() => {
+      setWalking(false);
+      doExamine(h);
+    }, 950);
+  }
+
+  /** 走到了:产出观察,可能解锁更深的念头 */
+  function doExamine(h: Hotspot) {
     if (examined.includes(h.id)) return;
     setExamined((prev) => [...prev, h.id]);
     setObservations((prev) => [
@@ -358,7 +406,7 @@ function GameInner() {
         intensity === "pierce"
           ? { text: "过滤器 · 碎裂", tone: "pierce" }
           : delta < 0
-            ? { text: "阿默 · 松动 ↓", tone: "closer" }
+            ? { text: "过滤器 · 裂了一道纹", tone: "closer" }
             : { text: "阿默 · 疏离 ↑", tone: "farther" }
       );
 
@@ -421,7 +469,16 @@ function GameInner() {
       e.target instanceof HTMLInputElement
     )
       return;
-    if (chapterCard || loading || sceneDone) return;
+    if (chapterCard || loading) return;
+
+    // 本幕结束:Enter/空格 进入下一幕或结局
+    if (sceneDone) {
+      if (e.key === "Enter" || e.code === "Space") {
+        e.preventDefault();
+        handleFinishScene();
+      }
+      return;
+    }
 
     if (!fullyRevealed) {
       if (e.code === "Space" || e.key === "Enter") {
@@ -444,7 +501,7 @@ function GameInner() {
         if (spots[focusIdx]) examine(spots[focusIdx]);
       } else if (e.key === "Enter") {
         e.preventDefault();
-        setChoosing(true);
+        openChoose();
       }
       return;
     }
@@ -498,9 +555,18 @@ function GameInner() {
         <div className="absolute inset-0 backdrop-blur-[1px]" />
       </div>
 
-      {/* 立绘层:阿沉(左,半透明因为玩家是第一视角) + 阿默(右) */}
+      {/* 立绘层:阿沉(可走动,检视时走近物件) + 阿默(右,隔着过滤器那层玻璃) */}
       <div className="absolute inset-0 z-10 pointer-events-none">
-        <div className="absolute bottom-0 left-0 w-[35vw] max-w-[400px] min-w-[200px] h-[70vh] opacity-70">
+        <div
+          className={`absolute bottom-0 h-[52vh] w-[24vw] max-w-[280px] min-w-[140px] -translate-x-1/2 ${
+            walking ? "walk-bob" : ""
+          }`}
+          style={{
+            left: `${chenX}%`,
+            transition: "left 950ms ease-in-out",
+            opacity: 0.9,
+          }}
+        >
           <Image
             src={chenPortrait}
             alt="阿沉"
@@ -510,10 +576,18 @@ function GameInner() {
         </div>
         <div
           className={`absolute bottom-0 right-0 w-[35vw] max-w-[400px] min-w-[200px] h-[70vh] transition-all duration-700 ${
-            loading && phase === "npc"
-              ? "brightness-110 scale-[1.02]"
-              : "brightness-90"
+            loading && phase === "npc" ? "scale-[1.02]" : ""
           }`}
+          style={{
+            // 过滤器 = 一层玻璃:暴露越多裂得越开,她越清晰;穿透后完全清楚
+            filter: rel?.pierced
+              ? "blur(0px) brightness(1.05)"
+              : `blur(${Math.max(
+                  0,
+                  2.4 - (rel?.exposureCount ?? 0) * 0.7
+                )}px) brightness(${loading && phase === "npc" ? 1.08 : 0.92})`,
+            transition: "filter 900ms ease",
+          }}
         >
           <Image
             src={amoPortrait}
@@ -523,6 +597,46 @@ function GameInner() {
           />
         </div>
       </div>
+
+      {/* 过滤器玻璃层:每一次暴露裂一道纹;穿透时整层碎开飞散 */}
+      {rel && (rel.exposureCount > 0 || rel.pierced) && (
+        <div
+          className={`fixed inset-0 z-[12] pointer-events-none ${
+            rel.pierced ? "shatter-out" : ""
+          }`}
+        >
+          {CRACK_SPOTS.slice(
+            0,
+            Math.min(rel.pierced ? Math.max(rel.exposureCount, 3) : rel.exposureCount, CRACK_SPOTS.length)
+          ).map((c, i) => (
+            <svg
+              key={i}
+              viewBox="0 0 100 100"
+              className="crack-in absolute w-28 h-28"
+              style={{
+                left: `${c.x}%`,
+                top: `${c.y}%`,
+                transform: `translate(-50%, -50%) rotate(${c.r}deg) scale(${c.s})`,
+              }}
+            >
+              <path
+                d={CRACK_PATHS[i % CRACK_PATHS.length]}
+                fill="none"
+                stroke="rgba(255,255,255,0.7)"
+                strokeWidth="0.8"
+                strokeLinecap="round"
+              />
+              <path
+                d={CRACK_PATHS[i % CRACK_PATHS.length]}
+                fill="none"
+                stroke="rgba(255,255,255,0.25)"
+                strokeWidth="2.2"
+                strokeLinecap="round"
+              />
+            </svg>
+          ))}
+        </div>
+      )}
 
       {/* 场景检视点(探索阶段可交互) */}
       {exploring && (
@@ -731,6 +845,7 @@ function GameInner() {
               className="inline-block mt-2 py-2 px-8 border border-white/40 hover:border-white hover:bg-white hover:text-ink transition-colors text-sm tracking-widest text-white"
             >
               {isLastScene ? "看 见 结 局" : "进 入 下 一 幕"}
+              <span className="ml-2 text-[10px] text-white/40">Enter</span>
             </button>
           </div>
         )}
@@ -767,7 +882,7 @@ function GameInner() {
               </div>
               <button
                 type="button"
-                onClick={() => setChoosing(true)}
+                onClick={openChoose}
                 className={`w-full py-2.5 border transition-colors text-sm tracking-[0.4em] ${
                   pierceActive
                     ? "border-white/80 text-white hover:bg-white hover:text-ink"
@@ -841,8 +956,16 @@ function GameInner() {
                   <textarea
                     value={input}
                     onChange={(e) => setInput(e.target.value)}
+                    onKeyDown={(e) => {
+                      if (e.key === "Enter" && !e.shiftKey) {
+                        e.preventDefault();
+                        submitTurn(input);
+                      } else if (e.key === "Escape") {
+                        setFreeInput(false);
+                      }
+                    }}
                     autoFocus
-                    placeholder="此刻真正想说的话……(倒计时不会停)"
+                    placeholder="此刻真正想说的话……(Enter 说出口 · Esc 收起 · 倒计时不会停)"
                     className={`w-full bg-white/5 border p-3 text-sm text-white placeholder:text-white/30 resize-none focus:outline-none rounded ${
                       pierceActive
                         ? "border-white/70 focus:border-white"

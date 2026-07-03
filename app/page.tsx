@@ -1,7 +1,24 @@
+"use client";
+
+import { useEffect } from "react";
 import Link from "next/link";
 import Image from "next/image";
+import { useRouter } from "next/navigation";
 
 export default function Home() {
+  const router = useRouter();
+
+  useEffect(() => {
+    function onKey(e: KeyboardEvent) {
+      if (e.key === "Enter" || e.code === "Space") {
+        e.preventDefault();
+        router.push("/prologue");
+      }
+    }
+    window.addEventListener("keydown", onKey);
+    return () => window.removeEventListener("keydown", onKey);
+  }, [router]);
+
   return (
     <main className="relative min-h-screen overflow-hidden flex flex-col items-center justify-center px-6 py-12">
       {/* 背景:标题主视觉(AI 生成素材合成,两人分立两侧,中间是距离) */}
@@ -55,6 +72,9 @@ export default function Home() {
             className="block w-full py-3 px-6 border border-white/30 text-white/90 hover:border-white hover:bg-white hover:text-ink transition-colors duration-500 tracking-[0.5em] text-sm"
           >
             开 始
+            <span className="ml-3 text-white/30 text-[10px] tracking-widest">
+              Enter
+            </span>
           </Link>
           <p className="text-xs text-white/35">
             建议戴耳机 · 在安静的环境下游玩 · 约 10 分钟
