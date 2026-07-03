@@ -16,7 +16,14 @@ import {
   saveSceneRecord,
   TurnRecord,
 } from "@/lib/playthrough";
-import { getScene, nextScene, ACT_SEQUENCE, Beat, Scene } from "@/lib/scenes";
+import {
+  getScene,
+  nextScene,
+  ACT_SEQUENCE,
+  Beat,
+  Hotspot,
+  Scene,
+} from "@/lib/scenes";
 
 interface Turn {
   id: number;
@@ -33,8 +40,17 @@ type Speaker = "narrator" | "amo" | "chen";
 interface Toast {
   key: number;
   text: string;
-  tone: "closer" | "farther" | "pierce";
+  tone: "closer" | "farther" | "pierce" | "unlock";
 }
+
+interface Observation {
+  beat: number;
+  name: string;
+  text: string;
+}
+
+/** 抉择倒计时(秒)。超时 = 沉默,过滤器替你说"没事" */
+const CHOICE_SECONDS = 20;
 
 /** 待揭示的内容块:旁白段落 / 阿默锚点台词 / 教学提示 */
 type Block =
@@ -79,12 +95,21 @@ function GameInner() {
   const [error, setError] = useState<string | null>(null);
   const [rel, setRel] = useState<RelationshipState | null>(null);
   const [toast, setToast] = useState<Toast | null>(null);
-  /** 当前待定节拍已揭示的内容块数(VN 式点击推进) */
+  /** 当前待定节拍已揭示的内容块数(点击/空格推进) */
   const [revealed, setRevealed] = useState(1);
   /** 章节卡:每幕开场的黑场标题 */
   const [chapterCard, setChapterCard] = useState(true);
+  /** 探索:已检视的物件、产生的观察、解锁的念头、键盘焦点 */
+  const [examined, setExamined] = useState<string[]>([]);
+  const [observations, setObservations] = useState<Observation[]>([]);
+  const [unlocked, setUnlocked] = useState<string[]>([]);
+  const [focusIdx, setFocusIdx] = useState(0);
+  /** 抉择阶段(限时) */
+  const [choosing, setChoosing] = useState(false);
+  const [timeLeft, setTimeLeft] = useState(CHOICE_SECONDS);
+  const [freeInput, setFreeInput] = useState(false);
+
   const toastTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
-  const bottomRef = useRef<HTMLDivElement | null>(null);
 
   // 每次进入新的一幕:黑场章节卡 + 重置本幕状态
   useEffect(() => {
@@ -93,6 +118,12 @@ function GameInner() {
     setRevealed(1);
     setInput("");
     setError(null);
+    setExamined([]);
+    setObservations([]);
+    setUnlocked([]);
+    setFocusIdx(0);
+    setChoosing(false);
+    setFreeInput(false);
     const t = setTimeout(() => setChapterCard(false), 2900);
     return () => clearTimeout(t);
   }, [sceneId]);
@@ -121,6 +152,11 @@ function GameInner() {
 
   const pendingBlocks = sceneDone ? [] : beatBlocks(scene, turns.length);
   const fullyRevealed = sceneDone || revealed >= pendingBlocks.length;
+  /** 探索阶段:内容已揭示,还没开口 */
+  const exploring = fullyRevealed && !sceneDone && !choosing && !loading;
+
+  /** 本拍的抉择选项:检视解锁的(◆)在前,预设念头在后 */
+  const options = [...unlocked, ...beat.impulses];
 
   // 穿透时刻:终幕最后一拍 + 全程累积暴露达到阈值 → 过滤器碎裂,原话直出
   const pierceActive =
@@ -148,10 +184,30 @@ function GameInner() {
       ? scene.piercedClosingNarration
       : scene.closingNarration;
 
-  // 内容更新时轻轻滚到底部
+  // 内容更新时滚到文档最底部
+  // 用 window.scrollTo 而不是 scrollIntoView:bottomRef 之前的设计会让 anchor 停在
+  // pb-[24rem] padding 之前,被 fixed footer 遮挡,看起来像"页面往上跑了 24rem"
   useEffect(() => {
-    bottomRef.current?.scrollIntoView({ behavior: "smooth", block: "end" });
-  }, [revealed, turns.length, loading, sceneDone]);
+    window.scrollTo({ top: document.body.scrollHeight, behavior: "smooth" });
+  }, [revealed, turns.length, loading, sceneDone, observations.length, choosing]);
+
+  // 抉择倒计时:超时 = 沉默
+  const silenceRef = useRef<() => void>(() => {});
+  useEffect(() => {
+    if (!choosing || loading) return;
+    setTimeLeft(CHOICE_SECONDS);
+    const iv = setInterval(() => {
+      setTimeLeft((t) => {
+        const nt = Math.max(0, t - 0.1);
+        if (nt <= 0) {
+          clearInterval(iv);
+          silenceRef.current();
+        }
+        return nt;
+      });
+    }, 100);
+    return () => clearInterval(iv);
+  }, [choosing, loading]);
 
   function showToast(t: Omit<Toast, "key">) {
     if (toastTimer.current) clearTimeout(toastTimer.current);
@@ -161,7 +217,21 @@ function GameInner() {
   }
 
   function advanceReveal() {
-    if (!fullyRevealed && !loading) setRevealed((r) => r + 1);
+    if (!fullyRevealed && !loading && !chapterCard) setRevealed((r) => r + 1);
+  }
+
+  /** 检视场景物件:产出观察,可能解锁更深的念头 */
+  function examine(h: Hotspot) {
+    if (examined.includes(h.id)) return;
+    setExamined((prev) => [...prev, h.id]);
+    setObservations((prev) => [
+      ...prev,
+      { beat: turns.length, name: h.name, text: h.observation },
+    ]);
+    if (h.unlocksImpulse && !unlocked.includes(h.unlocksImpulse)) {
+      setUnlocked((prev) => [...prev, h.unlocksImpulse!]);
+      showToast({ text: "◆ 一句更真的话浮现了", tone: "unlock" });
+    }
   }
 
   /** 阿默"刚说的话":当前节拍锚点台词,否则上一轮她的回应 */
@@ -182,24 +252,41 @@ function GameInner() {
     return history;
   }
 
-  async function submitTurn(rawText: string) {
+  async function submitTurn(rawText: string, opts: { silence?: boolean } = {}) {
     const trimmed = rawText.trim();
-    if (!trimmed || loading || !rel || sceneDone || !fullyRevealed) return;
+    if ((!trimmed && !opts.silence) || loading || !rel || sceneDone) return;
 
+    setChoosing(false);
+    setFreeInput(false);
     setLoading(true);
     setError(null);
     setPhase("filter");
     try {
+      let inner: string;
       let spoken: string;
       let intensity: Turn["intensity"];
       let hint: string | null;
 
-      if (pierceActive) {
+      if (opts.silence) {
+        // 超时:话到嘴边,没能推出口
+        if (pierceActive) {
+          inner = "(过滤器碎了。你却什么都没说。)";
+          spoken = "……";
+          intensity = "pierce";
+        } else {
+          inner = "(话到了嘴边。你在犹豫里,错过了它。)";
+          spoken = "……没事。";
+          intensity = "high";
+        }
+        hint = "你犹豫得太久,沉默替你做了选择。";
+      } else if (pierceActive) {
         // 过滤器碎了:原话直出,不走改写
+        inner = trimmed;
         spoken = trimmed;
         intensity = "pierce";
         hint = null;
       } else {
+        inner = trimmed;
         intensity = decideIntensity(
           trimmed,
           turns.length,
@@ -252,7 +339,9 @@ function GameInner() {
 
       // 更新关系状态:暴露拉近距离,回避推远
       const exposed =
-        intensity === "pierce" ? hasExposure(trimmed) : intensity === "low";
+        intensity === "pierce"
+          ? !opts.silence && hasExposure(trimmed)
+          : intensity === "low";
       const delta =
         intensity === "pierce" ? (exposed ? -25 : +10) : exposed ? -9 : +6;
       const nextRel: RelationshipState = {
@@ -277,7 +366,7 @@ function GameInner() {
         ...prev,
         {
           id: Date.now(),
-          inner: trimmed,
+          inner,
           spoken,
           amoReply: npcData.reply,
           amoInner: npcData.inner ?? "",
@@ -287,6 +376,8 @@ function GameInner() {
       ]);
       setInput("");
       setRevealed(1); // 下一拍从第一段旁白开始逐段揭示
+      setUnlocked([]);
+      setFocusIdx(0);
     } catch (err) {
       const msg = err instanceof Error ? err.message : String(err);
       setError(msg);
@@ -295,6 +386,7 @@ function GameInner() {
       setPhase("filter");
     }
   }
+  silenceRef.current = () => submitTurn("", { silence: true });
 
   function handleFinishScene() {
     const records: TurnRecord[] = turns.map((t) => ({
@@ -321,7 +413,61 @@ function GameInner() {
     }
   }
 
+  // 键盘操控:空格推进 / 方向键+E 检视 / Enter 开口 / 1-4 抉择
+  const keyCtx = useRef<(e: KeyboardEvent) => void>(() => {});
+  keyCtx.current = (e: KeyboardEvent) => {
+    if (
+      e.target instanceof HTMLTextAreaElement ||
+      e.target instanceof HTMLInputElement
+    )
+      return;
+    if (chapterCard || loading || sceneDone) return;
+
+    if (!fullyRevealed) {
+      if (e.code === "Space" || e.key === "Enter") {
+        e.preventDefault();
+        advanceReveal();
+      }
+      return;
+    }
+
+    if (exploring) {
+      const spots = beat.hotspots;
+      if (e.key === "ArrowRight" || e.key === "ArrowDown") {
+        e.preventDefault();
+        if (spots.length) setFocusIdx((i) => (i + 1) % spots.length);
+      } else if (e.key === "ArrowLeft" || e.key === "ArrowUp") {
+        e.preventDefault();
+        if (spots.length) setFocusIdx((i) => (i - 1 + spots.length) % spots.length);
+      } else if (e.key.toLowerCase() === "e") {
+        e.preventDefault();
+        if (spots[focusIdx]) examine(spots[focusIdx]);
+      } else if (e.key === "Enter") {
+        e.preventDefault();
+        setChoosing(true);
+      }
+      return;
+    }
+
+    if (choosing) {
+      const n = Number(e.key);
+      if (n >= 1 && n <= options.length) {
+        e.preventDefault();
+        submitTurn(options[n - 1]);
+      } else if (e.key.toLowerCase() === "t") {
+        e.preventDefault();
+        setFreeInput(true);
+      }
+    }
+  };
+  useEffect(() => {
+    const onKey = (e: KeyboardEvent) => keyCtx.current(e);
+    window.addEventListener("keydown", onKey);
+    return () => window.removeEventListener("keydown", onKey);
+  }, []);
+
   const sceneIndex = ACT_SEQUENCE.findIndex((s) => s.id === scene.id) + 1;
+  const timerPct = (timeLeft / CHOICE_SECONDS) * 100;
 
   return (
     <main className="relative min-h-screen overflow-hidden">
@@ -378,12 +524,49 @@ function GameInner() {
         </div>
       </div>
 
+      {/* 场景检视点(探索阶段可交互) */}
+      {exploring && (
+        <div className="fixed inset-0 z-[25] pointer-events-none">
+          {beat.hotspots.map((h, idx) => {
+            const done = examined.includes(h.id);
+            const focused = idx === focusIdx;
+            return (
+              <button
+                key={h.id}
+                type="button"
+                onClick={() => {
+                  setFocusIdx(idx);
+                  examine(h);
+                }}
+                className="group absolute -translate-x-1/2 -translate-y-1/2 pointer-events-auto"
+                style={{ left: `${h.x}%`, top: `${h.y}%` }}
+              >
+                <span
+                  className={`block w-5 h-5 rounded-full border-2 transition-all ${
+                    done
+                      ? "border-white/25 bg-white/10"
+                      : "border-accent bg-accent/20 soft-pulse"
+                  } ${focused ? "ring-2 ring-white/80 scale-110" : ""}`}
+                />
+                <span
+                  className={`absolute top-6 left-1/2 -translate-x-1/2 whitespace-nowrap text-[10px] tracking-widest text-white bg-black/70 px-2 py-0.5 rounded transition-opacity ${
+                    focused ? "opacity-100" : "opacity-0 group-hover:opacity-100"
+                  }`}
+                >
+                  {h.name}
+                </span>
+              </button>
+            );
+          })}
+        </div>
+      )}
+
       {/* 关系状态通知(底特律式,右上角短暂浮现) */}
       {toast && (
         <div
           key={toast.key}
           className={`fixed top-6 right-6 z-40 fade-in px-4 py-2 border backdrop-blur-md text-xs tracking-widest ${
-            toast.tone === "closer"
+            toast.tone === "closer" || toast.tone === "unlock"
               ? "border-accent/60 bg-black/60 text-accent"
               : toast.tone === "pierce"
                 ? "border-white bg-black/80 text-white"
@@ -400,8 +583,7 @@ function GameInner() {
           {scene.name}
         </p>
         <p className="text-[10px] text-white/50 mt-1 tracking-widest">
-          {ACT_SEQUENCE.findIndex((s) => s.id === scene.id) + 1} /{" "}
-          {ACT_SEQUENCE.length}
+          {sceneIndex} / {ACT_SEQUENCE.length}
         </p>
         {rel && (
           <div
@@ -417,12 +599,12 @@ function GameInner() {
 
       {/* 对话历史区(滚动 · 点击推进未揭示的旁白) */}
       <div
-        className={`relative z-20 px-6 pt-8 pb-[32rem] max-w-3xl mx-auto ${
+        className={`relative z-20 px-6 pt-8 pb-[24rem] max-w-3xl mx-auto ${
           !fullyRevealed && !loading ? "cursor-pointer" : ""
         }`}
         onClick={advanceReveal}
       >
-        {/* 节拍流:每一拍 = 旁白推进 + 阿默锚点台词 + 玩家一轮交锋 */}
+        {/* 节拍流:每一拍 = 旁白推进 + 阿默锚点台词 + 检视观察 + 玩家一轮交锋 */}
         {scene.beats
           .slice(0, Math.min(turns.length + 1, totalBeats))
           .map((_, j) => {
@@ -431,6 +613,7 @@ function GameInner() {
               ? beatBlocks(scene, j).slice(0, revealed)
               : beatBlocks(scene, j).filter((b) => b.kind !== "hint");
             const turn = turns[j];
+            const beatObs = observations.filter((o) => o.beat === j);
             return (
               <div key={j} className="mb-6 space-y-2">
                 {blocks.map((b, bi) => (
@@ -447,6 +630,21 @@ function GameInner() {
                         <p>{b.text}</p>
                       </div>
                     )}
+                  </div>
+                ))}
+
+                {/* 检视产生的观察 */}
+                {beatObs.map((o, oi) => (
+                  <div
+                    key={oi}
+                    className="fade-in border-l-2 border-dashed border-white/25 pl-4 py-2 pr-4 bg-black/25 backdrop-blur-sm rounded-r"
+                  >
+                    <p className="text-[10px] text-white/45 mb-1 tracking-widest">
+                      检视 · {o.name}
+                    </p>
+                    <p className="inner-voice text-sm text-white/70">
+                      <Typewriter text={o.text} cps={38} />
+                    </p>
                   </div>
                 ))}
 
@@ -489,9 +687,9 @@ function GameInner() {
           })}
 
         {/* 点击继续指示 */}
-        {!fullyRevealed && !loading && (
+        {!fullyRevealed && !loading && !chapterCard && (
           <p className="text-center text-xs tracking-[0.3em] text-white/60 soft-pulse py-2">
-            ▼ 点击继续
+            ▼ 空格 / 点击 继续
           </p>
         )}
 
@@ -537,87 +735,132 @@ function GameInner() {
           </div>
         )}
 
-        <div ref={bottomRef} />
       </div>
 
-      {/* 底部输入区(VN 风格):内容全部揭示后才浮现,先选念头,自由输入是备选 */}
+      {/* 底部操作区:阶段驱动(推进 → 探索 → 限时抉择) */}
       <footer className="fixed bottom-0 left-0 right-0 z-30 border-t border-white/10 bg-black/70 backdrop-blur-md">
         <div className="max-w-3xl mx-auto px-6 py-4">
-          {!fullyRevealed && !sceneDone ? (
+          {sceneDone ? (
+            <p className="text-center text-xs tracking-[0.3em] text-white/40 py-2">
+              本幕结束
+            </p>
+          ) : !fullyRevealed ? (
             <p
-              className="text-center text-xs tracking-[0.3em] text-white/40 py-3 cursor-pointer"
+              className="text-center text-xs tracking-[0.3em] text-white/40 py-2 cursor-pointer"
               onClick={advanceReveal}
             >
-              ▼ 点击画面继续
+              ▼ 空格 / 点击画面 继续
             </p>
-          ) : (
-            <>
-              <div className="mb-2 flex items-center justify-between text-xs text-white/50">
-                <span className={pierceActive ? "text-white" : undefined}>
-                  {sceneDone
-                    ? "本幕结束"
-                    : pierceActive
-                      ? "过滤器碎了。说什么,就是什么。"
-                      : beat.inputPrompt}
+          ) : exploring ? (
+            <div className="space-y-3">
+              <div className="flex items-center justify-between text-[11px] text-white/50">
+                <span>
+                  检视场景:点击光点(或 ←→ 选择 + E 检视) ·{" "}
+                  {examined.filter((id) =>
+                    beat.hotspots.some((h) => h.id === id)
+                  ).length}
+                  /{beat.hotspots.length}
                 </span>
                 <span>
-                  第 {turns.length} / {totalBeats} 轮
+                  第 {turns.length + 1} / {totalBeats} 拍
                 </span>
               </div>
+              <button
+                type="button"
+                onClick={() => setChoosing(true)}
+                className={`w-full py-2.5 border transition-colors text-sm tracking-[0.4em] ${
+                  pierceActive
+                    ? "border-white/80 text-white hover:bg-white hover:text-ink"
+                    : "border-white/30 text-white hover:border-accent hover:bg-accent hover:text-ink"
+                }`}
+              >
+                开 口(Enter)
+              </button>
+            </div>
+          ) : loading ? (
+            <p className="text-center text-xs tracking-[0.3em] text-white/40 py-2">
+              ……
+            </p>
+          ) : (
+            <div className="space-y-2">
+              {/* 倒计时条:走完 = 沉默 */}
+              <div className="h-1 bg-white/10 rounded overflow-hidden">
+                <div
+                  className={`h-full ${
+                    timerPct < 30 ? "bg-red-400/80" : "bg-accent/80"
+                  }`}
+                  style={{ width: `${timerPct}%` }}
+                />
+              </div>
+              <div className="flex items-center justify-between text-[11px] text-white/50">
+                <span className={pierceActive ? "text-white" : undefined}>
+                  {pierceActive
+                    ? "过滤器碎了。说什么,就是什么。"
+                    : beat.inputPrompt}
+                </span>
+                <span>犹豫太久,话会自己咽回去</span>
+              </div>
 
-              {/* 涌上来的念头:点选即说 */}
-              {!sceneDone && (
-                <div className="space-y-1.5 mb-3">
-                  {beat.impulses.map((im) => (
+              <div className="space-y-1.5">
+                {options.map((im, i) => {
+                  const isUnlocked = unlocked.includes(im);
+                  return (
                     <button
                       key={im}
                       type="button"
-                      disabled={loading}
                       onClick={() => submitTurn(im)}
-                      className="block w-full text-left text-xs leading-relaxed text-white/75 border border-white/15 hover:border-accent/70 hover:text-white hover:bg-white/5 transition-colors px-3 py-2 rounded disabled:opacity-40"
+                      className={`block w-full text-left text-xs leading-relaxed transition-colors px-3 py-2 rounded border ${
+                        isUnlocked
+                          ? "text-accent border-accent/50 hover:bg-accent hover:text-ink"
+                          : "text-white/75 border-white/15 hover:border-accent/70 hover:text-white hover:bg-white/5"
+                      }`}
                     >
+                      <span className="text-white/35 mr-2">{i + 1}</span>
+                      {isUnlocked && <span className="mr-1">◆</span>}
                       {im}
                     </button>
-                  ))}
-                </div>
-              )}
+                  );
+                })}
+              </div>
 
-              <form
-                onSubmit={(e) => {
-                  e.preventDefault();
-                  submitTurn(input);
-                }}
-              >
-                <textarea
-                  value={input}
-                  onChange={(e) => setInput(e.target.value)}
-                  placeholder="……或者,用你自己的话(可选)"
-                  className={`w-full bg-white/5 border p-3 text-sm text-white placeholder:text-white/30 resize-none focus:outline-none rounded ${
-                    pierceActive
-                      ? "border-white/70 focus:border-white"
-                      : "border-white/20 focus:border-accent/60"
-                  }`}
-                  rows={2}
-                  disabled={loading || sceneDone}
-                  maxLength={500}
-                />
-                {input.trim() && (
+              {!freeInput ? (
+                <button
+                  type="button"
+                  onClick={() => setFreeInput(true)}
+                  className="w-full text-center text-[11px] text-white/40 hover:text-white/70 transition-colors py-1"
+                >
+                  ……或者,用你自己的话(T)
+                </button>
+              ) : (
+                <form
+                  onSubmit={(e) => {
+                    e.preventDefault();
+                    submitTurn(input);
+                  }}
+                >
+                  <textarea
+                    value={input}
+                    onChange={(e) => setInput(e.target.value)}
+                    autoFocus
+                    placeholder="此刻真正想说的话……(倒计时不会停)"
+                    className={`w-full bg-white/5 border p-3 text-sm text-white placeholder:text-white/30 resize-none focus:outline-none rounded ${
+                      pierceActive
+                        ? "border-white/70 focus:border-white"
+                        : "border-white/20 focus:border-accent/60"
+                    }`}
+                    rows={2}
+                    maxLength={500}
+                  />
                   <button
                     type="submit"
-                    disabled={loading || !input.trim() || sceneDone}
-                    className="mt-2 w-full py-2 border border-white/30 hover:border-accent hover:bg-accent hover:text-ink transition-colors text-sm tracking-widest text-white disabled:opacity-40 disabled:hover:bg-transparent disabled:hover:text-white"
+                    disabled={!input.trim()}
+                    className="mt-1.5 w-full py-2 border border-white/30 hover:border-accent hover:bg-accent hover:text-ink transition-colors text-sm tracking-widest text-white disabled:opacity-40"
                   >
-                    {loading
-                      ? pierceActive
-                        ? "说出口……"
-                        : "过滤中……"
-                      : pierceActive
-                        ? "说 出 口(没有过滤)"
-                        : "说 出 口"}
+                    {pierceActive ? "说 出 口(没有过滤)" : "说 出 口"}
                   </button>
-                )}
-              </form>
-            </>
+                </form>
+              )}
+            </div>
           )}
         </div>
       </footer>

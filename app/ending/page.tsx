@@ -13,43 +13,46 @@ import {
   FilterReport,
 } from "@/lib/playthrough";
 
-/** 分支结局文案 */
+/** 分支结局文案(黑场终止页,短) */
 const ENDINGS: Record<
   EndingKind,
-  { label: string; title: string; paragraphs: string[] }
+  { title: string; paragraphs: string[] }
 > = {
   weathered: {
-    label: "结局",
     title: "风 化",
     paragraphs: [
       "没有争吵,没有摔门,没有一句重话。",
-      "关系没有结束——它只是没有活下去。谁也说不清是哪天结束的,这才是最窒息的部分。",
+      "谁也说不清是哪天结束的。",
     ],
   },
   "wasted-pierce": {
-    label: "结局",
     title: "风 化",
     paragraphs: [
-      "最后那一刻,没有任何东西拦你。过滤器碎了,嘴是你自己的。",
-      "你说出口的,还是客套。",
-      "原来拦住你的从来不是过滤器。",
+      "最后那一刻,没有任何东西拦你。",
+      "原来拦住你的,从来不是过滤器。",
     ],
   },
   "door-open": {
-    label: "结局",
     title: "门 没 有 关 上",
     paragraphs: [
-      "你把那句话原样说了出去。她在门口站了很久,声控灯灭了又亮。",
-      "这不是童话。明天,过滤器还会长回来,她的和你的都会。",
-      "但今天,门没有关上。",
+      "她在门口站了很久,声控灯灭了又亮。",
+      "明天,过滤器还会长回来。但今天,门没有关上。",
     ],
   },
 };
+
+/** 所有可能的结局(流程图展示用) */
+const ALL_ENDINGS: Array<{ kind: EndingKind; title: string; hint: string }> = [
+  { kind: "weathered", title: "风化", hint: "从未卸下防御" },
+  { kind: "wasted-pierce", title: "风化 · 无声", hint: "过滤器碎了,你却沉默" },
+  { kind: "door-open", title: "门没有关上", hint: "穿透,并且说了真话" },
+];
 
 export default function EndingPage() {
   const [play, setPlay] = useState<Playthrough | null>(null);
   const [report, setReport] = useState<FilterReport | null>(null);
   const [ending, setEnding] = useState<EndingKind>("weathered");
+  const [stage, setStage] = useState<"end" | "debrief">("end");
   const [mounted, setMounted] = useState(false);
 
   useEffect(() => {
@@ -64,13 +67,11 @@ export default function EndingPage() {
 
   if (mounted && (!play || play.scenes.length === 0)) {
     return (
-      <main className="min-h-screen flex flex-col items-center justify-center px-6 py-12 max-w-xl mx-auto text-center">
-        <p className="text-sm text-muted mb-6">
-          你还没有完成任何一幕。
-        </p>
+      <main className="min-h-screen bg-black flex flex-col items-center justify-center px-6 py-12 text-center">
+        <p className="text-sm text-white/50 mb-6">你还没有完成任何一幕。</p>
         <Link
           href="/game"
-          className="inline-block py-2 px-6 border border-ink/30 hover:border-ink hover:bg-ink hover:text-paper transition-colors text-sm tracking-widest"
+          className="inline-block py-2 px-6 border border-white/30 text-white/90 hover:border-white hover:bg-white hover:text-ink transition-colors text-sm tracking-widest"
         >
           开 始 第 一 幕
         </Link>
@@ -80,54 +81,152 @@ export default function EndingPage() {
 
   if (!mounted || !play || !report) {
     return (
-      <main className="min-h-screen flex items-center justify-center text-sm text-muted">
-        加载中……
+      <main className="min-h-screen bg-black flex items-center justify-center text-sm text-white/40">
+        ……
       </main>
     );
   }
 
   const endingCopy = ENDINGS[ending];
 
-  return (
-    <main className="min-h-screen flex flex-col px-6 py-12 max-w-2xl mx-auto">
-      <div className="space-y-10 fade-in">
-        {/* 结局标题(分支) */}
-        <header className="text-center space-y-3">
-          <p className="text-xs tracking-widest text-muted uppercase">
-            {endingCopy.label}
-          </p>
-          <h2 className="text-4xl font-serif tracking-wider">
-            {endingCopy.title}
-          </h2>
-          <p className="text-xs text-muted/70">
-            完成了 {report.totalScenes} 幕 · {report.totalTurns} 次开口
-          </p>
-        </header>
-
-        {/* 结局文本(分支) */}
-        <section className="space-y-4 leading-relaxed text-ink/80">
+  /* ── 第一屏:黑场终止 ── */
+  if (stage === "end") {
+    return (
+      <main className="min-h-screen bg-black flex flex-col items-center justify-center px-8 text-center">
+        <p
+          className="fade-in-delayed text-[10px] tracking-[0.5em] text-white/35 uppercase mb-6"
+          style={{ animationDelay: "0.5s" }}
+        >
+          结局
+        </p>
+        <h2 className="chapter-title text-4xl font-serif text-white/95 mb-10">
+          {endingCopy.title}
+        </h2>
+        <div className="space-y-3 max-w-md">
           {endingCopy.paragraphs.map((p, i) => (
-            <p key={i} className={i > 0 ? "text-muted" : undefined}>
+            <p
+              key={i}
+              className="fade-in-delayed text-sm leading-loose text-white/60"
+              style={{ animationDelay: `${1.6 + i * 1.2}s` }}
+            >
               {p}
             </p>
           ))}
+        </div>
+
+        <p
+          className="fade-in-delayed text-2xl font-serif text-white/80 mt-14"
+          style={{ animationDelay: "4.4s" }}
+        >
+          完
+        </p>
+
+        <div
+          className="fade-in-delayed mt-14 flex flex-col sm:flex-row gap-3"
+          style={{ animationDelay: "5.4s" }}
+        >
+          <button
+            type="button"
+            onClick={() => setStage("debrief")}
+            className="py-2 px-8 border border-white/30 text-white/90 hover:border-white hover:bg-white hover:text-ink transition-colors text-xs tracking-[0.3em]"
+          >
+            回 放 这 段 关 系
+          </button>
+          <Link
+            href="/game"
+            onClick={() => clearPlaythrough()}
+            className="py-2 px-8 border border-white/10 text-white/40 hover:text-white/80 hover:border-white/40 transition-colors text-xs tracking-[0.3em] text-center"
+          >
+            再 来 一 次
+          </Link>
+        </div>
+      </main>
+    );
+  }
+
+  /* ── 第二屏:复盘(流程图 + 对照) ── */
+  return (
+    <main className="min-h-screen flex flex-col px-6 py-12 max-w-2xl mx-auto">
+      <div className="space-y-10 fade-in">
+        <header className="text-center space-y-2">
+          <p className="text-xs tracking-widest text-muted uppercase">
+            复盘 · 你走过的路
+          </p>
+          <h2 className="text-2xl font-serif tracking-wider">
+            {endingCopy.title}
+          </h2>
+        </header>
+
+        {/* 流程图:每一拍的选择 + 三个可能的结局 */}
+        <section className="space-y-4">
+          <div className="space-y-3">
+            {play.scenes.map((sc, si) => (
+              <div key={si} className="flex items-center gap-3">
+                <p className="w-28 shrink-0 text-[10px] text-muted tracking-widest">
+                  {sc.sceneName.replace(/ · .*/, "")}
+                </p>
+                <div className="flex items-center gap-0">
+                  {sc.turns.map((t, i) => (
+                    <div key={i} className="flex items-center">
+                      {i > 0 && <span className="w-6 h-px bg-ink/15" />}
+                      <span
+                        title={
+                          t.intensity === "high"
+                            ? "完全过滤"
+                            : t.intensity === "low"
+                              ? "漏出一半"
+                              : "穿透"
+                        }
+                        className={`w-3.5 h-3.5 rounded-full border-2 ${
+                          t.intensity === "high"
+                            ? "border-ink/20 bg-ink/10"
+                            : t.intensity === "low"
+                              ? "border-accent bg-accent/30"
+                              : "border-ink bg-ink"
+                        }`}
+                      />
+                    </div>
+                  ))}
+                </div>
+              </div>
+            ))}
+          </div>
+
+          <div className="flex flex-wrap gap-2 pt-2">
+            {ALL_ENDINGS.map((e) => (
+              <div
+                key={e.kind}
+                className={`px-3 py-1.5 rounded-full border text-xs ${
+                  e.kind === ending
+                    ? "border-ink bg-ink text-paper"
+                    : "border-ink/15 text-muted/60"
+                }`}
+              >
+                {e.kind === ending ? e.title : `? ${e.hint}`}
+              </div>
+            ))}
+          </div>
+
+          <p className="text-[10px] text-muted/70">
+            ○ 完全过滤 · <span className="text-accent">●</span> 漏出一半 · ● 穿透
+            {ending !== "door-open" && " —— 另外的路,还没有人走过"}
+          </p>
         </section>
 
-        {/* 第三视角回放:对称性揭示 —— 整个游戏的心碎点 */}
-        <section className="border-t border-ink/10 pt-8 space-y-6">
-          <div className="space-y-2">
-            <p className="text-xs text-muted tracking-widest">第三视角 · 回放</p>
-            <p className="text-sm leading-relaxed text-ink/80">
-              现在,换一双眼睛,把这一路重看一遍。
+        {/* 对称性揭示:你想的 vs 她想的 */}
+        <section className="border-t border-ink/10 pt-8 space-y-5">
+          <div className="space-y-1">
+            <p className="text-xs text-muted tracking-widest">
+              第三视角 · 你们各自没说出口的
             </p>
-            <p className="text-sm leading-relaxed text-muted">
-              这是她那边的版本——她听到的,和她没说出口的。
+            <p className="text-sm text-muted leading-relaxed">
+              她的内心戏,和你的一模一样。
             </p>
           </div>
 
           {play.scenes.map((sc, si) => (
-            <div key={si} className="space-y-3">
-              <p className="text-xs text-accent/70 tracking-widest">
+            <div key={si} className="space-y-2">
+              <p className="text-[10px] text-accent/70 tracking-widest">
                 {sc.sceneName}
               </p>
               {sc.turns.map((t, i) => (
@@ -135,31 +234,13 @@ export default function EndingPage() {
                   key={i}
                   className="grid grid-cols-1 md:grid-cols-2 border border-ink/10 rounded overflow-hidden"
                 >
-                  <div className="p-4">
+                  <div className="p-3">
                     <p className="text-[10px] text-muted mb-1 tracking-widest">
-                      你想的 · 她永远没听到
+                      你想的
                     </p>
                     <p className="inner-voice text-sm">{t.inner}</p>
                   </div>
-                  <div className="p-4 md:border-l border-ink/10">
-                    <p className="text-[10px] text-muted mb-1 tracking-widest">
-                      你说的 · 她听到的只有这句
-                      {t.intensity === "low" && (
-                        <span className="ml-1 text-accent/60">· 漏了一半</span>
-                      )}
-                      {t.intensity === "pierce" && (
-                        <span className="ml-1 text-ink">· 原话,没有过滤</span>
-                      )}
-                    </p>
-                    <p className="spoken-words text-sm">"{t.spoken}"</p>
-                  </div>
-                  <div className="p-4 border-t border-ink/10">
-                    <p className="text-[10px] text-muted mb-1 tracking-widest">
-                      她说的 · 你听到的只有这句
-                    </p>
-                    <p className="spoken-words text-sm">"{t.amoReply}"</p>
-                  </div>
-                  <div className="p-4 border-t md:border-l border-ink/10 bg-accent/5">
+                  <div className="p-3 md:border-l border-t md:border-t-0 border-ink/10 bg-accent/5">
                     <p className="text-[10px] text-accent/70 mb-1 tracking-widest">
                       她想的 · 现在你才看见
                     </p>
@@ -171,106 +252,15 @@ export default function EndingPage() {
               ))}
             </div>
           ))}
-
-          <p className="text-sm leading-relaxed text-muted text-center pt-2">
-            她的内心戏,和你的一模一样。你们不是没话说——你们是各自都有一个过滤器。
-          </p>
         </section>
 
-        {/* 各幕金句回响 */}
-        <section className="border-t border-ink/10 pt-8 space-y-4">
-          <p className="text-xs text-muted tracking-widest">这一路,你留下的句子</p>
-          <div className="space-y-3">
-            {report.goldenQuotes.map((g, i) => (
-              <div key={i} className="border-l-2 border-accent/40 pl-4">
-                <p className="text-[10px] text-muted tracking-widest mb-1">
-                  {g.sceneName}
-                </p>
-                <p className="text-sm text-accent/90 italic">"{g.quote}"</p>
-              </div>
-            ))}
-          </div>
+        {/* 一句画像 */}
+        <section className="border-t border-ink/10 pt-8 space-y-3">
+          <p className="text-sm leading-relaxed text-ink">{report.portrait}</p>
+          <p className="text-sm leading-relaxed text-muted">{report.summary}</p>
         </section>
 
-        {/* 过滤器报告 */}
-        <section className="border-t border-ink/10 pt-8 space-y-6">
-          <div>
-            <p className="text-xs text-muted tracking-widest mb-2">你的过滤器报告</p>
-            <h3 className="text-xl font-serif">
-              这一路,你的回避画像
-            </h3>
-          </div>
-
-          {/* 个人化画像句 */}
-          <div className="bg-paper border border-ink/10 p-5 rounded">
-            <p className="text-sm leading-relaxed text-ink">
-              {report.portrait}
-            </p>
-          </div>
-
-          {/* 统计数据 */}
-          <div className="grid grid-cols-3 gap-4 text-center">
-            <div className="border border-ink/10 p-4 rounded">
-              <p className="text-3xl font-serif">{report.totalTurns}</p>
-              <p className="text-xs text-muted mt-1">次开口</p>
-            </div>
-            <div className="border border-ink/10 p-4 rounded">
-              <p className="text-3xl font-serif text-muted">{report.highCount}</p>
-              <p className="text-xs text-muted mt-1">次完全过滤</p>
-            </div>
-            <div className="border border-ink/10 p-4 rounded">
-              <p className="text-3xl font-serif text-accent">
-                {report.lowCount + report.pierceCount}
-              </p>
-              <p className="text-xs text-muted mt-1">
-                {report.pierceCount > 0 ? "次穿过了过滤器" : "次漏出一半"}
-              </p>
-            </div>
-          </div>
-
-          {/* 总结 */}
-          <p className="text-sm leading-relaxed text-ink/80">
-            {report.summary}
-          </p>
-
-          {/* 出口话习惯词 */}
-          {report.spokenHabits.length > 0 && (
-            <div>
-              <p className="text-xs text-muted mb-2">你最常用的回避词:</p>
-              <div className="flex flex-wrap gap-2">
-                {report.spokenHabits.map((w) => (
-                  <span
-                    key={w}
-                    className="px-3 py-1 border border-ink/20 text-sm text-ink/70 rounded-full"
-                  >
-                    {w}
-                  </span>
-                ))}
-              </div>
-            </div>
-          )}
-
-          {/* 内心暴露词 */}
-          {report.exposedFeelings.length > 0 && (
-            <div>
-              <p className="text-xs text-muted mb-2">
-                你心里出现过、却大多没说出口的词:
-              </p>
-              <div className="flex flex-wrap gap-2">
-                {report.exposedFeelings.map((w) => (
-                  <span
-                    key={w}
-                    className="px-3 py-1 border border-accent/30 text-sm text-accent/80 rounded-full bg-paper"
-                  >
-                    {w}
-                  </span>
-                ))}
-              </div>
-            </div>
-          )}
-        </section>
-
-        {/* 行动按钮 */}
+        {/* 行动 */}
         <section className="border-t border-ink/10 pt-8 flex flex-col sm:flex-row gap-3 justify-center">
           <Link
             href="/game"
@@ -288,14 +278,8 @@ export default function EndingPage() {
           </Link>
         </section>
 
-        {ending !== "door-open" && (
-          <p className="text-center text-xs text-muted/70">
-            听说,如果一路上卸下足够多的防御,最后那扇门会不一样。
-          </p>
-        )}
-
         <p className="text-center text-xs text-muted/60">
-          截图分享你的过滤器报告 · #CodeBuddy #腾讯云黑客松
+          截图分享你的流程图 · #CodeBuddy #腾讯云黑客松
         </p>
       </div>
     </main>
