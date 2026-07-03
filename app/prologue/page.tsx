@@ -1,6 +1,7 @@
 "use client";
 
 import { useEffect, useState } from "react";
+import Image from "next/image";
 import { useRouter } from "next/navigation";
 
 /**
@@ -48,11 +49,34 @@ export default function ProloguePage() {
     return () => window.removeEventListener("keydown", onKey);
   });
 
+  // 世界随序章推进慢慢显影:开头近乎全黑,说到"你是阿沉"时暖光渗出,
+  // 最后一句时餐厅已隐约可见——正好接进幕一。
+  const bgOpacity = Math.min(0.5, idx * 0.07);
+  const bgBlur = Math.max(2, 9 - idx);
+
   return (
     <main
-      className="min-h-screen bg-black flex flex-col items-center justify-center px-8 cursor-pointer select-none"
+      className="relative min-h-screen overflow-hidden bg-black flex flex-col items-center justify-center px-8 cursor-pointer select-none"
       onClick={advance}
     >
+      {/* 显影中的世界 */}
+      <div
+        className="fixed inset-0 z-0 pointer-events-none"
+        style={{
+          opacity: bgOpacity,
+          filter: `blur(${bgBlur}px)`,
+          transition: "opacity 1.6s ease, filter 1.6s ease",
+        }}
+      >
+        <Image
+          src="/images/scenes/act1_restaurant.png"
+          alt=""
+          fill
+          priority
+          className="object-cover"
+        />
+        <div className="absolute inset-0 bg-gradient-to-b from-black/60 via-black/30 to-black/70" />
+      </div>
       {/* 跳过(二周目玩家用) */}
       <button
         type="button"
@@ -67,7 +91,7 @@ export default function ProloguePage() {
 
       <div
         key={idx}
-        className="fade-in-slow max-w-md text-center space-y-4"
+        className="relative z-10 fade-in-slow max-w-md text-center space-y-4"
       >
         {SCREENS[idx].map((line, i) => (
           <p
