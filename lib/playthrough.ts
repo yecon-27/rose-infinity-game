@@ -1,17 +1,23 @@
 /**
  * 对话历史持久化
  *
- * 用 localStorage 跨页传递玩家在所有幕中的"真心 vs 出口"对照。
- * 支持多幕累积,结局页统一生成报告。
+ * 用 localStorage 跨页传递玩家在所有幕中的"真心 vs 出口"对照,
+ * 以及贯穿全局的关系状态(距离、暴露次数、穿透)。
+ * 结局页统一生成报告 + 第三视角回放 + 分支结局。
  */
 
 const STORAGE_KEY = "the-filter:playthrough";
+const RELATIONSHIP_KEY = "the-filter:relationship";
+
+export type TurnIntensity = "high" | "low" | "pierce";
 
 export interface TurnRecord {
   inner: string;
   spoken: string;
   amoReply: string;
-  intensity: "high" | "low";
+  /** 阿默没说出口的内心话——游戏中不可见,结局第三视角回放才揭示 */
+  amoInner: string;
+  intensity: TurnIntensity;
 }
 
 export interface SceneRecord {
@@ -24,6 +30,45 @@ export interface SceneRecord {
 
 export interface Playthrough {
   scenes: SceneRecord[];
+}
+
+/** 贯穿整局的关系状态 */
+export interface RelationshipState {
+  /** 距离 0-100,越高越疏离。初始 50 */
+  distance: number;
+  /** 累积的暴露时刻(低强度轮次数),达到阈值终幕触发穿透 */
+  exposureCount: number;
+  /** 终幕是否触发了穿透 */
+  pierced: boolean;
+  /** 穿透那一刻,玩家说的是不是真话(决定结局分支) */
+  pierceExposed: boolean;
+}
+
+const DEFAULT_RELATIONSHIP: RelationshipState = {
+  distance: 50,
+  exposureCount: 0,
+  pierced: false,
+  pierceExposed: false,
+};
+
+export function loadRelationship(): RelationshipState {
+  if (typeof window === "undefined") return { ...DEFAULT_RELATIONSHIP };
+  try {
+    const raw = localStorage.getItem(RELATIONSHIP_KEY);
+    if (!raw) return { ...DEFAULT_RELATIONSHIP };
+    return { ...DEFAULT_RELATIONSHIP, ...(JSON.parse(raw) as Partial<RelationshipState>) };
+  } catch {
+    return { ...DEFAULT_RELATIONSHIP };
+  }
+}
+
+export function saveRelationship(state: RelationshipState): void {
+  if (typeof window === "undefined") return;
+  try {
+    localStorage.setItem(RELATIONSHIP_KEY, JSON.stringify(state));
+  } catch (err) {
+    console.error("[playthrough] 关系状态保存失败:", err);
+  }
 }
 
 export function saveSceneRecord(record: SceneRecord): void {
@@ -57,9 +102,19 @@ export function clearPlaythrough(): void {
   if (typeof window === "undefined") return;
   try {
     localStorage.removeItem(STORAGE_KEY);
+    localStorage.removeItem(RELATIONSHIP_KEY);
   } catch (err) {
     console.error("[playthrough] 清除失败:", err);
   }
+}
+
+/** 结局分支 */
+export type EndingKind = "weathered" | "wasted-pierce" | "door-open";
+
+export function decideEnding(rel: RelationshipState): EndingKind {
+  if (rel.pierced && rel.pierceExposed) return "door-open";
+  if (rel.pierced) return "wasted-pierce";
+  return "weathered";
 }
 
 /**
@@ -72,6 +127,7 @@ export interface FilterReport {
   totalTurns: number;
   highCount: number;
   lowCount: number;
+  pierceCount: number;
   /** 玩家最常用来代替真心的"出口话"特征词 */
   spokenHabits: string[];
   /** 真心话里出现的暴露词(出现在 inner 中) */
@@ -110,6 +166,7 @@ export function buildReport(play: Playthrough): FilterReport {
   const totalTurns = allTurns.length;
   const highCount = allTurns.filter((t) => t.intensity === "high").length;
   const lowCount = allTurns.filter((t) => t.intensity === "low").length;
+  const pierceCount = allTurns.filter((t) => t.intensity === "pierce").length;
 
   const exposedSet = new Set<string>();
   for (const t of allTurns) {
@@ -132,7 +189,9 @@ export function buildReport(play: Playthrough): FilterReport {
     .map(([label]) => label);
 
   let summary: string;
-  if (lowCount === 0) {
+  if (pierceCount > 0) {
+    summary = `共 ${totalTurns} 次开口。前面 ${lowCount} 次暴露让过滤器一点点松动,直到最后一刻,它碎了——那一句话,是你自己说的,没有任何东西替你修饰。`;
+  } else if (lowCount === 0) {
     summary =
       "全程没有一次让过滤器松动。每一句真心话都被完整改写成客套,关系在不亏不欠中走向风化。";
   } else if (lowCount === totalTurns) {
@@ -162,6 +221,7 @@ export function buildReport(play: Playthrough): FilterReport {
     totalTurns,
     highCount,
     lowCount,
+    pierceCount,
     spokenHabits,
     exposedFeelings: Array.from(exposedSet),
     summary,

@@ -39,6 +39,7 @@ export async function POST(req: NextRequest) {
       sceneBrief:
         context.sceneBrief ??
         "两人第七次约会,吃完饭,账单放在桌上,阿默提议 AA。",
+      situation: context.situation,
       amosLastLine: context.amosLastLine,
       priorContext: context.priorContext,
     };

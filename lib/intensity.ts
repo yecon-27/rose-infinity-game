@@ -15,6 +15,13 @@
 export type FilterIntensity = "high" | "low";
 
 /**
+ * 穿透触发阈值:整局累积的"暴露时刻"(低强度轮次)达到该值,
+ * 终幕最后一拍过滤器碎裂,玩家的话原样说出——prd 2.2 的"穿透"档。
+ * 努力的方向不是说服对方,而是卸下自己的防御:卸得够多,最后才有资格说真话。
+ */
+export const PIERCE_THRESHOLD = 3;
+
+/**
  * 暴露性关键词词典。
  * 命中任一即视为玩家在尝试卸下防御 → 过滤器减弱。
  */
@@ -68,16 +75,15 @@ export function decideIntensity(
   _turnIndex: number,
   _history: string[] = []
 ): FilterIntensity {
-  const text = input.toLowerCase();
-
-  const hitCount = EXPOSURE_KEYWORDS.reduce(
-    (acc, kw) => acc + (text.includes(kw.toLowerCase()) ? 1 : 0),
-    0
-  );
-
   // 命中任意暴露词 → 低档(漏一半)
   // 没命中 → 高档(完全改写)
-  return hitCount > 0 ? "low" : "high";
+  return hasExposure(input) ? "low" : "high";
+}
+
+/** 输入中是否含暴露性表达(也用于判定穿透时刻玩家有没有真的说出真话) */
+export function hasExposure(input: string): boolean {
+  const text = input.toLowerCase();
+  return EXPOSURE_KEYWORDS.some((kw) => text.includes(kw.toLowerCase()));
 }
 
 /**
