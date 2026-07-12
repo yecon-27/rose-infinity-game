@@ -1,16 +1,36 @@
 import { NextRequest, NextResponse } from "next/server";
 import { chat } from "@/lib/hunyuan";
 import {
-  buildAmoSystemPrompt,
-  buildChenSystemPrompt,
+  buildSeanSystemPrompt,
+  buildVeraSystemPrompt,
   NpcContext,
+  Persona,
+  Phase,
+  Tone,
 } from "@/lib/npc-prompt";
 
 export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
 
-/** 阿默的兜底台词池,LLM 失败时随机取一句 */
-const AMO_REPLY_FALLBACKS = [
+/** Sean 的兜底台词池,LLM 失败时随机取一句 */
+const SEAN_REPLY_FALLBACKS = [
+  "嗯,行。",
+  "等我搞完。",
+  "明天吧。",
+  "你看呗,都行。",
+  "哦,好。",
+];
+
+/** Sean 的内心话兜底池——即使 LLM 失败,结局揭示也不能开天窗 */
+const SEAN_INNER_FALLBACKS = [
+  "他又想说点什么。想了想,算了。",
+  "又是这样。我自己的事。",
+  "她要是再多说一句,我可能就说了。可她没有。",
+  "没关系的。反正我也没打算说。",
+];
+
+/** Vera 的兜底台词池,LLM 失败时随机取一句 */
+const VERA_REPLY_FALLBACKS = [
   "嗯,行。",
   "那走吧。",
   "也是。",
@@ -18,8 +38,8 @@ const AMO_REPLY_FALLBACKS = [
   "哦,好。",
 ];
 
-/** 阿默的内心话兜底池——即使 LLM 失败,结局揭示也不能开天窗 */
-const AMO_INNER_FALLBACKS = [
+/** Vera 的内心话兜底池 */
+const VERA_INNER_FALLBACKS = [
   "她想说点什么。想了想,算了。",
   "又是这样。我们俩谁也不肯先开口。",
   "他要是再多说一句,我可能就说了。可他没有。",
@@ -30,8 +50,16 @@ function pick(pool: string[]): string {
   return pool[Math.floor(Math.random() * pool.length)];
 }
 
+function replyPool(persona: Persona): string[] {
+  return persona === "sean" ? SEAN_REPLY_FALLBACKS : VERA_REPLY_FALLBACKS;
+}
+
+function innerPool(persona: Persona): string[] {
+  return persona === "sean" ? SEAN_INNER_FALLBACKS : VERA_INNER_FALLBACKS;
+}
+
 /** 从 LLM 输出里解析 {"reply","inner"},失败则整段当 reply */
-function parseAmoOutput(raw: string): { reply: string; inner: string } {
+function parseOutput(raw: string, persona: Persona): { reply: string; inner: string } {
   const cleaned = raw
     .trim()
     .replace(/^```(?:json)?\s*/i, "")
@@ -44,12 +72,10 @@ function parseAmoOutput(raw: string): { reply: string; inner: string } {
         reply?: unknown;
         inner?: unknown;
       };
-      const reply =
-        typeof obj.reply === "string" ? obj.reply.trim() : "";
-      const inner =
-        typeof obj.inner === "string" ? obj.inner.trim() : "";
+      const reply = typeof obj.reply === "string" ? obj.reply.trim() : "";
+      const inner = typeof obj.inner === "string" ? obj.inner.trim() : "";
       if (reply) {
-        return { reply, inner: inner || pick(AMO_INNER_FALLBACKS) };
+        return { reply, inner: inner || pick(innerPool(persona)) };
       }
     } catch {
       // 落到纯文本兜底
@@ -57,42 +83,102 @@ function parseAmoOutput(raw: string): { reply: string; inner: string } {
   }
   const plain = cleaned.replace(/^["'""]|["'""]$/g, "").trim();
   return {
-    reply: plain || pick(AMO_REPLY_FALLBACKS),
-    inner: pick(AMO_INNER_FALLBACKS),
+    reply: plain || pick(replyPool(persona)),
+    inner: pick(innerPool(persona)),
   };
+}
+
+/** 旧字段(persona="amo"|"chen"、amoDirection、chenSpoken、spokenTone、pierced)向后兼容:
+ *  app/game/page.tsx 仍在用旧字段名,本路由同时接受新旧两套,内部统一映射到新模型。 */
+function normalizePersona(v: unknown): Persona {
+  // 旧:amo(她)→ vera;chen(他)→ sean
+  if (v === "amo" || v === "vera") return "vera";
+  return "sean";
+}
+
+function normalizePhase(v: unknown): Phase {
+  return v === "strained" ? "strained" : "warm";
+}
+
+function normalizeTone(v: unknown): Tone | undefined {
+  if (v === "secure" || v === "avoid" || v === "anxious") return v;
+  return undefined;
+}
+
+/** 旧对话历史里的 role 可能是 "amo"|"chen",统一映射到 "vera"|"sean" */
+function normalizeHistoryRole(v: unknown): Persona {
+  if (v === "amo" || v === "vera") return "vera";
+  return "sean";
 }
 
 export async function POST(req: NextRequest) {
   try {
     const body = await req.json();
-    const { context } = body as { context: Partial<NpcContext> };
+    // 用 any 取字段以兼容旧客户端字段名
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    const ctx: any = body?.context ?? {};
 
-    if (!context.chenSpoken || typeof context.chenSpoken !== "string") {
+    const partnerSpoken: string | undefined =
+      typeof ctx.partnerSpoken === "string"
+        ? ctx.partnerSpoken
+        : typeof ctx.chenSpoken === "string"
+        ? ctx.chenSpoken
+        : undefined;
+
+    if (!partnerSpoken) {
       return NextResponse.json(
-        { ok: false, error: "chenSpoken 不能为空" },
+        { ok: false, error: "partnerSpoken(或旧字段 chenSpoken)不能为空" },
         { status: 400 }
       );
     }
 
+    const persona = normalizePersona(ctx.persona);
+    const phase = normalizePhase(ctx.phase);
+
+    const direction: string | undefined =
+      typeof ctx.direction === "string"
+        ? ctx.direction
+        : typeof ctx.amoDirection === "string"
+        ? ctx.amoDirection
+        : undefined;
+
+    const dialogueHistory: NpcContext["dialogueHistory"] = Array.isArray(
+      ctx.dialogueHistory
+    )
+      ? ctx.dialogueHistory
+          .map(
+            // eslint-disable-next-line @typescript-eslint/no-explicit-any
+            (d: any) =>
+              d && typeof d.text === "string"
+                ? { role: normalizeHistoryRole(d.role), text: d.text as string }
+                : null
+          )
+          // eslint-disable-next-line @typescript-eslint/no-explicit-any
+          .filter((x: any): x is { role: Persona; text: string } => x !== null)
+      : undefined;
+
     const fullContext: NpcContext = {
-      persona: context.persona === "chen" ? "chen" : "amo",
-      sceneId: context.sceneId ?? "act1_aa",
+      persona,
+      phase,
+      sceneId:
+        typeof ctx.sceneId === "string" ? ctx.sceneId : "act1_warm",
       sceneBrief:
-        context.sceneBrief ??
-        "两人第七次约会,吃完饭,账单放在桌上,阿默提议 AA。",
-      situation: context.situation,
-      amoDirection: context.amoDirection,
-      chenSpoken: context.chenSpoken.slice(0, 500),
-      dialogueHistory: context.dialogueHistory,
-      balance: typeof context.balance === "number" ? context.balance : 0,
-      spokenTone: context.spokenTone,
-      pierced: context.pierced === true,
+        typeof ctx.sceneBrief === "string"
+          ? ctx.sceneBrief
+          : "两人吃完饭,在江边散步。夜风有点凉。",
+      situation:
+        typeof ctx.situation === "string" ? ctx.situation : undefined,
+      direction,
+      partnerSpoken: partnerSpoken.slice(0, 500),
+      dialogueHistory,
+      balance: typeof ctx.balance === "number" ? ctx.balance : 0,
+      partnerTone: normalizeTone(ctx.partnerTone ?? ctx.spokenTone),
     };
 
     const systemPrompt =
-      fullContext.persona === "chen"
-        ? buildChenSystemPrompt(fullContext)
-        : buildAmoSystemPrompt(fullContext);
+      persona === "vera"
+        ? buildVeraSystemPrompt(fullContext)
+        : buildSeanSystemPrompt(fullContext);
 
     let reply: string;
     let inner: string;
@@ -102,16 +188,18 @@ export async function POST(req: NextRequest) {
           { role: "system", content: systemPrompt },
           {
             role: "user",
-            content: `请输出阿默这一轮的 JSON(reply + inner)。`,
+            content: `请输出 ${
+              persona === "vera" ? "Vera" : "Sean"
+            } 这一轮的 JSON(reply + inner)。`,
           },
         ],
         { temperature: 0.85, maxTokens: 200 }
       );
-      ({ reply, inner } = parseAmoOutput(out));
+      ({ reply, inner } = parseOutput(out, persona));
     } catch (err) {
       console.error("[npc] LLM 调用失败,启用兜底:", err);
-      reply = pick(AMO_REPLY_FALLBACKS);
-      inner = pick(AMO_INNER_FALLBACKS);
+      reply = pick(replyPool(persona));
+      inner = pick(innerPool(persona));
     }
 
     return NextResponse.json({
