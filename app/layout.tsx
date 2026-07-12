@@ -2,8 +2,9 @@ import type { Metadata } from "next";
 import "./globals.css";
 
 export const metadata: Metadata = {
-  title: "过滤器 | The Filter",
-  description: "一对回避型×回避型的情侣,一段没有争吵、却在沉默中耗尽的关系。",
+  title: "玫瑰无限 | Rose Infinity",
+  description:
+    "一段好好的感情,是怎么一点点走散的。回到那些日子里,找出你当年没看见的瞬间。",
 };
 
 export default function RootLayout({

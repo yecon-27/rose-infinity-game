@@ -44,28 +44,28 @@ export default function Home() {
           className="fade-in-delayed text-xs tracking-[0.4em] text-white/40 uppercase"
           style={{ animationDelay: "0.3s" }}
         >
-          一段没有争吵的关系,是怎么结束的
+          回到那些以为还很长的日子里
         </p>
 
         <div className="fade-in-slow space-y-3">
           <h1 className="text-6xl font-serif tracking-[0.25em] text-white/95">
-            过滤器
+            玫瑰无限
           </h1>
-          <p className="text-xs text-white/50 tracking-[0.5em]">THE FILTER</p>
+          <p className="text-xs text-white/50 tracking-[0.5em]">ROSE INFINITY</p>
         </div>
 
         <div className="space-y-3 leading-loose text-white/70 text-sm">
           <p className="fade-in-delayed" style={{ animationDelay: "1.2s" }}>
-            你心里有话。
+            你们把未来都想好了。
           </p>
           <p className="fade-in-delayed" style={{ animationDelay: "2s" }}>
-            说出口的,却永远是别的。
+            后来它就那么淡了——你说不清是哪天。
           </p>
           <p
             className="fade-in-delayed text-white/45"
             style={{ animationDelay: "2.8s" }}
           >
-            你拦不住自己。
+            回去看看。这一次,好好看着她。
           </p>
         </div>
 
