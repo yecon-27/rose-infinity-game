@@ -9,7 +9,7 @@ export default function Home() {
   const [leaving, setLeaving] = useState(false);
   const leavingRef = useRef(false);
 
-  // 开始:先淡出到黑,再跳序章(序章本就是黑底,过渡顺滑,不再硬切黑屏)
+  // 开始：先淡出到黑，再跳序章（序章本就是黑底，过渡顺滑，不再硬切黑屏）
   const start = useCallback(() => {
     if (leavingRef.current) return;
     leavingRef.current = true;
@@ -30,7 +30,7 @@ export default function Home() {
 
   return (
     <main className="relative min-h-screen overflow-hidden flex flex-col items-center justify-center px-6 py-12">
-      {/* 背景:标题主视觉。离场时就地虚化+压暗(沉进回忆),不盖黑 */}
+      {/* 背景：标题主视觉。离场时就地虚化+压暗（沉进回忆），不盖黑 */}
       <div
         className="fixed inset-0 z-0"
         style={{
@@ -45,7 +45,7 @@ export default function Home() {
           priority
           className="object-cover ken-burns"
         />
-        {/* 居中暗角:文字处压暗,四周留住浅色水彩的通透 */}
+        {/* 居中暗角：文字处压暗，四周留住浅色水彩的通透 */}
         <div
           className="absolute inset-0"
           style={{
@@ -85,7 +85,7 @@ export default function Home() {
             className="fade-in-delayed text-white/65"
             style={{ animationDelay: "2.8s" }}
           >
-            回去看看。这一次,好好看着她。
+            回去看看。这一次，好好看着她。
           </p>
         </div>
 

@@ -11,7 +11,7 @@ export async function GET() {
         {
           role: "system",
           content:
-            "你是一个测试助手。请用一句话回复确认你能正常工作,并说出你是哪个模型。",
+            "你是一个测试助手。请用一句话回复确认你能正常工作，并说出你是哪个模型。",
         },
         { role: "user", content: "ping" },
       ],
