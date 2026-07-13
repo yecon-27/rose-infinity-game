@@ -21,20 +21,24 @@ export interface Choice {
    * 第一遍未必看得出;"看见"机制用它标记玩家当年错过/接住的瞬间。
    */
   reach?: boolean;
+  /** 选这项时,玩家角色切换到的表情(emotion key,如 "composed") */
+  face?: string;
   /**
    * 选后对方的回应。可留空 → 交给 /api/npc 依 phase + direction 现场生成。
-   * 写死则用于关键情感拍,保证情绪精准。
+   * 写死则用于关键情感拍,保证情绪精准。每句可带 face 切换说话者表情。
    */
-  reply?: Array<{ who: Speaker; text: string }>;
+  reply?: Array<{ who: Speaker; text: string; face?: string }>;
   /** 编剧给 NPC 的自然语言表演指示(喂 LLM,也供作者理解) */
   direction?: string;
 }
 
 export type Moment =
   | { kind: "narr"; text: string }
-  | { kind: "line"; who: Exclude<Speaker, "narr">; text: string }
+  | { kind: "line"; who: Exclude<Speaker, "narr">; text: string; face?: string }
   /** 幕中切换背景(如从会场走到楼梯间);瞬间生效,不占对话框 */
   | { kind: "bg"; src: string }
+  /** 不带台词地切换某人的表情(emotion key) */
+  | { kind: "face"; who: Exclude<Speaker, "narr">; emotion: string }
   | {
       kind: "beat";
       /** 引导语,如"他眼睛没离屏幕。你想凑近他——" */
@@ -50,8 +54,9 @@ export interface Scene {
   phase: Phase;
   /** 背景图路径 */
   bg: string;
-  /** 本幕对方(NPC)立绘 */
-  npcPortrait?: string;
+  /** 进场时的初始表情(emotion key),默认 warm */
+  veraFace?: string;
+  seanFace?: string;
   brief: string;
   /** 玩家视角(默认 vera) */
   pov?: Exclude<Speaker, "narr">;
@@ -68,7 +73,7 @@ export const HACKATHON_NIGHT: Scene = {
   title: "那晚的荷叶包鸡",
   phase: "warm",
   bg: "/images/scenes/hackathon-venue.png",
-  npcPortrait: "/images/characters/sean-focused.png",
+  seanFace: "focused",
   brief:
     "黑客松熬到深夜。晚饭凉在长桌那头,他还在赶代码。你也是这队的人,手里只有一杯给他续到第三回的美式。",
   pov: "vera",
@@ -141,7 +146,7 @@ export const HACKATHON_NIGHT: Scene = {
       kind: "narr",
       text: "外卖到了。你把他从屏幕前拽起来。楼梯间,夜黑透了,有人陆续下楼回家,脚步声在楼道里荡。",
     },
-    { kind: "line", who: "sean", text: "好累。" },
+    { kind: "line", who: "sean", text: "好累。", face: "tired" },
     {
       kind: "narr",
       text: "他抱住你,一股脑倒出来:队友好多东西不懂,早上技术选型选错了,review 代码纯属浪费工夫,vercel 免费版简直是垃圾……",
@@ -161,12 +166,14 @@ export const HACKATHON_NIGHT: Scene = {
             {
               who: "sean",
               text: "……谢谢你能跟我说。我都没意识到。我就是太累了,累到没法回应你。",
+              face: "warm",
             },
             { who: "narr", text: "他抱得更紧了。楼梯间的灯忽明忽暗。" },
           ],
         },
         {
           text: "“没事,你辛苦了,快趁热吃。”",
+          face: "composed",
           direction: "她把委屈咽下去,只哄他——又一次把自己排在后面。",
           reply: [
             { who: "sean", text: "嗯。你也吃。" },
@@ -180,7 +187,7 @@ export const HACKATHON_NIGHT: Scene = {
           text: "“你眼里就只有代码。”",
           direction: "带刺先扎。他会缩。",
           reply: [
-            { who: "sean", text: "……我不是。今天真的忙。" },
+            { who: "sean", text: "……我不是。今天真的忙。", face: "guilty" },
             {
               who: "narr",
               text: "他松开手去够筷子。那点想靠近的气,散了。",

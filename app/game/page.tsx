@@ -17,9 +17,25 @@ import {
 interface DisplayLine {
   who: Speaker;
   text: string;
+  /** 这句显示时,说话者切换到的表情(emotion key) */
+  face?: string;
 }
 
 type Mode = "flow" | "beat" | "done";
+
+/* 表情(emotion key → 立绘路径) */
+const VERA_FACES: Record<string, string> = {
+  warm: "/images/characters/vera-warm.png",
+  focused: "/images/characters/vera-focused.png",
+  composed: "/images/characters/vera-composed.png",
+  wistful: "/images/characters/vera-wistful.png",
+};
+const SEAN_FACES: Record<string, string> = {
+  warm: "/images/characters/sean-warm.png",
+  focused: "/images/characters/sean-focused.png",
+  tired: "/images/characters/sean-tired.png",
+  guilty: "/images/characters/sean-guilty.png",
+};
 
 /** 玩家这一局的选择足迹(供后续"看见"/回看用) */
 interface ChoiceLog {
@@ -83,6 +99,8 @@ function GameInner() {
   const [loading, setLoading] = useState(false);
   const [entering, setEntering] = useState(true);
   const [bg, setBg] = useState(scene.bg);
+  const [veraEmotion, setVeraEmotion] = useState(scene.veraFace ?? "warm");
+  const [seanEmotion, setSeanEmotion] = useState(scene.seanFace ?? "warm");
 
   const historyRef = useRef<Array<{ role: "vera" | "sean"; text: string }>>([]);
 
@@ -95,6 +113,8 @@ function GameInner() {
     setLoading(false);
     setEntering(true);
     setBg(scene.bg);
+    setVeraEmotion(scene.veraFace ?? "warm");
+    setSeanEmotion(scene.seanFace ?? "warm");
     historyRef.current = [];
     // 2200ms:与 .memory-focus / .memory-title 动画时长一致,画面对焦完成、幕名隐去后再放行。
     const t = setTimeout(() => setEntering(false), 2200);
@@ -103,6 +123,13 @@ function GameInner() {
 
   const current = queue[0];
   const tw = useTypewriter(current?.text ?? "");
+
+  /* 表情随当前显示的台词切换 */
+  useEffect(() => {
+    if (!current?.face) return;
+    if (current.who === "sean") setSeanEmotion(current.face);
+    else if (current.who === "vera") setVeraEmotion(current.face);
+  }, [current]);
 
   /* 引擎:队列空且 flow 时,消化下一个 moment */
   useEffect(() => {
@@ -119,8 +146,12 @@ function GameInner() {
       setBg(m.src);
       setIdx((i) => i + 1);
     } else if (m.kind === "line") {
-      setQueue([{ who: m.who, text: m.text }]);
+      setQueue([{ who: m.who, text: m.text, face: m.face }]);
       historyRef.current.push({ role: m.who, text: m.text });
+      setIdx((i) => i + 1);
+    } else if (m.kind === "face") {
+      if (m.who === "sean") setSeanEmotion(m.emotion);
+      else setVeraEmotion(m.emotion);
       setIdx((i) => i + 1);
     } else if (m.kind === "beat") {
       setOptIdx(0);
@@ -158,12 +189,16 @@ function GameInner() {
       historyRef.current.push({ role: playerRole, text: choice.text });
 
       // 先显示玩家这一句
-      const playerLine: DisplayLine = { who: playerRole, text: choice.text };
+      const playerLine: DisplayLine = {
+        who: playerRole,
+        text: choice.text,
+        face: choice.face,
+      };
 
       if (choice.reply && choice.reply.length) {
         const lines = [playerLine];
         for (const r of choice.reply) {
-          lines.push({ who: r.who, text: r.text });
+          lines.push({ who: r.who, text: r.text, face: r.face });
           if (r.who === "vera" || r.who === "sean")
             historyRef.current.push({ role: r.who, text: r.text });
         }
@@ -245,8 +280,8 @@ function GameInner() {
 
   /* ────────────────────────── 渲染 ────────────────────────── */
 
-  const veraPortrait = "/images/characters/vera-warm.png";
-  const seanPortrait = scene.npcPortrait ?? "/images/characters/sean-warm.png";
+  const veraPortrait = VERA_FACES[veraEmotion] ?? VERA_FACES.warm;
+  const seanPortrait = SEAN_FACES[seanEmotion] ?? SEAN_FACES.warm;
   const speaker = current?.who;
 
   return (
@@ -274,10 +309,11 @@ function GameInner() {
           style={{ opacity: speaker === playerRole ? 1 : 0.4 }}
         >
           <Image
+            key={veraPortrait}
             src={veraPortrait}
             alt="Vera"
             fill
-            className="object-contain object-bottom drop-shadow-2xl"
+            className="object-contain object-bottom drop-shadow-2xl fade-in"
           />
         </div>
         <div
@@ -285,10 +321,11 @@ function GameInner() {
           style={{ opacity: speaker === npcRole ? 1 : 0.4 }}
         >
           <Image
+            key={seanPortrait}
             src={seanPortrait}
             alt="Sean"
             fill
-            className="object-contain object-bottom drop-shadow-2xl"
+            className="object-contain object-bottom drop-shadow-2xl fade-in"
           />
         </div>
       </div>
