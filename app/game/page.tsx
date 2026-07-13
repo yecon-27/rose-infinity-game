@@ -166,9 +166,9 @@ function GameInner() {
       if (!tw.done) tw.skip();
       else setQueue((q) => q.slice(1));
     } else if (mode === "done") {
-      router.push("/");
+      router.push(scene.onDone ?? "/");
     }
-  }, [entering, loading, mode, queue.length, tw, router]);
+  }, [entering, loading, mode, queue.length, tw, router, scene]);
 
   /* 玩家做出选择 */
   const npcRole: "vera" | "sean" = scene.pov === "sean" ? "vera" : "sean";
@@ -398,7 +398,7 @@ function GameInner() {
             <div className="text-center space-y-4 cursor-pointer">
               <p className="text-white/80 tracking-[0.2em]">本章结束</p>
               <p className="text-white/40 text-xs tracking-[0.3em]">
-                空格 / 点击 回到首页
+                空格 / 点击 继续
               </p>
             </div>
           ) : null}

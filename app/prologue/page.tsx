@@ -57,9 +57,10 @@ export default function ProloguePage() {
     return () => window.removeEventListener("keydown", onKey);
   });
 
-  // 世界随推进慢慢显影
-  const bgOpacity = Math.min(0.5, idx * 0.07);
-  const bgBlur = Math.max(2, 9 - idx);
+  // 承接标题页离场的"变暗虚化"状态:开场就有一张压暗、虚化的同一张图,
+  // 随推进极缓慢地清晰一点点(记忆尚未完全对焦,真正对焦留到进入场景时)。
+  const bgOpacity = Math.min(0.6, 0.48 + idx * 0.02);
+  const bgBlur = Math.max(7, 12 - idx * 0.6);
 
   const screen = SCREENS[idx];
 
@@ -78,7 +79,7 @@ export default function ProloguePage() {
         }}
       >
         <Image
-          src="/images/scenes/warm-room.png"
+          src="/images/scenes/title_keyart.png"
           alt=""
           fill
           priority

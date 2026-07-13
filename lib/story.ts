@@ -60,7 +60,34 @@ export interface Scene {
   brief: string;
   /** 玩家视角(默认 vera) */
   pov?: Exclude<Speaker, "narr">;
+  /** 本幕走完后去哪(默认回首页;设为 /look?id=xxx 进入"看见"回看) */
+  onDone?: string;
   script: Moment[];
+}
+
+/* ─────────── "看见" · 回看数据 ───────────
+ * 活过一遍之后,回到同一段记忆:这次不推进,而是找出当年没看见的"伸手",
+ * 点开才浮现对方那一侧当时没说出口的心情。这是本作的玩法灵魂。
+ */
+export interface LookbackMoment {
+  /** 这一刻的背景 */
+  bg: string;
+  /** 当年表面上发生的(旁白视角,你当时看到的) */
+  surface: string;
+  /** 点开才看见:对方当年没说出口的那句 */
+  hidden: string;
+  /** 这句藏话是谁的 */
+  who: "sean" | "vera";
+}
+
+export interface Lookback {
+  id: string;
+  title: string;
+  /** 开场旁白 */
+  intro: string[];
+  moments: LookbackMoment[];
+  /** 收尾旁白 */
+  outro: string[];
 }
 
 /* ─────────── 甜蜜期 · 锚点一 · 那晚的荷叶包鸡 ───────────
@@ -74,6 +101,7 @@ export const HACKATHON_NIGHT: Scene = {
   phase: "warm",
   bg: "/images/scenes/hackathon-venue.png",
   seanFace: "focused",
+  onDone: "/look?id=warm_hackathon",
   brief:
     "黑客松熬到深夜。晚饭凉在长桌那头,他还在赶代码。你也是这队的人,手里只有一杯给他续到第三回的美式。",
   pov: "vera",
@@ -212,4 +240,55 @@ export const STORY: Scene[] = [HACKATHON_NIGHT];
 
 export function getStoryScene(id: string): Scene | undefined {
   return STORY.find((s) => s.id === id);
+}
+
+/* ─────────── 回看 · 那晚的荷叶包鸡(看 Sean 那一侧) ───────────
+ * 你以为你都记得。可当时你只看见他没回应你——没看见他那一侧在沉。
+ * 这不是控诉他,是让玩家"看见":他不是不爱,是先被自己淹没了。
+ */
+export const HACKATHON_LOOKBACK: Lookback = {
+  id: "warm_hackathon",
+  title: "回看 · 那晚的荷叶包鸡",
+  intro: [
+    "那一晚,你以为你都记得。",
+    "可有些东西,当时你没看见。",
+    "再看一遍。这次,看他。",
+  ],
+  moments: [
+    {
+      bg: "/images/scenes/hackathon-venue.png",
+      surface: "你握住他敲键盘的那只手。他“嗯”了一声,把手抽了回去。",
+      hidden:
+        "我知道那是她的手。可我一抬头,那个 bug 就从脑子里溜了。等我搞完,一定好好牵回来——我总是说“等我搞完”。",
+      who: "sean",
+    },
+    {
+      bg: "/images/scenes/hackathon-venue.png",
+      surface: "你问他吃什么,他头也不抬:“随便,你点吧。”",
+      hidden:
+        "不是随便。是我连挑一个菜的力气,都想省下来给代码。她记得我不吃辣、爱清淡——我却把这份记得,当成了理所当然。",
+      who: "sean",
+    },
+    {
+      bg: "/images/scenes/hackathon-stairs.png",
+      surface: "楼梯上,他抱住你,一口气倒完了一肚子苦水。",
+      hidden:
+        "她等了我一整晚。我却先说了我的累。等她开口我才发现——原来我一直在被她接住,却从没问过她,累不累。",
+      who: "sean",
+    },
+  ],
+  outro: [
+    "原来那晚,他不是没看见你。",
+    "他只是,先被自己淹没了。",
+    "有些手,当年没能牵住。",
+    "但你已经开始看见了。",
+  ],
+};
+
+export const LOOKBACKS: Record<string, Lookback> = {
+  warm_hackathon: HACKATHON_LOOKBACK,
+};
+
+export function getLookback(id: string): Lookback | undefined {
+  return LOOKBACKS[id];
 }
