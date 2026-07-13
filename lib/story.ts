@@ -8,7 +8,6 @@
  *   - phase 决定语气温度(warm 热 / strained 冷),对齐 npc-prompt 与设计基准。
  *
  * 设计依据:docs/writing/dialogue-style-guide.md 第一部分。
- * 旧的 lib/scenes.ts 仍供旧引擎使用,迁移完成后删除。
  */
 
 export type Phase = "warm" | "strained";
@@ -34,6 +33,8 @@ export interface Choice {
 export type Moment =
   | { kind: "narr"; text: string }
   | { kind: "line"; who: Exclude<Speaker, "narr">; text: string }
+  /** 幕中切换背景(如从会场走到楼梯间);瞬间生效,不占对话框 */
+  | { kind: "bg"; src: string }
   | {
       kind: "beat";
       /** 引导语,如"他眼睛没离屏幕。你想凑近他——" */
@@ -135,6 +136,7 @@ export const HACKATHON_NIGHT: Scene = {
         },
       ],
     },
+    { kind: "bg", src: "/images/scenes/hackathon-stairs.png" },
     {
       kind: "narr",
       text: "外卖到了。你把他从屏幕前拽起来。楼梯间,夜黑透了,有人陆续下楼回家,脚步声在楼道里荡。",

@@ -82,6 +82,7 @@ function GameInner() {
   const [optIdx, setOptIdx] = useState(0);
   const [loading, setLoading] = useState(false);
   const [chapterCard, setChapterCard] = useState(true);
+  const [bg, setBg] = useState(scene.bg);
 
   const historyRef = useRef<Array<{ role: "vera" | "sean"; text: string }>>([]);
 
@@ -93,8 +94,11 @@ function GameInner() {
     setOptIdx(0);
     setLoading(false);
     setChapterCard(true);
+    setBg(scene.bg);
     historyRef.current = [];
-    const t = setTimeout(() => setChapterCard(false), 2400);
+    // 2900ms:留一点缓冲,确保 .chapter-card 的 2.8s 淡出动画完整播完再卸载,
+    // 否则黑幕会在淡出到一半时被直接抽走,造成突然的画面跳变。
+    const t = setTimeout(() => setChapterCard(false), 2900);
     return () => clearTimeout(t);
   }, [sceneId]);
 
@@ -111,6 +115,9 @@ function GameInner() {
     }
     if (m.kind === "narr") {
       setQueue([{ who: "narr", text: m.text }]);
+      setIdx((i) => i + 1);
+    } else if (m.kind === "bg") {
+      setBg(m.src);
       setIdx((i) => i + 1);
     } else if (m.kind === "line") {
       setQueue([{ who: m.who, text: m.text }]);
@@ -250,7 +257,14 @@ function GameInner() {
     >
       {/* 背景 */}
       <div className="fixed inset-0 z-0">
-        <Image src={scene.bg} alt="" fill priority className="object-cover" />
+        <Image
+          key={bg}
+          src={bg}
+          alt=""
+          fill
+          priority
+          className="object-cover fade-in-slow"
+        />
         <div className="absolute inset-0 bg-gradient-to-b from-black/40 via-black/40 to-black/80" />
       </div>
 

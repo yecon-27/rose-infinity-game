@@ -1,18 +1,12 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useEffect } from "react";
 import Link from "next/link";
 import Image from "next/image";
 import { useRouter } from "next/navigation";
-import { isHerNightUnlocked } from "@/lib/playthrough";
 
 export default function Home() {
   const router = useRouter();
-  const [herNight, setHerNight] = useState(false);
-
-  useEffect(() => {
-    setHerNight(isHerNightUnlocked());
-  }, []);
 
   useEffect(() => {
     function onKey(e: KeyboardEvent) {
@@ -82,14 +76,6 @@ export default function Home() {
               Enter
             </span>
           </Link>
-          {herNight && (
-            <Link
-              href="/game?scene=amo_diary"
-              className="block w-full py-2.5 px-6 border border-accent/40 text-accent/90 hover:border-accent hover:bg-accent hover:text-ink transition-colors duration-500 tracking-[0.4em] text-xs"
-            >
-              她 的 那 一 晚 · 二周目
-            </Link>
-          )}
           <p className="text-xs text-white/35">
             建议戴耳机 · 在安静的环境下游玩 · 约 10 分钟
           </p>
