@@ -523,7 +523,6 @@ const WARM_NVC: Scene = {
       kind: "narr",
       text: "和黑客松那次一样：他们做得到，只是没接住。工具在手，压力一来还是滑走了。",
     },
-    { kind: "bg", src: "/images/scenes/campus-dusk.png" },
     {
       kind: "narr",
       text: "暮色里，她忽然说：等毕业，房子要朝南，狗要养柯基。他说行，又补一句，得先能养活自己。",
@@ -617,10 +616,6 @@ const BURST_PHONE: Scene = {
           ],
         },
       ],
-    },
-    {
-      kind: "bg",
-      src: "/images/scenes/dorm-corner-night.png",
     },
     {
       kind: "narr",
@@ -796,10 +791,6 @@ const COLD_FEVER: Scene = {
           ],
         },
       ],
-    },
-    {
-      kind: "bg",
-      src: "/images/scenes/fever-split.png",
     },
     {
       kind: "narr",

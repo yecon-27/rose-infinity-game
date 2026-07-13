@@ -33,6 +33,8 @@ const COPIES = [
   ["generated-images/scenes", "暖的室内_", "public/images/scenes/warm-room.png"],
   ["generated-images/scenes", "未来的公寓_", "public/images/scenes/future-apartment.png"],
   ["generated-images/scenes", "半年后的便利店_", "public/images/scenes/konbini-later.png"],
+  ["generated-images/scenes", "半年后的便利店_", "public/images/scenes/konbini-night.png"],
+  ["generated-images/scenes", "商场服装店试衣间外", "public/images/scenes/mall-fitting.png"],
 ];
 
 function resolveSource(dir, nameOrPrefix) {
