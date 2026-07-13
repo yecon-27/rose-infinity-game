@@ -134,22 +134,22 @@ export const HACKATHON_NIGHT: Scene = {
     {
       kind: "line",
       who: "sean",
-      text: "等一下下，等阿泽把那个分支 push 上来就好……马上。",
+      text: "等一下下，等阿泽把那个分支 push 上来就好……",
     },
-    { kind: "narr", text: "“马上”，他今晚说过第四回了。" },
+    { kind: "narr", text: "“等一下”，他今晚说过第四回了。" },
     {
       kind: "beat",
       prompt: "他眼睛没离屏幕。你想凑近他——",
       situation: "黑客松深夜，他埋头赶代码，你想要一点回应。",
       choices: [
         {
-          text: "从背后捶捶他的肩。",
+          text: "（从背后捶捶他的肩）",
           reach: true,
           face: "focused",
           reply: [{ who: "sean", text: "嗯……你先歇会儿。" }],
         },
         {
-          text: "握住他敲键盘的那只手。",
+          text: "（握住他敲键盘的那只手）",
           reach: true,
           face: "focused",
           reply: [
@@ -160,7 +160,7 @@ export const HACKATHON_NIGHT: Scene = {
           ],
         },
         {
-          text: "凑过去，等一个眼神。",
+          text: "（凑过去，等一个眼神）",
           reach: true,
           face: "focused",
           reply: [{ who: "narr", text: "他没有看你。屏幕的光在他镜片上跳。" }],
@@ -169,7 +169,7 @@ export const HACKATHON_NIGHT: Scene = {
     },
     { kind: "narr", text: "好，收到。今晚全世界最要紧的，是那个分支。" },
     { kind: "narr", text: "别人吃完陆续回来了。" },
-    { kind: "line", who: "vera", text: "那我点外卖了。", face: "warm" },
+    { kind: "line", who: "vera", text: "那我点外卖了。" },
     { kind: "line", who: "sean", text: "随便。你点吧。" },
     {
       kind: "beat",
@@ -209,13 +209,13 @@ export const HACKATHON_NIGHT: Scene = {
         {
           text: "“你当队长已经很好了。……不过你今天也忽略我了，我说了好几次我饿，你都没正面回应。但我知道你难，所以这些我弄好了。”",
           reach: true,
+          face: "warm",
           direction:
             "她先肯定他、再用事实（不是指责）说出自己的委屈。这是成功修复的范本。",
           reply: [
             {
               who: "sean",
               text: "……谢谢你能跟我说。我都没意识到。我就是太累了，累到没法回应你。",
-              face: "warm",
             },
             { who: "narr", text: "他抱得更紧了。楼梯间的灯忽明忽暗。" },
           ],
@@ -256,7 +256,7 @@ export const HACKATHON_NIGHT: Scene = {
           text: "“你眼里就只有代码。”",
           direction: "带刺先扎。他会缩。",
           reply: [
-            { who: "sean", text: "……我不是。今天真的忙。", face: "guilty" },
+            { who: "sean", text: "……我不是。今天真的忙。" },
             {
               who: "narr",
               text: "他松开手去够筷子。那点想靠近的气，散了。",

@@ -104,6 +104,11 @@ function LookInner() {
     phase === "reachback" ||
     phase === "outro";
   const whoLabel = (w: "sean" | "vera") => (w === "sean" ? "Sean" : "Vera");
+  // 立绘编排:前两个瞬间左侧(Sean);第三个瞬间起转右侧(Vera)、左侧淡出;接住后右侧也淡出
+  const showLeft = phase === "moments" && momentIdx < 2;
+  const showRight =
+    (phase === "moments" && momentIdx >= 2) ||
+    (phase === "reachback" && !reachDone);
 
   return (
     <main
@@ -130,10 +135,36 @@ function LookInner() {
         <div className="absolute inset-0 bg-black/45" />
       </div>
 
-      {/* 接住时:玫瑰从底部盛放浮现(压在底部,不遮挡居中的文字) */}
+      {/* 左侧 · Sean(前两个瞬间:你正看着的那个人) */}
+      <div
+        className="fixed bottom-0 left-2 z-[6] h-[60vh] w-[28vw] max-w-[320px] min-w-[150px] pointer-events-none"
+        style={{ opacity: showLeft ? 1 : 0, transition: "opacity 1200ms ease" }}
+      >
+        <Image
+          src="/images/characters/sean-tired.png"
+          alt="Sean"
+          fill
+          className="object-contain object-bottom drop-shadow-2xl"
+        />
+      </div>
+
+      {/* 右侧 · Vera(第三个瞬间起:回到自己) */}
+      <div
+        className="fixed bottom-0 right-2 z-[6] h-[60vh] w-[28vw] max-w-[320px] min-w-[150px] pointer-events-none"
+        style={{ opacity: showRight ? 1 : 0, transition: "opacity 1200ms ease" }}
+      >
+        <Image
+          src="/images/characters/vera-composed.png"
+          alt="Vera"
+          fill
+          className="object-contain object-bottom drop-shadow-2xl"
+        />
+      </div>
+
+      {/* 接住:右侧淡出的同时,玫瑰完整盛放浮在下方约 1/4 处 */}
       {reachDone && (
-        <div className="fixed inset-x-0 bottom-0 z-[5] flex justify-center pointer-events-none">
-          <div className="relative w-56 h-56 translate-y-1/3 fade-in-slow opacity-45">
+        <div className="fixed inset-x-0 bottom-[10%] z-[5] flex justify-center pointer-events-none">
+          <div className="relative w-60 h-60 fade-in-slow opacity-90">
             <Image
               src="/images/motifs/rose-bloom.png"
               alt=""
