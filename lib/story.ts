@@ -28,6 +28,11 @@ export interface Choice {
    * 写死则用于关键情感拍,保证情绪精准。每句可带 face 切换说话者表情。
    */
   reply?: Array<{ who: Speaker; text: string; face?: string }>;
+  /**
+   * 本选项专属的收尾(接在 reply 之后)。让不同情感方向的选择走向不同的结尾,
+   * 而不是三条路汇到同一句。是这一拍"分支"的落点。
+   */
+  after?: Array<{ who: Speaker; text: string; face?: string }>;
   /** 编剧给 NPC 的自然语言表演指示(喂 LLM,也供作者理解) */
   direction?: string;
 }
@@ -86,6 +91,12 @@ export interface Lookback {
   /** 开场旁白 */
   intro: string[];
   moments: LookbackMoment[];
+  /** 看见之后的"接住":回到那一刻,这一次伸手。治愈的落点(可选)。 */
+  reachback?: {
+    prompt: string;
+    choice: string;
+    response: string[];
+  };
   /** 收尾旁白 */
   outro: string[];
 }
@@ -128,11 +139,13 @@ export const HACKATHON_NIGHT: Scene = {
         {
           text: "从背后捶捶他的肩。",
           reach: true,
+          face: "focused",
           reply: [{ who: "sean", text: "嗯……你先歇会儿。" }],
         },
         {
           text: "握住他敲键盘的那只手。",
           reach: true,
+          face: "focused",
           reply: [
             {
               who: "narr",
@@ -143,13 +156,14 @@ export const HACKATHON_NIGHT: Scene = {
         {
           text: "凑过去,等一个眼神。",
           reach: true,
+          face: "focused",
           reply: [{ who: "narr", text: "他没有看你。屏幕的光在他镜片上跳。" }],
         },
       ],
     },
     { kind: "narr", text: "好,收到。今晚全世界最要紧的,是那个分支。" },
     { kind: "narr", text: "别人吃完陆续回来了。" },
-    { kind: "line", who: "vera", text: "那我点外卖了。" },
+    { kind: "line", who: "vera", text: "那我点外卖了。", face: "warm" },
     { kind: "line", who: "sean", text: "随便。你点吧。" },
     {
       kind: "beat",
@@ -198,6 +212,16 @@ export const HACKATHON_NIGHT: Scene = {
             },
             { who: "narr", text: "他抱得更紧了。楼梯间的灯忽明忽暗。" },
           ],
+          after: [
+            {
+              who: "narr",
+              text: "楼梯上两盒饭,热气重新升起来。荷叶掀开,是他老家的味道。",
+            },
+            {
+              who: "narr",
+              text: "你们没聊房子。可那天晚上,那座还没影的小房子,好像又近了一点。",
+            },
+          ],
         },
         {
           text: "“没事,你辛苦了,快趁热吃。”",
@@ -208,6 +232,16 @@ export const HACKATHON_NIGHT: Scene = {
             {
               who: "narr",
               text: "你把委屈和荷叶一起,叠好,压在了盒底。",
+            },
+          ],
+          after: [
+            {
+              who: "narr",
+              text: "两盒饭静静开着。他吃得很快,你没怎么动筷子。",
+            },
+            {
+              who: "narr",
+              text: "小房子没人提。它就停在那儿,像一句谁都没接住的话。",
             },
           ],
         },
@@ -221,16 +255,18 @@ export const HACKATHON_NIGHT: Scene = {
               text: "他松开手去够筷子。那点想靠近的气,散了。",
             },
           ],
+          after: [
+            {
+              who: "narr",
+              text: "他闷头吃饭。楼道的灯灭了一次,谁也没去按。",
+            },
+            {
+              who: "narr",
+              text: "那座还没影的小房子,今晚,离得更远了。",
+            },
+          ],
         },
       ],
-    },
-    {
-      kind: "narr",
-      text: "楼梯上两盒饭,热气重新升起来。荷叶掀开,是他老家的味道。",
-    },
-    {
-      kind: "narr",
-      text: "你们没聊房子。可那天晚上,那座还没影的小房子,好像又近了一点。",
     },
   ],
 };
@@ -277,6 +313,15 @@ export const HACKATHON_LOOKBACK: Lookback = {
       who: "sean",
     },
   ],
+  reachback: {
+    prompt: "现在,你都看见了。如果能回到那一晚——",
+    choice: "走过去,牵住他的手:“你也辛苦了。我们都在。”",
+    response: [
+      "你没能真的回到那一晚。",
+      "但下一次,有人在你面前悄悄伸手时——",
+      "你会认得出了。",
+    ],
+  },
   outro: [
     "原来那晚,他不是没看见你。",
     "他只是,先被自己淹没了。",

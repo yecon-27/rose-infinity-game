@@ -23,12 +23,13 @@ interface DisplayLine {
 
 type Mode = "flow" | "beat" | "done";
 
-/* 表情(emotion key → 立绘路径) */
-const VERA_FACES: Record<string, string> = {
-  warm: "/images/characters/vera-warm.png",
-  focused: "/images/characters/vera-focused.png",
-  composed: "/images/characters/vera-composed.png",
-  wistful: "/images/characters/vera-wistful.png",
+/* Vera 立绘:按周目/场景切换两张图
+ *  - 一周目(现场,玩家=Vera,pov=vera)→ composed(压着情绪的平静)
+ *  - 二周目/回看(视角对调,pov=sean)→ wistful(回忆里的怅然)
+ */
+const VERA_PORTRAITS: Record<"vera" | "sean", string> = {
+  vera: "/images/characters/vera-composed.png",
+  sean: "/images/characters/vera-wistful.png",
 };
 const SEAN_FACES: Record<string, string> = {
   warm: "/images/characters/sean-warm.png",
@@ -36,6 +37,61 @@ const SEAN_FACES: Record<string, string> = {
   tired: "/images/characters/sean-tired.png",
   guilty: "/images/characters/sean-guilty.png",
 };
+
+/**
+ * 立绘 · 交叉淡入
+ * 换表情时:旧脸淡出、新脸同时淡入(叠着过渡),读作"表情变化"而不是"换了张图"。
+ * active=false 时整体压暗,表示此刻不是说话者。
+ */
+function Portrait({
+  src,
+  alt,
+  active,
+  side,
+}: {
+  src: string;
+  alt: string;
+  active: boolean;
+  side: "left" | "right";
+}) {
+  const [layers, setLayers] = useState<Array<{ id: number; src: string }>>([
+    { id: 0, src },
+  ]);
+  const idRef = useRef(0);
+  useEffect(() => {
+    setLayers((prev) => {
+      if (prev[prev.length - 1].src === src) return prev;
+      idRef.current += 1;
+      return [...prev, { id: idRef.current, src }].slice(-2);
+    });
+  }, [src]);
+  return (
+    <div
+      className={`absolute bottom-0 ${
+        side === "left" ? "left-2" : "right-2"
+      } h-[62vh] w-[30vw] max-w-[340px] min-w-[160px] transition-opacity duration-500`}
+      style={{ opacity: active ? 1 : 0.4 }}
+    >
+      {layers.map((l, i) => {
+        const top = i === layers.length - 1;
+        return (
+          <Image
+            key={l.id}
+            src={l.src}
+            alt={alt}
+            fill
+            className={`object-contain object-bottom drop-shadow-2xl ${
+              top ? "fade-in" : ""
+            }`}
+            style={
+              top ? undefined : { opacity: 0, transition: "opacity 700ms ease" }
+            }
+          />
+        );
+      })}
+    </div>
+  );
+}
 
 /** 玩家这一局的选择足迹(供后续"看见"/回看用) */
 interface ChoiceLog {
@@ -195,12 +251,23 @@ function GameInner() {
         face: choice.face,
       };
 
+      const afterLines: DisplayLine[] = (choice.after ?? []).map((a) => ({
+        who: a.who,
+        text: a.text,
+        face: a.face,
+      }));
+
       if (choice.reply && choice.reply.length) {
         const lines = [playerLine];
         for (const r of choice.reply) {
           lines.push({ who: r.who, text: r.text, face: r.face });
           if (r.who === "vera" || r.who === "sean")
             historyRef.current.push({ role: r.who, text: r.text });
+        }
+        for (const a of afterLines) {
+          lines.push(a);
+          if (a.who === "vera" || a.who === "sean")
+            historyRef.current.push({ role: a.who, text: a.text });
         }
         setQueue(lines);
         setMode("flow");
@@ -232,7 +299,11 @@ function GameInner() {
         const data = await res.json();
         const reply: string = data?.ok ? data.reply : "……";
         historyRef.current.push({ role: npcRole, text: reply });
-        setQueue((q) => [...q, { who: npcRole, text: reply }]);
+        for (const a of afterLines) {
+          if (a.who === "vera" || a.who === "sean")
+            historyRef.current.push({ role: a.who, text: a.text });
+        }
+        setQueue((q) => [...q, { who: npcRole, text: reply }, ...afterLines]);
       } catch {
         setQueue((q) => [...q, { who: npcRole, text: "……" }]);
       } finally {
@@ -280,7 +351,7 @@ function GameInner() {
 
   /* ────────────────────────── 渲染 ────────────────────────── */
 
-  const veraPortrait = VERA_FACES[veraEmotion] ?? VERA_FACES.warm;
+  const veraPortrait = VERA_PORTRAITS[scene.pov ?? "vera"];
   const seanPortrait = SEAN_FACES[seanEmotion] ?? SEAN_FACES.warm;
   const speaker = current?.who;
 
@@ -302,32 +373,20 @@ function GameInner() {
         <div className="absolute inset-0 bg-gradient-to-b from-black/40 via-black/40 to-black/80" />
       </div>
 
-      {/* 立绘:Vera(左) + Sean(右),高亮当前说话者 */}
+      {/* 立绘:Vera(左) + Sean(右),表情交叉淡入,高亮当前说话者 */}
       <div className="absolute inset-0 z-10 pointer-events-none">
-        <div
-          className="absolute bottom-0 left-2 h-[62vh] w-[30vw] max-w-[340px] min-w-[160px] transition-opacity duration-500"
-          style={{ opacity: speaker === playerRole ? 1 : 0.4 }}
-        >
-          <Image
-            key={veraPortrait}
-            src={veraPortrait}
-            alt="Vera"
-            fill
-            className="object-contain object-bottom drop-shadow-2xl fade-in"
-          />
-        </div>
-        <div
-          className="absolute bottom-0 right-2 h-[62vh] w-[30vw] max-w-[340px] min-w-[160px] transition-opacity duration-500"
-          style={{ opacity: speaker === npcRole ? 1 : 0.4 }}
-        >
-          <Image
-            key={seanPortrait}
-            src={seanPortrait}
-            alt="Sean"
-            fill
-            className="object-contain object-bottom drop-shadow-2xl fade-in"
-          />
-        </div>
+        <Portrait
+          src={veraPortrait}
+          alt="Vera"
+          active={speaker === "vera"}
+          side="left"
+        />
+        <Portrait
+          src={seanPortrait}
+          alt="Sean"
+          active={speaker === "sean"}
+          side="right"
+        />
       </div>
 
       {/* 进场:记忆对焦时,幕名浮在正在清晰的画面上,再隐去(不经过纯黑) */}

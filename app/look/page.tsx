@@ -18,7 +18,7 @@ export default function LookPage() {
   );
 }
 
-type Phase = "intro" | "moments" | "outro";
+type Phase = "intro" | "moments" | "reachback" | "outro";
 
 function LookInner() {
   const router = useRouter();
@@ -30,6 +30,7 @@ function LookInner() {
   const [introIdx, setIntroIdx] = useState(0);
   const [momentIdx, setMomentIdx] = useState(0);
   const [revealed, setRevealed] = useState(false);
+  const [reachDone, setReachDone] = useState(false);
   const [outroIdx, setOutroIdx] = useState(0);
 
   const advance = useCallback(() => {
@@ -47,7 +48,15 @@ function LookInner() {
       } else if (momentIdx < look.moments.length - 1) {
         setMomentIdx((i) => i + 1);
         setRevealed(false);
+      } else if (look.reachback) {
+        setPhase("reachback");
       } else {
+        setPhase("outro");
+        setOutroIdx(0);
+      }
+    } else if (phase === "reachback") {
+      if (!reachDone) setReachDone(true); // 这一次,伸手
+      else {
         setPhase("outro");
         setOutroIdx(0);
       }
@@ -55,7 +64,7 @@ function LookInner() {
       if (outroIdx < look.outro.length - 1) setOutroIdx((i) => i + 1);
       else router.push("/");
     }
-  }, [look, phase, introIdx, revealed, momentIdx, outroIdx, router]);
+  }, [look, phase, introIdx, revealed, momentIdx, reachDone, outroIdx, router]);
 
   useEffect(() => {
     function onKey(e: KeyboardEvent) {
@@ -82,8 +91,18 @@ function LookInner() {
   }
 
   const moment = look.moments[momentIdx];
+  const lastBg = look.moments[look.moments.length - 1]?.bg ?? "";
   const bg =
-    phase === "moments" ? moment.bg : look.moments[0]?.bg ?? "";
+    phase === "intro"
+      ? look.moments[0]?.bg ?? ""
+      : phase === "moments"
+      ? moment.bg
+      : lastBg;
+  // 看清后(或已进入接住/收尾)画面对上焦,不再虚化
+  const clear =
+    (phase === "moments" && revealed) ||
+    phase === "reachback" ||
+    phase === "outro";
   const whoLabel = (w: "sean" | "vera") => (w === "sean" ? "Sean" : "Vera");
 
   return (
@@ -101,16 +120,41 @@ function LookInner() {
             priority
             className="object-cover"
             style={{
-              filter:
-                phase === "moments" && revealed
-                  ? "none"
-                  : "blur(9px) saturate(0.5) brightness(0.55)",
+              filter: clear
+                ? "none"
+                : "blur(9px) saturate(0.5) brightness(0.55)",
               transition: "filter 1.3s ease",
             }}
           />
         )}
         <div className="absolute inset-0 bg-black/45" />
       </div>
+
+      {/* 接住时:玫瑰盛放浮现 */}
+      {reachDone && (
+        <div className="fixed inset-0 z-[5] flex items-center justify-center pointer-events-none">
+          <div className="relative w-64 h-64 fade-in-slow opacity-70">
+            <Image
+              src="/images/motifs/rose-bloom.png"
+              alt=""
+              fill
+              className="object-contain"
+            />
+          </div>
+        </div>
+      )}
+
+      {/* 她那一晚 · Vera 怅然立绘(回看中浮现,作为这一夜的情绪锚点) */}
+      {phase !== "intro" && (
+        <div className="fixed bottom-0 left-2 z-[8] h-[60vh] w-[30vw] max-w-[340px] min-w-[160px] pointer-events-none fade-in-slow opacity-90">
+          <Image
+            src="/images/characters/vera-wistful.png"
+            alt="Vera"
+            fill
+            className="object-contain object-bottom drop-shadow-2xl"
+          />
+        </div>
+      )}
 
       {/* 前景内容 */}
       <div className="relative z-10 min-h-screen flex flex-col items-center justify-center px-8 text-center">
@@ -161,6 +205,37 @@ function LookInner() {
           </div>
         )}
 
+        {phase === "reachback" && look.reachback && (
+          <div className="max-w-lg space-y-8">
+            <p className="text-white/70 text-sm leading-loose">
+              {look.reachback.prompt}
+            </p>
+            {!reachDone ? (
+              <button
+                type="button"
+                onClick={(e) => {
+                  e.stopPropagation();
+                  advance();
+                }}
+                className="mx-auto block px-6 py-3 border border-accent/60 text-accent/90 hover:border-accent hover:bg-accent hover:text-ink transition-colors text-sm leading-relaxed"
+              >
+                {look.reachback.choice}
+              </button>
+            ) : (
+              <div className="fade-in space-y-4">
+                {look.reachback.response.map((line, i) => (
+                  <p
+                    key={i}
+                    className="text-white/95 text-base leading-loose"
+                  >
+                    {line}
+                  </p>
+                ))}
+              </div>
+            )}
+          </div>
+        )}
+
         {phase === "outro" && (
           <p
             key={outroIdx}
@@ -174,6 +249,8 @@ function LookInner() {
         <p className="fixed bottom-10 text-[10px] tracking-[0.3em] text-white/30 soft-pulse">
           {phase === "moments" && !revealed
             ? "点亮 · 看清这一刻"
+            : phase === "reachback" && !reachDone
+            ? "这一次 · 伸手"
             : phase === "outro" && outroIdx >= look.outro.length - 1
             ? "空格 / 点击 结束"
             : "空格 / 点击 继续"}
