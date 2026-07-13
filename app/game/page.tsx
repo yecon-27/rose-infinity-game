@@ -373,19 +373,20 @@ function GameInner() {
         <div className="absolute inset-0 bg-gradient-to-b from-black/40 via-black/40 to-black/80" />
       </div>
 
-      {/* 立绘:Vera(左) + Sean(右),表情交叉淡入,高亮当前说话者 */}
+      {/* 立绘:Vera + Sean,表情交叉淡入,高亮当前说话者
+       * 一周目(pov=vera)交换站位:Sean 在左、Vera 在右;二周目恢复默认。 */}
       <div className="absolute inset-0 z-10 pointer-events-none">
         <Portrait
           src={veraPortrait}
           alt="Vera"
           active={speaker === "vera"}
-          side="left"
+          side={scene.pov === "vera" ? "right" : "left"}
         />
         <Portrait
           src={seanPortrait}
           alt="Sean"
           active={speaker === "sean"}
-          side="right"
+          side={scene.pov === "vera" ? "left" : "right"}
         />
       </div>
 
