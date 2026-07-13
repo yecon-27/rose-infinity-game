@@ -6,7 +6,6 @@ import {
   NpcContext,
   Persona,
   Phase,
-  Tone,
 } from "@/lib/npc-prompt";
 
 export const runtime = "nodejs";
@@ -88,8 +87,9 @@ function parseOutput(raw: string, persona: Persona): { reply: string; inner: str
   };
 }
 
-/** 旧字段(persona="amo"|"chen"、amoDirection、chenSpoken、spokenTone、pierced)向后兼容:
- *  app/game/page.tsx 仍在用旧字段名,本路由同时接受新旧两套,内部统一映射到新模型。 */
+/** 旧字段(persona="amo"|"chen"、amoDirection、chenSpoken)向后兼容:
+ *  app/game/page.tsx 已迁移到新字段名,但本路由仍同时接受旧名,内部统一映射到新模型。
+ *  balance / partnerTone / spokenTone / pierced 已废弃,不再读取。 */
 function normalizePersona(v: unknown): Persona {
   // 旧:amo(她)→ vera;chen(他)→ sean
   if (v === "amo" || v === "vera") return "vera";
@@ -98,11 +98,6 @@ function normalizePersona(v: unknown): Persona {
 
 function normalizePhase(v: unknown): Phase {
   return v === "strained" ? "strained" : "warm";
-}
-
-function normalizeTone(v: unknown): Tone | undefined {
-  if (v === "secure" || v === "avoid" || v === "anxious") return v;
-  return undefined;
 }
 
 /** 旧对话历史里的 role 可能是 "amo"|"chen",统一映射到 "vera"|"sean" */
@@ -171,8 +166,6 @@ export async function POST(req: NextRequest) {
       direction,
       partnerSpoken: partnerSpoken.slice(0, 500),
       dialogueHistory,
-      balance: typeof ctx.balance === "number" ? ctx.balance : 0,
-      partnerTone: normalizeTone(ctx.partnerTone ?? ctx.spokenTone),
     };
 
     const systemPrompt =

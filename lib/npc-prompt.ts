@@ -13,7 +13,8 @@
  *   - warm     甜蜜期:活的、暖、闹、句子可长可闹。问题这时已埋好,只在蛛丝马迹里露半秒。
  *   - strained 僵持期:话极短、圆滑躲闪(他)/ 体面收住(她)。
  *
- * 一体两面:回避底下是焦虑。按阶段 + 气压,让回避那面或焦虑那面各自出来。
+ * 一体两面:回避底下是焦虑。按阶段(phase 温度)+ 编剧的表演指示(direction),
+ * 让回避那面或焦虑那面在具体的拍里各自出来——不用累积的数值刻度。
  *
  * 每轮输出 JSON {"reply","inner"}:
  *   - reply  说出口的话(玩家实时可见)
@@ -22,9 +23,10 @@
  * 设计依据:docs/writing/dialogue-style-guide.md 第一部分"设计基准"。
  */
 
+import { bannedWordsNote } from "./banned-words";
+
 export type Persona = "sean" | "vera";
 export type Phase = "warm" | "strained";
-export type Tone = "secure" | "avoid" | "anxious";
 
 export interface NpcContext {
   /** NPC 是谁(一周目 NPC=Sean;二周目视角对调时 NPC=Vera) */
@@ -35,16 +37,16 @@ export interface NpcContext {
   sceneBrief: string;
   /** 当下正在发生什么 */
   situation?: string;
-  /** 编剧给 NPC 的表演指示 */
+  /**
+   * 编剧给 NPC 的自然语言表演指示——**此刻露哪张脸的主驱动**。
+   * 配合 phase(温度)决定语气;不再用 balance 数值刻度。场景侧的 reach
+   * 标记服务"看见"机制,不进 prompt。
+   */
   direction?: string;
   /** 对手方刚说出口的话 */
   partnerSpoken: string;
   /** 本幕此前的对话记录 */
   dialogueHistory?: Array<{ role: Persona; text: string }>;
-  /** 气压 -100(焦虑那面露头)~0(安稳)~+100(回避那面露头),两人共享 */
-  balance?: number;
-  /** 对手方这句话的语气 */
-  partnerTone?: Tone;
 }
 
 /** "她那一侧"回看用:玩家在二周目/事后回到某个场景,生成 Vera 当时没说出口的真实心情 */
@@ -68,36 +70,6 @@ function phaseNote(phase: Phase): string {
   return phase === "warm"
     ? "【当下语气 · 甜蜜期(热)】活的、具体、有来有回、会闹会贫,句子该长就长。问题这时已埋好,但只在蛛丝马迹里露半秒——别写穿。"
     : "【当下语气 · 僵持期(冷)】话极短、圆滑躲闪 / 体面收住。这才是'话极短、冷处理'生效的阶段,别拿去写甜蜜期。";
-}
-
-/** 气压 → 此刻露出哪张脸。同一阶段下,气压不同,出来的那面也不同 */
-function balanceNote(balance: number, phase: Phase): string {
-  if (phase === "warm") {
-    if (balance > 25)
-      return "气压偏'回避那面':此刻轻轻往后撤半步,但甜的底色还在——撤得不明显,只是话短了半拍、答应的事拖了一下。当时看着像认真,事后才认出是下线的早期形态。";
-    if (balance < -25)
-      return "气压偏'焦虑那面':照顾里开始密不透风,或话里有一丝不易察觉的查岗/试探——此刻看着仍像'太爱了'。";
-    return "气压安稳:两人都松,会主动接话,会开玩笑。这是建立感情的位置。";
-  }
-  // strained
-  if (balance > 25)
-    return "气压偏'回避那面':圆滑、客套、'都行''你定''有事叫我'——把开口的难题推回给对方。";
-  if (balance < -25)
-    return "气压偏'焦虑那面':冷嘲、温度骤降('哦,现在知道找我了');说完立刻后悔,但只在 inner 里认。";
-  return "气压是僵持的'稳':两人都在客气,谁也不肯先碰那个话题。";
-}
-
-function toneNote(tone?: Tone): string {
-  switch (tone) {
-    case "secure":
-      return "对手方这句是没有防御的真话。会有一瞬间的意外(真话在这段关系里很稀有),然后尽量接住——接得可能笨拙,但暖的。";
-    case "anxious":
-      return "对手方这句带刺(其实是怕,说出来是质问)。会愣住;reply 可以顿一下、可以轻轻回刺或轻轻卸掉,但 inner 里读得懂刺底下的怕。";
-    case "avoid":
-      return "对手方这句被压平了(客套、轻描淡写)。松一口气,同时心里有点空。";
-    default:
-      return "";
-  }
 }
 
 function formatHistory(
@@ -134,7 +106,6 @@ ${phaseNote(context.phase)}
 ## 甜蜜期(warm)
 - 句子可以长、可以闹、可以贫。有来有回,会主动接话、会开玩笑。
 - 关心直接落地:"我在你楼下。你肯定又没吃饭。"——命令式的熟稔,不是甜言蜜语。
-- 禁:感叹号、文艺腔、流畅漂亮的告白。依然是干幽默,自己不觉得好笑。
 - **种子(一体两面,只露蛛丝马迹)**:偶尔过载时,答应的事会打电话回来说"等我搞完这个,马上"——当时看着像认真,事后才认出是下线的早期形态。**只露半秒,别写穿。**
 
 ## 僵持期(strained)
@@ -142,7 +113,9 @@ ${phaseNote(context.phase)}
 - 圆滑躲闪:用"有事叫我""多喝水""你先忙"代替真关心——听着体贴,其实什么都不用付出。
 - 听到真话:停顿("……"),然后笨拙地往前半步("那……我跟你一起去,行吗"这种级别,不许煽情)。
 - 听到带刺:不回刺。说"你可以直接说的"这种平静的话。
-- 禁:感叹号、解释情绪、任何流畅漂亮的告白。
+
+# 禁词表(按阶段分级,出现即重写)
+${bannedWordsNote(context.phase)}
 
 # 内心话(inner)
 - 和 reply 形成落差:嘴上圆滑/拖/客套,inner 是清醒的自责("我是不是又躲了""她要的不是这句")。
@@ -165,12 +138,12 @@ strained,听到:"你是不是就是来走个过场的?"
 → reply:"……行,你忙。"
 → inner:"她为什么这样说话。——我是不是又躲了。"
 
+# 此刻的表演方向(主驱动,优先于默认语气)
+${context.direction ? context.direction : "(编剧未给定向——按当前阶段默认语气反应,partnerSpoken 是主要刺激)"}
+
 # 场景上下文
 - 场景:${context.sceneBrief}
 ${context.situation ? `- 此刻:${context.situation}` : ""}
-${context.direction ? `- 你此刻的状态与反应方向:${context.direction}` : ""}
-- 气压:${balanceNote(context.balance ?? 0, context.phase)}
-${toneNote(context.partnerTone) ? `- ${toneNote(context.partnerTone)}` : ""}
 - Vera 刚刚说出口的话:"${context.partnerSpoken}"
 
 # 本幕已有对话
@@ -206,7 +179,6 @@ ${phaseNote(context.phase)}
 - 直接的吐槽、共享的旧梗。**熟,而不是甜**——她不知道自己什么时候可爱。
 - 关心一律位移成事务:"多买了,帮我吃"=我特意给你买的;"到了说一声"=我会担心到你到家。她从不命名情感。
 - 允许停顿"……"、答非所问、话说一半。
-- 禁:感叹号、语气词撒娇、网络梗、任何她自知可爱的话、书面语、解释自己的情绪。
 - **种子(一体两面,只露蛛丝马迹)**:照顾里偶尔密不透风——盯他吃补给的语气有点像盯梢,当时看着像太爱,事后才认出是同一只手。**只露半秒,别写穿。**
 
 ## 僵持期(strained)
@@ -216,6 +188,9 @@ ${phaseNote(context.phase)}
 - 听到真话:停顿("……"),可以答非所问,可以只说出半句——体面第一次碎掉。
 - 焦虑闪现是冷嘲,不是吵闹。说完立刻后悔——嘴上不认,inner 里认。
 - 绝不轻易说"我也想你""我需要你"。
+
+# 禁词表(按阶段分级,出现即重写)
+${bannedWordsNote(context.phase)}
 
 # 内心话(inner)
 - 和 reply 形成落差:嘴上体面/冷嘲/客套,心里翻江倒海。
@@ -239,12 +214,12 @@ strained,听到:"今晚有点事。明天吧。"
 → reply:"嗯,你忙。"
 → inner:"又是明天。我数了,这个月第七个明天。"
 
+# 此刻的表演方向(主驱动,优先于默认语气)
+${context.direction ? context.direction : "(编剧未给定向——按当前阶段默认语气反应,partnerSpoken 是主要刺激)"}
+
 # 场景上下文
 - 场景:${context.sceneBrief}
 ${context.situation ? `- 此刻:${context.situation}` : ""}
-${context.direction ? `- 你此刻的状态与反应方向:${context.direction}` : ""}
-- 气压:${balanceNote(context.balance ?? 0, context.phase)}
-${toneNote(context.partnerTone) ? `- ${toneNote(context.partnerTone)}` : ""}
 - Sean 刚刚说出口的话:"${context.partnerSpoken}"
 
 # 本幕已有对话
