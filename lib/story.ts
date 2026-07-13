@@ -119,7 +119,7 @@ export const HACKATHON_NIGHT: Scene = {
   bg: "/images/scenes/hackathon-venue.png",
   veraFace: "warm",
   seanFace: "focused",
-  onDone: "/look?id=warm_hackathon",
+  onDone: "/game?scene=warm_shopping",
   brief:
     "黑客松熬到深夜。晚饭凉在长桌那头，他还在赶代码。你也是这队的人，手里只有一杯给他续到第三回的美式。",
   pov: "vera",
@@ -971,7 +971,7 @@ const AFTER_KONBINI: Scene = {
   phase: "warm",
   bg: "/images/scenes/konbini-night.png",
   seanFace: "focused",
-  onDone: "/",
+  onDone: "/ending",
   brief:
     "还是那家便利店。玻璃门开开合合，冷气扑脸。你一个人，站在关东煮前。",
   pov: "vera",
