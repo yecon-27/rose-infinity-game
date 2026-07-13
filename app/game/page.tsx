@@ -81,7 +81,7 @@ function GameInner() {
   const [mode, setMode] = useState<Mode>("flow");
   const [optIdx, setOptIdx] = useState(0);
   const [loading, setLoading] = useState(false);
-  const [chapterCard, setChapterCard] = useState(true);
+  const [entering, setEntering] = useState(true);
   const [bg, setBg] = useState(scene.bg);
 
   const historyRef = useRef<Array<{ role: "vera" | "sean"; text: string }>>([]);
@@ -93,12 +93,11 @@ function GameInner() {
     setMode("flow");
     setOptIdx(0);
     setLoading(false);
-    setChapterCard(true);
+    setEntering(true);
     setBg(scene.bg);
     historyRef.current = [];
-    // 2900ms:留一点缓冲,确保 .chapter-card 的 2.8s 淡出动画完整播完再卸载,
-    // 否则黑幕会在淡出到一半时被直接抽走,造成突然的画面跳变。
-    const t = setTimeout(() => setChapterCard(false), 2900);
+    // 2200ms:与 .memory-focus / .memory-title 动画时长一致,画面对焦完成、幕名隐去后再放行。
+    const t = setTimeout(() => setEntering(false), 2200);
     return () => clearTimeout(t);
   }, [sceneId]);
 
@@ -107,7 +106,7 @@ function GameInner() {
 
   /* 引擎:队列空且 flow 时,消化下一个 moment */
   useEffect(() => {
-    if (chapterCard || loading || queue.length > 0 || mode !== "flow") return;
+    if (entering || loading || queue.length > 0 || mode !== "flow") return;
     const m: Moment | undefined = script[idx];
     if (!m) {
       setMode("done");
@@ -127,18 +126,18 @@ function GameInner() {
       setOptIdx(0);
       setMode("beat");
     }
-  }, [idx, queue.length, mode, chapterCard, loading, script]);
+  }, [idx, queue.length, mode, entering, loading, script]);
 
   /* 推进对话框 */
   const advance = useCallback(() => {
-    if (chapterCard || loading || mode === "beat") return;
+    if (entering || loading || mode === "beat") return;
     if (queue.length > 0) {
       if (!tw.done) tw.skip();
       else setQueue((q) => q.slice(1));
     } else if (mode === "done") {
       router.push("/");
     }
-  }, [chapterCard, loading, mode, queue.length, tw, router]);
+  }, [entering, loading, mode, queue.length, tw, router]);
 
   /* 玩家做出选择 */
   const npcRole: "vera" | "sean" = scene.pov === "sean" ? "vera" : "sean";
@@ -217,7 +216,7 @@ function GameInner() {
 
   useEffect(() => {
     function onKey(e: KeyboardEvent) {
-      if (chapterCard || loading) return;
+      if (entering || loading) return;
       if (beatMoment) {
         const n = beatMoment.choices.length;
         if (e.key === "ArrowDown" || e.key === "ArrowRight") {
@@ -242,7 +241,7 @@ function GameInner() {
     }
     window.addEventListener("keydown", onKey);
     return () => window.removeEventListener("keydown", onKey);
-  }, [beatMoment, optIdx, choose, advance, chapterCard, loading]);
+  }, [beatMoment, optIdx, choose, advance, entering, loading]);
 
   /* ────────────────────────── 渲染 ────────────────────────── */
 
@@ -256,7 +255,7 @@ function GameInner() {
       onClick={advance}
     >
       {/* 背景 */}
-      <div className="fixed inset-0 z-0">
+      <div className={`fixed inset-0 z-0 ${entering ? "memory-focus" : ""}`}>
         <Image
           key={bg}
           src={bg}
@@ -294,10 +293,10 @@ function GameInner() {
         </div>
       </div>
 
-      {/* 章节卡 */}
-      {chapterCard && (
-        <div className="fixed inset-0 z-50 bg-black flex items-center justify-center fade-in-slow">
-          <h2 className="text-3xl font-serif text-white/90 tracking-[0.2em]">
+      {/* 进场:记忆对焦时,幕名浮在正在清晰的画面上,再隐去(不经过纯黑) */}
+      {entering && (
+        <div className="memory-title fixed inset-0 z-40 flex items-center justify-center pointer-events-none bg-black/25">
+          <h2 className="text-3xl font-serif text-white/95 tracking-[0.25em] drop-shadow-lg">
             {scene.title}
           </h2>
         </div>

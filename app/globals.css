@@ -174,3 +174,38 @@ body {
 .soft-pulse {
   animation: softPulse 2.2s ease-in-out infinite;
 }
+
+/* 记忆对焦:进场时画面从模糊、褪色、压暗,慢慢对上焦、回上色、亮起来。
+   替代旧的黑幕章节卡——延续序章"世界从模糊里显影"的视觉语言,也呼应"回看/看见"。 */
+@keyframes memoryFocus {
+  0% {
+    filter: blur(14px) saturate(0.5) brightness(0.65);
+    transform: scale(1.06);
+  }
+  100% {
+    filter: blur(0) saturate(1) brightness(1);
+    transform: scale(1);
+  }
+}
+.memory-focus {
+  animation: memoryFocus 2.2s ease-out forwards;
+}
+
+/* 进场幕名:浮现在正在清晰的画面上,再隐去(不经过纯黑) */
+@keyframes memoryTitle {
+  0% {
+    opacity: 0;
+  }
+  20% {
+    opacity: 1;
+  }
+  68% {
+    opacity: 1;
+  }
+  100% {
+    opacity: 0;
+  }
+}
+.memory-title {
+  animation: memoryTitle 2.2s ease-in-out forwards;
+}
