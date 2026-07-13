@@ -242,12 +242,12 @@ function GameInner() {
         text: choice.text,
         reach: !!choice.reach,
       });
-      historyRef.current.push({ role: playerRole, text: choice.text });
+      historyRef.current.push({ role: playerRole, text: choice.say ?? choice.text });
 
-      // 先显示玩家这一句
+      // 先显示玩家这一句（say 为说出口的纯净台词，缺省回退到选项文案）
       const playerLine: DisplayLine = {
         who: playerRole,
-        text: choice.text,
+        text: choice.say ?? choice.text,
         face: choice.face,
       };
 
@@ -291,7 +291,7 @@ function GameInner() {
               sceneBrief: scene.brief,
               situation: m.situation,
               direction: choice.direction,
-              partnerSpoken: choice.text,
+              partnerSpoken: choice.say ?? choice.text,
               dialogueHistory: historyRef.current.slice(0, -1),
             },
           }),

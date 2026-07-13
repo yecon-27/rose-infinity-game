@@ -24,6 +24,12 @@ export interface Choice {
   /** 选这项时，玩家角色切换到的表情（emotion key，如 "composed") */
   face?: string;
   /**
+   * 选完后实际"说出口"的那句。留空则等于 text（选项按钮文案即台词）。
+   * 用于选项文案带动作提示/引号（如 "问一句"你想吃什么"。"），
+   * 但说出口时只想保留纯净台词（"你想吃什么。"）的场景。
+   */
+  say?: string;
+  /**
    * 选后对方的回应。可留空 → 交给 /api/npc 依 phase + direction 现场生成。
    * 写死则用于关键情感拍，保证情绪精准。每句可带 face 切换说话者表情。
    */
@@ -179,7 +185,8 @@ export const HACKATHON_NIGHT: Scene = {
         },
         {
           text: "问一句“你想吃什么”。",
-          reply: [{ who: "sean", text: "都行，你定。" }],
+          say: "你想吃什么。",
+          reply: [{ who: "sean", text: "都行,你定。" }],
         },
       ],
     },
