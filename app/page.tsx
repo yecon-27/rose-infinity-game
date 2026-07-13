@@ -29,7 +29,7 @@ export default function Home() {
   }, [start]);
 
   return (
-    <main className="relative min-h-screen overflow-hidden flex flex-col items-center justify-center px-6 py-12">
+    <main className="relative min-h-screen overflow-hidden bg-black flex flex-col items-center justify-center px-6 py-12">
       {/* 背景：标题主视觉。离场时就地虚化+压暗（沉进回忆），不盖黑 */}
       <div
         className="fixed inset-0 z-0"

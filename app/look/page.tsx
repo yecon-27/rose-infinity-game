@@ -31,7 +31,15 @@ function LookInner() {
   const [momentIdx, setMomentIdx] = useState(0);
   const [revealed, setRevealed] = useState(false);
   const [reachDone, setReachDone] = useState(false);
+  const [roseOn, setRoseOn] = useState(false);
   const [outroIdx, setOutroIdx] = useState(0);
+
+  // 接住后:先等右侧立绘淡完(1.2s),玫瑰再开始盛放,两者不同时出现
+  useEffect(() => {
+    if (!reachDone) return;
+    const t = setTimeout(() => setRoseOn(true), 1200);
+    return () => clearTimeout(t);
+  }, [reachDone]);
 
   const advance = useCallback(() => {
     if (!look) return;
@@ -161,8 +169,8 @@ function LookInner() {
         />
       </div>
 
-      {/* 接住:右侧淡出的同时,玫瑰完整盛放浮在下方约 1/4 处 */}
-      {reachDone && (
+      {/* 接住:等右侧立绘淡完后,玫瑰才完整盛放(浮在下方约 1/4 处),不与立绘同时出现 */}
+      {roseOn && (
         <div className="fixed inset-x-0 bottom-[10%] z-[5] flex justify-center pointer-events-none">
           <div className="relative w-60 h-60 fade-in-slow opacity-90">
             <Image
@@ -172,18 +180,6 @@ function LookInner() {
               className="object-contain"
             />
           </div>
-        </div>
-      )}
-
-      {/* 她那一晚 · Vera 怅然立绘(回看中浮现,作为这一夜的情绪锚点) */}
-      {phase !== "intro" && (
-        <div className="fixed bottom-0 left-2 z-[8] h-[60vh] w-[30vw] max-w-[340px] min-w-[160px] pointer-events-none fade-in-slow opacity-90">
-          <Image
-            src="/images/characters/vera-wistful.png"
-            alt="Vera"
-            fill
-            className="object-contain object-bottom drop-shadow-2xl"
-          />
         </div>
       )}
 
