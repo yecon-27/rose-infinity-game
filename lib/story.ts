@@ -146,7 +146,6 @@ export const HACKATHON_NIGHT: Scene = {
         {
           text: "（从背后捶捶他的肩）",
           reach: true,
-          face: "focused",
           reply: [{ who: "sean", text: "嗯……你先歇会儿。" }],
         },
         {
