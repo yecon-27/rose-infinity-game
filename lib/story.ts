@@ -275,6 +275,7 @@ export const HACKATHON_NIGHT: Scene = {
         },
       ],
     },
+    { kind: "face", who: "vera", emotion: "warm" },
   ],
 };
 
@@ -321,12 +322,12 @@ export const HACKATHON_LOOKBACK: Lookback = {
     },
   ],
   reachback: {
-    prompt: "现在，你都看见了。如果能回到那一晚——",
-    choice: "走过去，牵住他的手：“你也辛苦了。我们都在。”",
+    prompt: "那一晚，你们都在笨拙地爱着。只是谁也没接住谁。",
+    choice: "如果能回到那晚——这次，先开口的是你：“我也累了。你呢？”",
     response: [
-      "你没能真的回到那一晚。",
-      "但下一次，有人在你面前悄悄伸手时——",
-      "你会认得出了。",
+      "你回不去那一晚了。",
+      "但你记住了：接住，是两个人的事。",
+      "下次有人向你伸手，你会认得出——也记得，伸出自己的手。",
     ],
   },
   outro: [

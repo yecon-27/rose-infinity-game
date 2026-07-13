@@ -23,14 +23,18 @@ interface DisplayLine {
 
 type Mode = "flow" | "beat" | "done";
 
-/* Vera 立绘:按周目/场景切换两张图
- *  - 一周目(现场,玩家=Vera,pov=vera)→ composed(压着情绪的平静)
- *  - 二周目/回看(视角对调,pov=sean)→ wistful(回忆里的怅然)
+/* Vera 立绘:按情绪切换,默认表情由周目决定
+ *  - 一周目(现场,玩家=Vera,pov=vera)默认 composed(压着情绪的平静)
+ *  - 二周目/回看(视角对调,pov=sean)默认 wistful(回忆里的怅然)
+ *  - 特定情感拍可被剧情临时覆盖为 warm(如被接住、和解的瞬间)
  */
-const VERA_PORTRAITS: Record<"vera" | "sean", string> = {
-  vera: "/images/characters/vera-composed.png",
-  sean: "/images/characters/vera-wistful.png",
+const VERA_EMOTIONS: Record<string, string> = {
+  composed: "/images/characters/vera-composed.png",
+  wistful: "/images/characters/vera-wistful.png",
+  warm: "/images/characters/vera-warm.png",
 };
+const veraDefaultEmotion = (pov?: string) =>
+  pov === "sean" ? "wistful" : "composed";
 const SEAN_FACES: Record<string, string> = {
   warm: "/images/characters/sean-warm.png",
   focused: "/images/characters/sean-focused.png",
@@ -155,7 +159,9 @@ function GameInner() {
   const [loading, setLoading] = useState(false);
   const [entering, setEntering] = useState(true);
   const [bg, setBg] = useState(scene.bg);
-  const [veraEmotion, setVeraEmotion] = useState(scene.veraFace ?? "warm");
+  const [veraEmotion, setVeraEmotion] = useState(
+    scene.veraFace ?? veraDefaultEmotion(scene.pov)
+  );
   const [seanEmotion, setSeanEmotion] = useState(scene.seanFace ?? "warm");
 
   const historyRef = useRef<Array<{ role: "vera" | "sean"; text: string }>>([]);
@@ -169,7 +175,7 @@ function GameInner() {
     setLoading(false);
     setEntering(true);
     setBg(scene.bg);
-    setVeraEmotion(scene.veraFace ?? "warm");
+    setVeraEmotion(scene.veraFace ?? veraDefaultEmotion(scene.pov));
     setSeanEmotion(scene.seanFace ?? "warm");
     historyRef.current = [];
     // 2200ms:与 .memory-focus / .memory-title 动画时长一致,画面对焦完成、幕名隐去后再放行。
@@ -351,7 +357,8 @@ function GameInner() {
 
   /* ────────────────────────── 渲染 ────────────────────────── */
 
-  const veraPortrait = VERA_PORTRAITS[scene.pov ?? "vera"];
+  const veraPortrait =
+    VERA_EMOTIONS[veraEmotion] ?? VERA_EMOTIONS[veraDefaultEmotion(scene.pov)];
   const seanPortrait = SEAN_FACES[seanEmotion] ?? SEAN_FACES.warm;
   const speaker = current?.who;
 

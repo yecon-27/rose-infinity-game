@@ -130,10 +130,10 @@ function LookInner() {
         <div className="absolute inset-0 bg-black/45" />
       </div>
 
-      {/* 接住时:玫瑰盛放浮现 */}
+      {/* 接住时:玫瑰从底部盛放浮现(压在底部,不遮挡居中的文字) */}
       {reachDone && (
-        <div className="fixed inset-0 z-[5] flex items-center justify-center pointer-events-none">
-          <div className="relative w-64 h-64 fade-in-slow opacity-70">
+        <div className="fixed inset-x-0 bottom-0 z-[5] flex justify-center pointer-events-none">
+          <div className="relative w-56 h-56 translate-y-1/3 fade-in-slow opacity-45">
             <Image
               src="/images/motifs/rose-bloom.png"
               alt=""
