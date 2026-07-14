@@ -130,7 +130,7 @@
 | 必做 ×7 | vera-focused / vera-anxious / vera-torn / vera-crying / sean-wounded / sean-sick / sean-grieving | 每幕情绪高点各有一张"对的脸"；场景图零新增 |
 | 加分 ×5 | vera-accusing / vera-hurt / vera-calm / sean-cold / sean-pleading | 有余力再出 |
 
-> 场景图**一张都不用新生成**：幕5 的分屏感用幕中 bg 切换（fever-night ↔ konbini-night）实现。
+> ⚠️ 2026-07-14 复查实图发现：`dorm-room-night` / `fever-night` / `dorm-doorway` 是同一张带 "The Filter" 水印的白天客厅占位图，`campus-bench` 放的是暖卧室错图。**需新生成场景图 4 张**（校园长椅、宿舍夜收拾行李、发烧夜宿舍、宿舍门口夜），prompt 见工单。幕5 她那侧复用 `konbini-night`（幕中 bg 切换做分屏感），无需另出。
 
 ---
 
@@ -142,40 +142,58 @@
 ### Vera 基底段（照现有 vera-warm 特征写，勿改）
 
 ```
-Hand-drawn watercolor illustration, character portrait, half-body, vertical composition.
-A Chinese female college student in her early 20s, long straight black hair falling past
-her shoulders, soft natural face, gentle composed presence. Soft muted watercolor palette,
-loose brushwork, paper texture, white background, transparent-friendly, character only,
-no scene. Same art style, same face, same hairstyle as previous portraits of this character.
+手绘水彩插画风格，人物立绘，半身像，竖构图。
+一位二十岁出头的中国女大学生，黑色长直发垂过肩膀，五官柔和自然，气质温柔沉静。
+柔和的低饱和水彩色调，松弛的笔触，水彩纸纹理，白色背景，只画人物，不要任何场景。
+与该角色此前的立绘保持同一张脸、同一发型、同一画风。
 ```
 
 | 表情差分（追加一行） | 服装行（追加一行） | 存为（抠图后） |
 |---|---|---|
-| `Expression: attentive and focused, leaning in slightly, bright appraising eyes, sizing something up with fond concentration.` | `Wearing: cream knitted sweater, warm tone.`（与现有一致） | `认真专注版_抠图.png` → vera-focused |
-| `Expression: anxious and tense, brows knitted, eyes fixed downward as if on a phone screen, fingertips tight, breath held.` | `Wearing: everyday casual student clothes, slightly cooler tone.` | `不安版_抠图.png` → vera-anxious |
-| `Expression: torn and conflicted, half-turned as if about to leave, pained hesitation in the eyes, lips pressed.` | `Wearing: convenience store staff apron over a plain shirt, night shift, cold fluorescent light feel.` | `撕扯版_抠图.png` → vera-torn |
-| `Expression: crying quietly but clear-eyed, tears on cheeks, chin steady, nodding through tears, heartbroken yet resolved.` | `Wearing: light coat, muted cold tone.` | `含泪版_抠图.png` → vera-crying |
-| `Expression: sharp accusing gaze, chin slightly raised, eyes bright and cutting.`（加分） | 同 anxious 服装行 | `质问版_抠图.png` → vera-accusing |
-| `Expression: on the verge of breaking, forcing composure, reddened eyes, trembling mouth corner.`（加分） | 同 anxious 服装行 | `破防版_抠图.png` → vera-hurt |
-| `Expression: calm and gently released, soft steady gaze, faint peaceful ease, quietly grown.`（加分） | `Wearing: slightly more put-together outfit, a small sign of new life.` | `释然版_抠图.png` → vera-calm |
+| `表情：认真专注，微微前倾，眼神发亮地打量着什么，带着喜爱的专注劲。` | `服装：米白色针织毛衣，暖色调。`（与现有一致） | `认真专注版_抠图.png` → vera-focused |
+| `表情：不安紧绷，眉头微蹙，目光向下像盯着手机屏幕，指尖收紧，屏着呼吸。` | `服装：日常学生便服，色调偏冷。` | `不安版_抠图.png` → vera-anxious |
+| `表情：被撕扯的犹豫，身体半转像要离开，眼里是克制的痛，嘴唇抿着。` | `服装：素色衬衫外系便利店店员围裙，夜班，冷白灯光感。` | `撕扯版_抠图.png` → vera-torn |
+| `表情：安静落泪但眼神清醒，脸颊有泪痕，下巴稳着，含泪点头，心碎却坚定。` | `服装：浅色外套，冷色调。` | `含泪版_抠图.png` → vera-crying |
+| `表情：质问的锐利眼神，下巴微抬，目光发亮而带刺。`（加分） | 同"不安"服装行 | `质问版_抠图.png` → vera-accusing |
+| `表情：濒临破防又强撑镇定，眼眶发红，嘴角微微发抖。`（加分） | 同"不安"服装行 | `破防版_抠图.png` → vera-hurt |
+| `表情：平静释然，眼神柔和而稳，淡淡的松弛，安静地长大了一点。`（加分） | `服装：比从前稍讲究一点的穿搭，一点新生活的气象。` | `释然版_抠图.png` → vera-calm |
 
 ### Sean 基底段（照现有 sean-warm 特征写，勿改）
 
 ```
-Hand-drawn watercolor illustration, character portrait, half-body, vertical composition.
-A Chinese male college student in his early 20s, short black hair, boyish honest face,
-lean build. Soft muted watercolor palette, loose brushwork, paper texture, white background,
-transparent-friendly, character only, no scene. Same art style, same face, same hairstyle
-as previous portraits of this character.
+手绘水彩插画风格，人物立绘，半身像，竖构图。
+一位二十岁出头的中国男大学生，黑色短发，少年气、老实耐看的脸，身形清瘦。
+柔和的低饱和水彩色调，松弛的笔触，水彩纸纹理，白色背景，只画人物，不要任何场景。
+与该角色此前的立绘保持同一张脸、同一发型、同一画风。
 ```
 
 | 表情差分（追加一行） | 服装行（追加一行） | 存为（抠图后） |
 |---|---|---|
-| `Expression: wounded by distrust, eyes lowered and dark, lips pressed thin, quietly hurt, shoulders drawn back half a step.` | `Wearing: everyday casual student clothes, slightly cooler tone.` | `被刺伤版_抠图.png` → sean-wounded |
-| `Expression: feverish and weak, pale face, unfocused glassy eyes, wrapped in a blanket, exhausted.` | `Wearing: loose home clothes, blanket over shoulders, sickly pale.` | `发烧版_抠图.png` → sean-sick |
-| `Expression: silent tears under a doorway light, reddened eyes, face slightly turned away, grief held with dignity.` | `Wearing: loose hoodie, slumped, muted cold tone.` | `落泪版_抠图.png` → sean-grieving |
-| `Expression: shut down and cold, expressionless, face turned aside, emotionally offline.`（加分） | 同 wounded 服装行 | `冷下来版_抠图.png` → sean-cold |
-| `Expression: pleading, half a step forward, urgent hopeful eyes, about to say "let's try again".`（加分） | 同 grieving 服装行 | `挽留版_抠图.png` → sean-pleading |
+| `表情：被不信任刺伤，眼神低垂发暗，嘴唇抿成一条线，安静的受伤，肩膀微微后收。` | `服装：日常学生便服，色调偏冷。` | `被刺伤版_抠图.png` → sean-wounded |
+| `表情：发烧虚弱，脸色苍白，眼神涣散没有焦点，裹着毯子，疲惫不堪。` | `服装：宽松居家衣物，肩上裹着毯子，病容苍白。` | `发烧版_抠图.png` → sean-sick |
+| `表情：门灯下无声落泪，眼眶通红，脸微微别开，压着体面的悲伤。` | `服装：宽松连帽卫衣，松塌，冷色调。` | `落泪版_抠图.png` → sean-grieving |
+| `表情：关上了的冷淡，面无表情，脸别向一侧，情绪下线。`（加分） | 同"被刺伤"服装行 | `冷下来版_抠图.png` → sean-cold |
+| `表情：挽留，身体往前半步，眼神急切又抱着希望，像正要说"我们再试试"。`（加分） | 同"落泪"服装行 | `挽留版_抠图.png` → sean-pleading |
+
+### 场景图 ×4（全部必做，替换占位图；出图后丢 generated-images/scenes/，按前缀命名）
+
+场景基底段（每张都以此开头）：
+
+```
+手绘水彩插画场景背景，不要任何人物。
+柔和的低饱和水彩色调，松弛的笔触，水彩纸纹理，氛围安静而有情绪。
+横构图，宽画面。
+```
+
+| 内容差分（追加） | 存为（前缀命名） |
+|---|---|
+| `午后的校园，一条木质长椅在树荫下，阳光透过树叶洒下斑驳光点，长椅一角放着一本摊开的书。暖色调，青绿与暖黄，松弛的下午。` | `校园长椅_1.png` |
+| `深夜的大学宿舍，收拾到一半：床上摊开一个行李箱，地上两个封好的纸箱和一卷胶带，书桌台灯亮着，床头一部手机屏幕发着冷光。冷蓝灰调，阴影重，安静而紧绷。` | `宿舍夜收拾行李_1.png` |
+| `深夜熄了灯的单人宿舍，床上只有拱成一团的被子，床边手机屏幕亮着一小块冷光，桌上一份没动过的外卖粥。冷灰蓝调，孤独的病夜。`（⚠️ 用**方构图 1:1、主体居中**：此图用于幕5 分屏左半） | `发烧夜宿舍_1.png` |
+| `深夜便利店的收银柜台内侧，冷白的荧光灯，柜台上扣着一部手机，旁边一杯冒着热气的关东煮，货架整齐，玻璃门外是一片黑的街道。冷白与蓝灰调，夜班的安静。`（⚠️ 方构图 1:1、主体居中：幕5 分屏右半） | `便利店夜班柜台_1.png` |
+| `傍晚的宿舍楼门口，夕阳西斜，把门前的影子和光拉得很长，台阶上是暖橙色的光，楼道深处已经暗了，门边放着一个很轻的塑料袋。好天气的黄昏，离别的安静。` | `宿舍门口黄昏_1.png` |
+| `清晨的城际列车站台，一列列车停在站台边，车门开着，站台空旷，只有一只拉杆行李箱立在车门旁，天刚亮，冷灰蓝里透一点晨光。离开的安静，谁也没来送。`（幕4 结尾过场：他走那天，她没去送） | `城际站台_1.png` |
+| `下午的大学宿舍，大片阳光从窗户洒进来，窗外是明亮的蓝天，房间收拾得半空，桌上放着一个装了些零碎小东西的塑料袋和一本夹着便利贴的书。天气好得刺眼，离别前的明亮与安静。`（幕6"好天气"前半：白天收东西、谈话；收完切门口夜） | `好天气宿舍_1.png` |
 
 ### 出图自查（每张过一遍）
 

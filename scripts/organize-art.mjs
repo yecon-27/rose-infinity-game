@@ -48,6 +48,14 @@ const COPIES = [
   ["generated-images/scenes", "半年后的便利店_", "public/images/scenes/konbini-later.png"],
   ["generated-images/scenes", "半年后的便利店_", "public/images/scenes/konbini-night.png"],
   ["generated-images/scenes", "商场服装店试衣间外", "public/images/scenes/mall-fitting.png"],
+  // ── 场景 · 2026-07-14 工单新增(替换 The Filter 占位图/错图) ──
+  ["generated-images/scenes", "校园长椅_", "public/images/scenes/campus-bench.png"],
+  ["generated-images/scenes", "宿舍夜收拾行李_", "public/images/scenes/dorm-room-night.png"],
+  ["generated-images/scenes", "发烧夜宿舍_", "public/images/scenes/fever-night.png"],
+  ["generated-images/scenes", "宿舍门口黄昏_", "public/images/scenes/dorm-doorway.png"],
+  ["generated-images/scenes", "便利店夜班柜台_", "public/images/scenes/konbini-counter.png"],
+  ["generated-images/scenes", "城际站台_", "public/images/scenes/departure-station.png"],
+  ["generated-images/scenes", "好天气宿舍_", "public/images/scenes/sunny-dorm.png"],
 ];
 
 function resolveSource(dir, nameOrPrefix) {

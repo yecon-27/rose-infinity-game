@@ -379,16 +379,40 @@ function GameInner() {
       className="relative min-h-screen overflow-hidden bg-black"
       onClick={advance}
     >
-      {/* 背景 */}
+      {/* 背景：单图全屏，或左右分屏（两地感，如幕5） */}
       <div className={`fixed inset-0 z-0 ${entering ? "memory-focus" : ""}`}>
-        <Image
-          key={bg}
-          src={bg}
-          alt=""
-          fill
-          priority
-          className="object-cover fade-in-slow"
-        />
+        {scene.bgSplit ? (
+          <div className="absolute inset-0 flex">
+            <div className="relative h-full w-1/2">
+              <Image
+                src={scene.bgSplit[0]}
+                alt=""
+                fill
+                priority
+                className="object-cover fade-in-slow"
+              />
+            </div>
+            <div className="h-full w-[3px] bg-black/90 shadow-[0_0_18px_rgba(0,0,0,0.9)]" />
+            <div className="relative h-full flex-1">
+              <Image
+                src={scene.bgSplit[1]}
+                alt=""
+                fill
+                priority
+                className="object-cover fade-in-slow"
+              />
+            </div>
+          </div>
+        ) : (
+          <Image
+            key={bg}
+            src={bg}
+            alt=""
+            fill
+            priority
+            className="object-cover fade-in-slow"
+          />
+        )}
         <div className="absolute inset-0 bg-gradient-to-b from-black/40 via-black/40 to-black/80" />
       </div>
 

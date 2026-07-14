@@ -65,6 +65,12 @@ export interface Scene {
   phase: Phase;
   /** 背景图路径 */
   bg: string;
+  /**
+   * 左右分屏背景（两地感，如幕5）：[左图, 右图]。
+   * 设置后整幕以分屏渲染、忽略 bg 的全屏图与幕中 bg 切换；
+   * pov=vera 时立绘 Sean 在左、Vera 在右，正好各站各的半边。
+   */
+  bgSplit?: [string, string];
   /** 进场时的初始表情（emotion key)，默认 warm */
   veraFace?: string;
   seanFace?: string;
@@ -787,6 +793,15 @@ const BURST_PHONE: Scene = {
       kind: "narr",
       text: "到你楼下，他只说了句“到了”。你很想收回刚才每一句，可一句也没收回来。冷处理，从这晚开始。",
     },
+    { kind: "bg", src: "/images/scenes/departure-station.png" },
+    {
+      kind: "narr",
+      text: "一周后，他走了。行李箱是他自己拖下楼的。",
+    },
+    {
+      kind: "narr",
+      text: "你没去送。他也没问你来不来。你们都在等对方先开口。谁都没开。",
+    },
   ],
 };
 
@@ -800,6 +815,10 @@ const COLD_FEVER: Scene = {
   title: "外卖粥",
   phase: "strained",
   bg: "/images/scenes/fever-night.png",
+  bgSplit: [
+    "/images/scenes/fever-night.png",
+    "/images/scenes/konbini-counter.png",
+  ],
   seanFace: "tired",
   onDone: "/game?scene=end_breakup",
   brief:
@@ -1062,7 +1081,7 @@ const END_BREAKUP: Scene = {
   id: "end_breakup",
   title: "好天气",
   phase: "strained",
-  bg: "/images/scenes/dorm-doorway.png",
+  bg: "/images/scenes/sunny-dorm.png",
   seanFace: "tired",
   onDone: "/game?scene=after_konbini",
   brief:
@@ -1082,6 +1101,33 @@ const END_BREAKUP: Scene = {
       kind: "narr",
       text: "你接过来。指尖碰了一下，谁都没缩，谁也没停。桌上还摊着那本《非暴力沟通》，你的便利贴还夹在第三章。",
     },
+    {
+      kind: "line",
+      who: "sean",
+      text: "你这支眉笔，都秃成这样了还留着。",
+      face: "warm",
+    },
+    {
+      kind: "narr",
+      text: "他在找话说。声音比平时高半度，像怕屋子一静下来，就要说正事了。",
+    },
+    {
+      kind: "line",
+      who: "sean",
+      text: "楼下肠粉店换老板了，你知道吗。新老板的酱汁不行。",
+    },
+    { kind: "line", who: "vera", text: "嗯。", face: "composed" },
+    {
+      kind: "narr",
+      text: "你没接他的话。不是想对他冷。是查手机那晚之后，有个东西碎在了你们中间。你试过，拼不回去。",
+    },
+    {
+      kind: "line",
+      who: "sean",
+      text: "……别搞得这么伤感。大晴天的。",
+      face: "guilty",
+    },
+    { kind: "narr", text: "他笑了一下，没笑成。窗外的阳光好得不讲道理。" },
     {
       kind: "beat",
       prompt: "袋子装满了。话还空着。你开口——",
@@ -1212,7 +1258,12 @@ const END_BREAKUP: Scene = {
     { kind: "line", who: "sean", text: "……嗯。到这了。", face: "tired" },
     {
       kind: "narr",
-      text: "东西收完了。门口的灯把两个影子拉得很长。他替你拉开门，像过去每一次送你下楼。",
+      text: "东西收完了。话也说完了。太阳西斜下来，还是好天气。",
+    },
+    { kind: "bg", src: "/images/scenes/dorm-doorway.png" },
+    {
+      kind: "narr",
+      text: "宿舍楼门口，西斜的太阳把两个影子拉得很长。他替你拉开门，像过去每一次送你下楼。",
     },
     { kind: "line", who: "sean", text: "都拿好了？" },
     { kind: "narr", text: "你点头。他也点头。都在等对方先转身。" },
@@ -1229,7 +1280,7 @@ const END_BREAKUP: Scene = {
             { who: "sean", text: "……嗯。都是真的。", face: "guilty" },
             {
               who: "narr",
-              text: "他哭了。没出声，就那么站在灯下，眼泪下来了。你第一次看见他哭。也是最后一次。",
+              text: "他哭了。没出声，就那么站在夕阳里，眼泪下来了。你第一次看见他哭。也是最后一次。",
             },
           ],
           after: [
@@ -1252,7 +1303,7 @@ const END_BREAKUP: Scene = {
           after: [
             {
               who: "narr",
-              text: "你走进夜里。那句“路上小心”，后来跟了你很多年。",
+              text: "你走进暮色里。那句“路上小心”，后来跟了你很多年。",
             },
           ],
         },
@@ -1291,7 +1342,7 @@ const END_BREAKUP: Scene = {
     },
     {
       kind: "narr",
-      text: "你走出宿舍楼，天上一颗星都没有。你允许自己哭到路口。路口以后的路，你想清醒地走。",
+      text: "你走出宿舍楼。天边还亮着，好得不像话。你允许自己哭到路口。路口以后的路，你想清醒地走。",
     },
   ],
 };
@@ -1631,7 +1682,7 @@ export const PHONE_LOOKBACK: Lookback = {
  */
 export const FEVER_LOOKBACK: Lookback = {
   id: "cold_fever",
-  title: "回看 · 发烧夜",
+  title: "回看 · 外卖粥",
   intro: [
     "那晚你守住了柜台，守住了“负责”。",
     "有一行灰字，你一直没问。",
@@ -1692,14 +1743,14 @@ export const BREAKUP_LOOKBACK: Lookback = {
   ],
   moments: [
     {
-      bg: "/images/scenes/dorm-doorway.png",
+      bg: "/images/scenes/sunny-dorm.png",
       surface: "他把卷好的充电线递给你，用你教他的绕法。",
       hidden:
         "那个绕法是她教我的。卷的时候我在想，往后我大概一辈子都会这么卷线。她带来的东西收得走，她教会我的，收不走。",
       who: "sean",
     },
     {
-      bg: "/images/scenes/dorm-doorway.png",
+      bg: "/images/scenes/sunny-dorm.png",
       surface: "他说“要不，我们再试试”。你说：可我们在一起，还是会吵个不停。",
       hidden:
         "她说得对，我没反驳。可那句“再试试”不是随口说的。我是真想赌一把。只是她清醒，我就不能拖着她陪我赌。",
@@ -1707,18 +1758,18 @@ export const BREAKUP_LOOKBACK: Lookback = {
     },
     {
       bg: "/images/scenes/dorm-doorway.png",
-      surface: "门口的灯下，你转身下楼，没有回头。",
+      surface: "夕阳把影子拉得很长。你转身走出楼门口，没有回头。",
       hidden:
-        "台阶是数着走的。数到第七级，我差点回头喊“我们再试试”。是发烧那晚把我按住了。我怕的不是吵，是吵完之后，我们还是会走回这个门口。",
+        "步子是数着走的。数到第七步，我差点回头喊“我们再试试”。是发烧那晚把我按住了。我怕的不是吵，是吵完之后，我们还是会走回这个门口。",
       who: "vera",
     },
   ],
   reachback: {
     prompt: "分开也许还是会分开。可有一句话，值得当面说完。",
     choice:
-      "如果能回到那盏灯下，这次你说：“我们没有输。谢谢你，真的爱过我。”",
+      "如果能回到那个门口，这次你说：“我们没有输。谢谢你，真的爱过我。”",
     response: [
-      "你回不去那盏灯下了。",
+      "你回不去那个门口了。",
       "但你记住了：好好告别，也是接住。接住这段感情本身。",
       "爱过的部分不作废。它跟着你们，各自去往后的日子。",
     ],
