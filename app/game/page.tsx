@@ -11,6 +11,7 @@ import {
   Scene,
   Speaker,
 } from "@/lib/story";
+import { useVoice } from "@/lib/use-voice";
 
 /* ────────────────────────── 类型 ────────────────────────── */
 
@@ -185,6 +186,12 @@ function GameInner() {
 
   const current = queue[0];
   const tw = useTypewriter(current?.text ?? "");
+  const voice = useVoice();
+
+  /* 配音：当前台词开始显示时播对应音频（没生成的句子静默跳过） */
+  useEffect(() => {
+    if (current) voice.play(current.who, current.text);
+  }, [current, voice.play]);
 
   /* 表情随当前显示的台词切换 */
   useEffect(() => {
@@ -326,6 +333,11 @@ function GameInner() {
       ? (script[idx] as Extract<Moment, { kind: "beat" }>)
       : null;
 
+  /* 配音：进入选择节拍时读引导语 */
+  useEffect(() => {
+    if (beatMoment) voice.play("narr", beatMoment.prompt);
+  }, [beatMoment, voice.play]);
+
   useEffect(() => {
     function onKey(e: KeyboardEvent) {
       if (entering || loading) return;
@@ -410,6 +422,18 @@ function GameInner() {
       <header className="relative z-20 pt-5 text-center">
         <p className="text-xs tracking-[0.3em] text-white/70">{scene.title}</p>
       </header>
+
+      {/* 声音开关 */}
+      <button
+        type="button"
+        onClick={(e) => {
+          e.stopPropagation();
+          voice.toggleMuted();
+        }}
+        className="fixed top-5 right-5 z-50 text-[10px] tracking-widest text-white/35 hover:text-white/80 transition-colors"
+      >
+        {voice.muted ? "声 · 关" : "声 · 开"}
+      </button>
 
       {/* 底部:对话框 or 选择 */}
       <div className="fixed inset-x-0 bottom-0 z-30 px-6 pb-10">

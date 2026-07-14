@@ -67,80 +67,118 @@
 
 ### 爆发期
 
-#### 幕4 · 查手机（情绪最大声的一幕，预估）
-> **剧情**：不安全感到顶点，Vera 翻了他的手机、关注/点赞记录，看到很多异性、一些"不对"的痕迹（多半不是真出轨）。越查越信，质问、爆发。事后两人都羞耻，缩回冷处理——僵持期由此开始。
+#### 幕4 · 查手机（2026-07-14 对齐新剧本）
+> **剧情（已定稿）**：他大四，下周去外地实习报到；Vera 来他宿舍帮他收拾行李（室友已回家）。他下楼取快递（新买的行李箱）时手机亮了，她越查越信，质问、爆发。收尾他送她回去，一路隔着半步。
 
-- **场景图 ×1（新）**：某人的宿舍房间（一方去找另一方），或约会散场后校园的安静角落。夜、紧绷，手机屏光打脸，冷调、阴影重。（可另出 1 张"背对背"作僵持过渡，可选）
+- **场景图**：复用 `dorm-room-night.png`（已生成）。
 - **服装**：学生日常便服（不是睡衣）；两人色调仍相近，靠光线与表情区分紧张。
-- **Sean ×3（新表情）**
-  - `defensive` 被质问的辩解——皱眉、手微抬、身体略后仰。
-  - `wounded` 被不信任刺到的委屈——眼神沉、抿嘴、垂眼。
-  - `cold` 关上的冷——面无表情、别开脸，下线。
-- **Vera ×3（新表情）**
-  - `anxious` 翻找时的不安——盯着屏、眉紧、身体前倾、指尖发紧。
-  - `accusing` 质问带刺——眼神发亮发利、下巴微抬，话里有刀。
-  - `hurt` 破防——强撑着，眼睛发亮、眼眶红、嘴角抖。
-- 📌 **此幕吵架无法逐字写死 → 最适合接 LLM 智能回应。**
+- **Sean（新表情）**
+  - `wounded`（必做）被不信任刺到的委屈——眼神沉、抿嘴、垂眼。
+  - `cold`（加分）关上的冷——面无表情、别开脸，下线。
+- **Vera（新表情）**
+  - `anxious`（必做）翻手机时的不安——眉紧、身体前倾、指尖发紧。
+  - `hurt`（加分）破防——强撑着，眼眶红、嘴角抖。
+  - `accusing`（加分）质问带刺——眼神发利、下巴微抬。
 
 ### 僵持期
 
-#### 幕5 · 发烧夜（僵持期的扳机 · 两人都有错，预估）
-> **剧情**：这次是 **Sean 发烧**，想让 Vera 来陪。可 Vera 被老师交代的任务绊住，责任感极强，放不下手里的事——何况她来了也帮不上什么忙。Sean 一句："以后结婚了，工作也比家庭重要吗？"
-> **两个人身上都有问题**：Vera 用"责任"当挡箭牌，把体贴收在一个能自我说服的安全距离里（她的回避戴着"懂事"的面具）；Sean 把一次没来上升成对整段未来的审判，用愧疚绑架，要"被排在第一位"（他的焦虑装成一个价值观质问）。谁都有道理，谁也没接住谁——这是全片"没有坏人"的一块基石。
+#### 幕5 · 发烧夜（2026-07-14 对齐新剧本）
+> **剧情（已定稿）**：Sean 在实习城市的宿舍发烧（床垫还是新的）；**Vera 在便利店上夜班**，柜台只有她一个人，走不开。"以后结婚了，工作也比家庭重要吗？"
 
-- **场景图 ×1**：分屏 / 两地感——**Sean 发烧缩在他的宿舍床上**，手机亮在手边；**Vera 那头**在自习室 / 图书馆，对着摊开的任务，手机扣在桌上。冷灰蓝调，两个被距离和责任隔开的人。
-- **服装**：僵持期转冷。Sean 病中松散、脸色发白；Vera 学生便装、认真但疲惫。
-- **Sean ×2–3**
-  - `sick` 发烧的虚弱——脸白、眼神发飘、裹着被子。
-  - `reproachful` 质问时的委屈带怨——垂眼或别脸，嘴抿。
-  - `pleading` 想让她来又说不出口的隐忍（可选）。
-- **Vera ×2**
-  - `torn` 被撕扯——责任与愧疚之间，手停在任务和手机之间，眉心紧。
-  - `composed` 讲道理时的冷静收住——语气稳、把情绪压下去（她用"讲道理"保持距离）。
+- **场景图**：他那侧复用 `fever-night.png`；她那侧**复用 `konbini-night.png`**（幕中 `bg` 切换即可制造分屏感，无需新图）。
+- **服装**：僵持期转冷。Sean 病中松散、脸色发白；**Vera 便利店工装/围裙**（这身也是幕7 呼应的一部分）。
+- **Sean（新表情）**
+  - `sick`（必做）发烧的虚弱——脸白、眼神发飘、裹着被子/毯子。
+- **Vera（新表情）**
+  - `torn`（必做）被撕扯——围裙解到一半的那三秒，眉心紧。
 
 ### 结束 & 事后
 
-#### 幕6 · 分手夜（相爱却走不下去，预估）
-> **剧情**：不是无声风化。两个深爱的人，有挽留、有眼泪；可两人都清楚——在一起还是会一直吵，校园恋情太难有结果（毕业、异地、太年轻）。含泪做了清醒的决定。爱是真的，分开也是真的。
-> **延迟的痛**：分开后 Sean 反而异常平静（回避式麻木），真正的痛半年后才砸下来（幕7）。
+#### 幕6 · 好天气（原"分手夜"，2026-07-14 对齐新剧本）
+> **剧情（已定稿）**：他实习后头一次回校的周末。有挽留（"要不，我们再试试"）、有眼泪，但"在一起还是会吵个不停"横在中间。哭着把话说明白，好好放手。他当晚翻相册、把有她的朋友圈一条条藏起来，带着泪痕睡着。
 
-- **场景图 ×1**：收走留在对方宿舍的东西 / 或宿舍楼下告别。`act5_room` 可作宿舍房间。一个轻得不像样的袋子、门口的灯。
+- **场景图**：复用 `dorm-doorway.png`（已生成）。
 - **服装**：Vera 外套 + 拎着袋子；Sean 卫衣、松塌。
-- **Sean ×2–3**
-  - `pleading` 挽留——往前半步、眼神急，"我们再试试"。
-  - `grieving` 疼而不舍——眼眶红、别过脸。
-  - `resigned` 最终认了的空（可选）。
-- **Vera ×2–3**
-  - `pleading` 挽留/别走——伸手、眼神亮。
-  - `crying` 落泪但清醒——含泪点头。
-  - `resolved` 做了决定后的平静痛（可选）。
+- **Sean（新表情）**
+  - `grieving`（必做）站在灯下无声落泪——眼眶红、别过脸。剧本里有"你第一次看见他哭"，现在只能用 guilty 顶着，这张最值得补。
+  - `pleading`（加分）挽留——往前半步、眼神急。
+- **Vera（新表情）**
+  - `crying`（必做）落泪但清醒——含泪点头。
 
-#### 幕7 · 半年后（预估）
-> **剧情**：还是那家便利店，她一个人。一句没经过任何修饰的真话（"要，谢谢，今天有点冷"）——她说得慢，但说完整了。她开始能好好说话了。
+#### 幕7 · 半年后
+> **剧情（已定稿）**：还是那家便利店（她打过夜班的那家），柜台后站着新来的兼职生。"要，谢谢。今天有点冷。"收银台边有一小桶九块九的单支玫瑰，她看了两眼，没买。
 
-- **场景图 ×1**：已生成 `konbini-later`（半年后便利店）——夜、暖白灯、一个人、留白。
-- **服装**：Vera 比从前讲究一点点（走出来了的气象）。
-- **Vera ×1–2**
-  - `calm` 平静/一点释然——松、眼神稳、淡淡的，不苦。
-  - `wistful-soft` 想起旧事的温柔怅然（可选）。
-- Sean：多半不出场（或一张远景/背影，可选）。
+- **场景图**：复用 `konbini-night.png`（已生成）。
+- **Vera（新表情，加分）**
+  - `calm` 平静/一点释然——松、眼神稳、淡淡的，不苦。穿得比从前讲究一点点。
+
+#### 甜蜜期补漏
+- **Vera `focused`（必做）**：幕2 挑衣服、幕3 各引用了 `face: "focused"`，但 `vera-focused.png` 当前缺失（引擎回退到默认脸，表情不到位）。`organize-art.mjs` 里"认真专注版"的归位映射还在，出图即接上。
 
 #### 治愈 / 尾声 · 玫瑰母题
 - 无需人物立绘。用已生成的 `rose-bud`（花苞）、`rose-bloom`（盛放）母题。
 
 ### 回看（看见机制）
-- **不需要新图**：复用对应幕的场景图（如黑客松的会场/楼梯间）。
+- **不需要新图**：复用对应幕的场景图。
 
 ---
 
-## 四、数量汇总（粗估）
+## 四、数量汇总（2026-07-14 更新）
 
-| 类别 | 已生成 | 待生成（预估） |
+| 优先级 | 立绘 | 说明 |
 |---|---|---|
-| 场景图 | 会场/楼梯/暖室内/未来公寓/半年后便利店 + 旧 `act5_room` | 爆发夜室内 ×1、僵持冷室内 ×1（其余多可复用） |
-| Vera 立绘 | 甜蜜期 4 款（warm/focused/composed/wistful) | 挑衣服/憧憬/爆发（anxious/accusing/hurt)/僵持/分手 等，按幕换装约 8–10 张 |
-| Sean 立绘 | 甜蜜期 4 款（warm/focused/tired/guilty) | 挑衣服/爆发（defensive/wounded/cold)/僵持/分手 等，约 8–10 张 |
-| 母题 | rose-bud / rose-bloom / 标题图 | — |
+| 必做 ×7 | vera-focused / vera-anxious / vera-torn / vera-crying / sean-wounded / sean-sick / sean-grieving | 每幕情绪高点各有一张"对的脸"；场景图零新增 |
+| 加分 ×5 | vera-accusing / vera-hurt / vera-calm / sean-cold / sean-pleading | 有余力再出 |
 
-> 现实取舍（3 天）:**先把 甜蜜·黑客松（已齐） + 爆发·查手机 + 分手夜 三幕的图配齐**，就能撑起"暖→炸→冷→散→看见"的完整情绪闭环；挑衣服/聊哲学/僵持等属加分，有余力再补。
-> 每新增一幕，先在这份清单登记"服装 + 表情 key"，再按同一 base prompt 出图，避免同幕内跳脸。
+> 场景图**一张都不用新生成**：幕5 的分屏感用幕中 bg 切换（fever-night ↔ konbini-night）实现。
+
+---
+
+## 五、生图工单（直接贴 CodeBuddy · 2026-07-14）
+
+> 用法：每张图 = **基底段 + 那一行表情差分**拼一起贴。同一角色所有图共用基底段，只换表情行，这就是"防换人铁律"的落实。
+> 出图后丢 `generated-images/vera_remove_bg|sean_remove_bg/`（抠图版）按下表命名，跑 `node scripts/organize-art.mjs` 归位。
+
+### Vera 基底段（照现有 vera-warm 特征写，勿改）
+
+```
+Hand-drawn watercolor illustration, character portrait, half-body, vertical composition.
+A Chinese female college student in her early 20s, long straight black hair falling past
+her shoulders, soft natural face, gentle composed presence. Soft muted watercolor palette,
+loose brushwork, paper texture, white background, transparent-friendly, character only,
+no scene. Same art style, same face, same hairstyle as previous portraits of this character.
+```
+
+| 表情差分（追加一行） | 服装行（追加一行） | 存为（抠图后） |
+|---|---|---|
+| `Expression: attentive and focused, leaning in slightly, bright appraising eyes, sizing something up with fond concentration.` | `Wearing: cream knitted sweater, warm tone.`（与现有一致） | `认真专注版_抠图.png` → vera-focused |
+| `Expression: anxious and tense, brows knitted, eyes fixed downward as if on a phone screen, fingertips tight, breath held.` | `Wearing: everyday casual student clothes, slightly cooler tone.` | `不安版_抠图.png` → vera-anxious |
+| `Expression: torn and conflicted, half-turned as if about to leave, pained hesitation in the eyes, lips pressed.` | `Wearing: convenience store staff apron over a plain shirt, night shift, cold fluorescent light feel.` | `撕扯版_抠图.png` → vera-torn |
+| `Expression: crying quietly but clear-eyed, tears on cheeks, chin steady, nodding through tears, heartbroken yet resolved.` | `Wearing: light coat, muted cold tone.` | `含泪版_抠图.png` → vera-crying |
+| `Expression: sharp accusing gaze, chin slightly raised, eyes bright and cutting.`（加分） | 同 anxious 服装行 | `质问版_抠图.png` → vera-accusing |
+| `Expression: on the verge of breaking, forcing composure, reddened eyes, trembling mouth corner.`（加分） | 同 anxious 服装行 | `破防版_抠图.png` → vera-hurt |
+| `Expression: calm and gently released, soft steady gaze, faint peaceful ease, quietly grown.`（加分） | `Wearing: slightly more put-together outfit, a small sign of new life.` | `释然版_抠图.png` → vera-calm |
+
+### Sean 基底段（照现有 sean-warm 特征写，勿改）
+
+```
+Hand-drawn watercolor illustration, character portrait, half-body, vertical composition.
+A Chinese male college student in his early 20s, short black hair, boyish honest face,
+lean build. Soft muted watercolor palette, loose brushwork, paper texture, white background,
+transparent-friendly, character only, no scene. Same art style, same face, same hairstyle
+as previous portraits of this character.
+```
+
+| 表情差分（追加一行） | 服装行（追加一行） | 存为（抠图后） |
+|---|---|---|
+| `Expression: wounded by distrust, eyes lowered and dark, lips pressed thin, quietly hurt, shoulders drawn back half a step.` | `Wearing: everyday casual student clothes, slightly cooler tone.` | `被刺伤版_抠图.png` → sean-wounded |
+| `Expression: feverish and weak, pale face, unfocused glassy eyes, wrapped in a blanket, exhausted.` | `Wearing: loose home clothes, blanket over shoulders, sickly pale.` | `发烧版_抠图.png` → sean-sick |
+| `Expression: silent tears under a doorway light, reddened eyes, face slightly turned away, grief held with dignity.` | `Wearing: loose hoodie, slumped, muted cold tone.` | `落泪版_抠图.png` → sean-grieving |
+| `Expression: shut down and cold, expressionless, face turned aside, emotionally offline.`（加分） | 同 wounded 服装行 | `冷下来版_抠图.png` → sean-cold |
+| `Expression: pleading, half a step forward, urgent hopeful eyes, about to say "let's try again".`（加分） | 同 grieving 服装行 | `挽留版_抠图.png` → sean-pleading |
+
+### 出图自查（每张过一遍）
+
+1. 和现有 vera-warm / sean-warm 摆在一起，是同一个人吗（发型、脸型、画风）？
+2. 半身、竖构图、白底、无场景元素？
+3. 表情读得出目标情绪，且**不夸张**（这游戏的表演是收着的）？

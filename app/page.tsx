@@ -76,16 +76,16 @@ export default function Home() {
 
         <div className="space-y-3 leading-loose text-white/85 text-sm">
           <p className="fade-in-delayed" style={{ animationDelay: "1.2s" }}>
-            你们把未来都想好了。
+            你们连未来都想好了。
           </p>
           <p className="fade-in-delayed" style={{ animationDelay: "2s" }}>
-            后来它就那么淡了——你说不清是哪天。
+            后来它就那么淡了。你说不清是哪一天。
           </p>
           <p
             className="fade-in-delayed text-white/65"
             style={{ animationDelay: "2.8s" }}
           >
-            回去看看。这一次，好好看着她。
+            回去看看。这一次，慢一点。
           </p>
         </div>
 

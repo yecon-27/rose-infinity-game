@@ -22,11 +22,24 @@ const COPIES = [
   ["generated-images/vera_remove_bg", "认真专注版_抠图.png", "public/images/characters/vera-focused.png"],
   ["generated-images/vera_remove_bg", "压着情绪的平静版_抠图.png", "public/images/characters/vera-composed.png"],
   ["generated-images/vera_remove_bg", "回忆里的怅然版_抠图.png", "public/images/characters/vera-wistful.png"],
+  // ── Vera 立绘 · 2026-07-14 工单新增(见 docs/art-asset-plan.md 第五节) ──
+  ["generated-images/vera_remove_bg", "不安版_抠图.png", "public/images/characters/vera-anxious.png"],
+  ["generated-images/vera_remove_bg", "撕扯版_抠图.png", "public/images/characters/vera-torn.png"],
+  ["generated-images/vera_remove_bg", "含泪版_抠图.png", "public/images/characters/vera-crying.png"],
+  ["generated-images/vera_remove_bg", "质问版_抠图.png", "public/images/characters/vera-accusing.png"],
+  ["generated-images/vera_remove_bg", "破防版_抠图.png", "public/images/characters/vera-hurt.png"],
+  ["generated-images/vera_remove_bg", "释然版_抠图.png", "public/images/characters/vera-calm.png"],
   // ── Sean 立绘(去背) ──
   ["generated-images/sean_remove_bg", "温柔版_抠图.png", "public/images/characters/sean-warm.png"],
   ["generated-images/sean_remove_bg", "盯屏幕的专注版_抠图.png", "public/images/characters/sean-focused.png"],
   ["generated-images/sean_remove_bg", "熬夜的累版_抠图.png", "public/images/characters/sean-tired.png"],
   ["generated-images/sean_remove_bg", "愧疚版_抠图.png", "public/images/characters/sean-guilty.png"],
+  // ── Sean 立绘 · 2026-07-14 工单新增(见 docs/art-asset-plan.md 第五节) ──
+  ["generated-images/sean_remove_bg", "被刺伤版_抠图.png", "public/images/characters/sean-wounded.png"],
+  ["generated-images/sean_remove_bg", "发烧版_抠图.png", "public/images/characters/sean-sick.png"],
+  ["generated-images/sean_remove_bg", "落泪版_抠图.png", "public/images/characters/sean-grieving.png"],
+  ["generated-images/sean_remove_bg", "冷下来版_抠图.png", "public/images/characters/sean-cold.png"],
+  ["generated-images/sean_remove_bg", "挽留版_抠图.png", "public/images/characters/sean-pleading.png"],
   // ── 场景(全图,按前缀匹配) ──
   ["generated-images/scenes", "黑客松夜会场_", "public/images/scenes/hackathon-venue.png"],
   ["generated-images/scenes", "黑客松夜楼梯间_", "public/images/scenes/hackathon-stairs.png"],

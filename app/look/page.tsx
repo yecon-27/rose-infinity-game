@@ -3,7 +3,13 @@
 import { Suspense, useCallback, useEffect, useState } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
 import Image from "next/image";
-import { getLookback, Lookback, LOOKBACKS } from "@/lib/story";
+import {
+  getLookback,
+  getNextLookbackId,
+  Lookback,
+  LOOKBACKS,
+} from "@/lib/story";
+import { useVoice } from "@/lib/use-voice";
 
 /**
  * "看见" · 回看
@@ -25,6 +31,7 @@ function LookInner() {
   const params = useSearchParams();
   const id = params.get("id") ?? Object.keys(LOOKBACKS)[0];
   const look: Lookback | undefined = getLookback(id);
+  const nextId = getNextLookbackId(id);
 
   const [phase, setPhase] = useState<Phase>("intro");
   const [introIdx, setIntroIdx] = useState(0);
@@ -34,12 +41,42 @@ function LookInner() {
   const [roseOn, setRoseOn] = useState(false);
   const [outroIdx, setOutroIdx] = useState(0);
 
+  // 同一页面在 /look?id=A → /look?id=B 之间切换时不会卸载，手动归零
+  useEffect(() => {
+    setPhase("intro");
+    setIntroIdx(0);
+    setMomentIdx(0);
+    setRevealed(false);
+    setReachDone(false);
+    setRoseOn(false);
+    setOutroIdx(0);
+  }, [id]);
+
   // 接住后:先等右侧立绘淡完(1.2s),玫瑰再开始盛放,两者不同时出现
   useEffect(() => {
     if (!reachDone) return;
     const t = setTimeout(() => setRoseOn(true), 1200);
     return () => clearTimeout(t);
   }, [reachDone]);
+
+  /* 配音：随当前展示的文字播对应音频（未生成的句子静默跳过） */
+  const voice = useVoice();
+  useEffect(() => {
+    if (!look) return;
+    if (phase === "intro") {
+      voice.play("narr", look.intro[introIdx] ?? "");
+    } else if (phase === "moments") {
+      const mo = look.moments[momentIdx];
+      if (!mo) return;
+      if (!revealed) voice.play("narr", mo.surface);
+      else voice.play(mo.who, mo.hidden);
+    } else if (phase === "reachback" && look.reachback) {
+      if (!reachDone) voice.play("narr", look.reachback.prompt);
+      else voice.play("narr", look.reachback.response);
+    } else if (phase === "outro") {
+      voice.play("narr", look.outro[outroIdx] ?? "");
+    }
+  }, [look, phase, introIdx, momentIdx, revealed, reachDone, outroIdx, voice.play]);
 
   const advance = useCallback(() => {
     if (!look) return;
@@ -70,9 +107,20 @@ function LookInner() {
       }
     } else {
       if (outroIdx < look.outro.length - 1) setOutroIdx((i) => i + 1);
-      else router.push("/");
+      else if (nextId) router.push(`/look?id=${nextId}`);
+      else router.push("/ending?seen=1");
     }
-  }, [look, phase, introIdx, revealed, momentIdx, reachDone, outroIdx, router]);
+  }, [
+    look,
+    phase,
+    introIdx,
+    revealed,
+    momentIdx,
+    reachDone,
+    outroIdx,
+    nextId,
+    router,
+  ]);
 
   useEffect(() => {
     function onKey(e: KeyboardEvent) {
@@ -279,7 +327,9 @@ function LookInner() {
             : phase === "reachback" && !reachDone
             ? "这一次 · 伸手"
             : phase === "outro" && outroIdx >= look.outro.length - 1
-            ? "空格 / 点击 结束"
+            ? nextId
+              ? "▼ 下一段记忆"
+              : "空格 / 点击 结束"
             : "空格 / 点击 继续"}
         </p>
       </div>
@@ -289,16 +339,29 @@ function LookInner() {
         type="button"
         onClick={(e) => {
           e.stopPropagation();
-          router.push("/");
+          if (nextId) router.push(`/look?id=${nextId}`);
+          else router.push("/ending?seen=1");
         }}
         className="fixed top-6 right-6 z-30 text-[10px] tracking-widest text-white/25 hover:text-white/60 transition-colors"
       >
-        跳过 ▸
+        跳过这段 ▸
       </button>
 
       <p className="fixed top-5 left-1/2 -translate-x-1/2 z-20 text-[10px] tracking-[0.4em] text-white/40">
         {look.title}
       </p>
+
+      {/* 声音开关 */}
+      <button
+        type="button"
+        onClick={(e) => {
+          e.stopPropagation();
+          voice.toggleMuted();
+        }}
+        className="fixed top-6 left-6 z-30 text-[10px] tracking-widest text-white/25 hover:text-white/60 transition-colors"
+      >
+        {voice.muted ? "声 · 关" : "声 · 开"}
+      </button>
     </main>
   );
 }
