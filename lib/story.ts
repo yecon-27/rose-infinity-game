@@ -557,9 +557,18 @@ const WARM_NVC: Scene = {
     },
     { kind: "line", who: "sean", text: "行。狗呢？", face: "warm" },
     { kind: "line", who: "vera", text: "柯基。腿短，跑不远。" },
-    { kind: "line", who: "sean", text: "那退休了搬去海边。狗到时候换条大的。" },
-    { kind: "line", who: "vera", text: "退休你都排上了？" },
-    { kind: "line", who: "sean", text: "先记上。免得到时候现想。" },
+    {
+      kind: "line",
+      who: "sean",
+      text: "我们努力工作，攒够两百万，被动收入能覆盖咱俩花销，咱们就不用天天打工了。",
+      face: "warm",
+    },
+    { kind: "line", who: "vera", text: "两百万？你还算上通胀了吗？" },
+    {
+      kind: "line",
+      who: "sean",
+      text: "……那三百万。反正先记上，免得到时候现想。",
+    },
     {
       kind: "narr",
       text: "两个学生，把三十年后规划得钉是钉铆是铆，认真得像明天就要交房。谁都没提，毕业其实只隔一年。",
@@ -698,10 +707,12 @@ const BURST_PHONE: Scene = {
           text: "（举着屏幕）这些人，你一个都没跟我说过。",
           face: "composed",
           reply: [
-            { who: "sean", text: "同事。项目组的人，你认识。" },
+            { who: "sean", text: "朋友。骑车认识的，你见过的。" },
+            { who: "vera", text: "我什么时候见过？" },
+            { who: "sean", text: "我删了行了吧。我根本没精力管这些，我没有骗你。" },
             {
               who: "narr",
-              text: "他声音没高，却往后退了半步。被不信任刺到的人，先把自己缩起来。",
+              text: "他声音没高，却往后退了半步。\"删了行了吧\"这句话，像在哄小孩。被不信任刺到的人，先把自己缩起来。",
             },
           ],
           after: [
@@ -712,31 +723,33 @@ const BURST_PHONE: Scene = {
           ],
         },
         {
-          text: "（声音发抖）你是不是，早就不止我了。",
+          text: "你不是跟我说，跟女孩子走得不近吗？那这些是什么？",
           reach: true,
           face: "composed",
           reply: [
-            { who: "sean", text: "你疯了？" },
+            { who: "sean", text: "朋友。以前一起骑车的。" },
+            { who: "vera", text: "那为什么我不知道？" },
+            { who: "sean", text: "我删了行了吧。我根本没精力管这些，我没有骗你。" },
             {
               who: "narr",
-              text: "他像被烫到。你这句话不是问，是判。两个人都听见了那句不该出口的。",
+              text: "他说\"删了行了吧\"，像在妥协。可她听见的是：你闹，我删，然后呢。这句\"没有骗你\"，越说越像辩解。",
             },
           ],
           after: [
             {
               who: "narr",
-              text: "这句一旦出口，就收不回。你们都知道。",
+              text: "你把他说过的话，和屏幕上的照片对在一起。对不上的部分，已经够你定罪了。",
             },
           ],
         },
         {
-          text: "（冷笑）行，你忙。",
+          text: "（把手机推过去）你自己看，这是\"走得不近\"？",
           face: "composed",
           reply: [
             { who: "sean", text: "……你非要这么想。" },
             {
               who: "narr",
-              text: "他关掉手机屏幕，像关上一扇门。音量没变，温度骤降。",
+              text: "他关掉手机屏幕，像关上一扇门。音量没变，温度骤降。你想要的不是这句，是解释。",
             },
           ],
           after: [
