@@ -644,7 +644,7 @@ const BURST_PHONE: Scene = {
           after: [
             {
               who: "narr",
-              text: "你告诉自己只是同事。可手指已经划到了下一条。",
+              text: "你告诉自己只是朋友。可手指已经划到了下一条。",
             },
           ],
         },
@@ -790,14 +790,14 @@ const BURST_PHONE: Scene = {
   ],
 };
 
-/* ─────────── 僵持期 · 幕5 · 发烧夜（扳机 · 两人都有错） ───────────
+/* ─────────── 僵持期 · 幕5 · 外卖粥（扳机 · 两人都有错） ───────────
  * 分屏/两地。他在实习城市发烧，想她来陪；她在便利店上夜班，柜台走不开。
  * 他用愧疚绑架，要“被排第一”；她用“责任”当挡箭牌，把体贴收在安全距离。
  * 谁都有理，谁也没接住谁。便利店与幕7“还是那家便利店”呼应。
  */
 const COLD_FEVER: Scene = {
   id: "cold_fever",
-  title: "发烧夜",
+  title: "外卖粥",
   phase: "strained",
   bg: "/images/scenes/fever-night.png",
   seanFace: "tired",
