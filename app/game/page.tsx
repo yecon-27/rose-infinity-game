@@ -6,6 +6,7 @@ import Image from "next/image";
 import { useSoundscape } from "@/components/soundscape-provider";
 import { AUDIO, soundscapeForScene } from "@/lib/audio";
 import { preloadImageSources } from "@/lib/preload";
+import { appendChoiceLog } from "@/lib/choice-log";
 import {
   STORY,
   getStoryScene,
@@ -169,29 +170,6 @@ function Portrait({
       })}
     </div>
   );
-}
-
-/** 玩家这一局的选择足迹(供后续"看见"/回看用) */
-interface ChoiceLog {
-  sceneId: string;
-  momentIdx: number;
-  text: string;
-  reach: boolean;
-}
-
-const LOG_KEY = "rose:choices";
-
-function logChoice(entry: ChoiceLog) {
-  if (typeof window === "undefined") return;
-  try {
-    const prev: ChoiceLog[] = JSON.parse(
-      localStorage.getItem(LOG_KEY) ?? "[]"
-    );
-    prev.push(entry);
-    localStorage.setItem(LOG_KEY, JSON.stringify(prev));
-  } catch {
-    /* 忽略存储失败 */
-  }
 }
 
 /* ────────────────────────── 打字机 ────────────────────────── */
@@ -383,7 +361,7 @@ function GameInner() {
 
       playSfx(AUDIO.sfx.softTap, 0.2);
 
-      logChoice({
+      appendChoiceLog({
         sceneId: scene.id,
         momentIdx: idx,
         text: choice.text,
@@ -792,12 +770,19 @@ function GameInner() {
               </p>
             </div>
           ) : mode === "done" ? (
-            <div className="text-center space-y-4 cursor-pointer">
+            <button
+              type="button"
+              onClick={(event) => {
+                event.stopPropagation();
+                router.push(scene.onDone ?? "/");
+              }}
+              className="group block w-full space-y-4 py-3 text-center focus-visible:outline focus-visible:outline-1 focus-visible:outline-offset-4 focus-visible:outline-white/60"
+            >
               <p className="text-white/80 tracking-[0.2em]">本章结束</p>
-              <p className="text-white/40 text-xs tracking-[0.3em]">
-                空格 / 点击 继续
+              <p className="text-white/40 text-xs tracking-[0.3em] transition-colors group-hover:text-white/65">
+                点击进入下一幕
               </p>
-            </div>
+            </button>
           ) : null}
 
           {/* 提示行 */}

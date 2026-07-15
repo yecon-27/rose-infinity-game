@@ -7,6 +7,16 @@ import { LOOKBACK_SEQUENCE } from "@/lib/story";
 import { useSoundscape } from "@/components/soundscape-provider";
 import { AUDIO } from "@/lib/audio";
 
+const SEEN_ACTIONS = [
+  { label: "写 一 封 信", to: "/letter" },
+  { label: "玫 瑰 还 在", to: "/" },
+];
+
+const FIRST_ENDING_ACTIONS = [
+  { label: "回 看 记 忆", to: `/look?id=${LOOKBACK_SEQUENCE[0]}` },
+  { label: "返 回 首 页", to: "/" },
+];
+
 /**
  * 结局页面 · 两种状态
  * 1. 活完一遍（默认）：邀请回到记忆里，从第一段开始"看见"。
@@ -30,12 +40,7 @@ function EndingInner() {
   });
 
   /* 键盘：↑↓（或←→）选择，Enter/空格 确认 */
-  const actions = seen
-    ? [{ label: "玫 瑰 还 在", to: "/" }]
-    : [
-        { label: "回 看 记 忆", to: `/look?id=${LOOKBACK_SEQUENCE[0]}` },
-        { label: "返 回 首 页", to: "/" },
-      ];
+  const actions = seen ? SEEN_ACTIONS : FIRST_ENDING_ACTIONS;
   const [sel, setSel] = useState(0);
   useEffect(() => setSel(0), [seen]);
   useEffect(() => {
@@ -55,7 +60,7 @@ function EndingInner() {
     }
     window.addEventListener("keydown", onKey);
     return () => window.removeEventListener("keydown", onKey);
-  }, [seen, sel, router, playSfx]);
+  }, [actions, sel, router, playSfx]);
 
   return (
     <main className="relative min-h-screen overflow-hidden bg-[#4a3a3a] flex flex-col items-center justify-center px-8">

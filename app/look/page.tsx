@@ -39,12 +39,10 @@ function LookInner() {
   const { playSfx } = useSoundscape(soundscapeForScene(id, true));
 
   const [phase, setPhase] = useState<Phase>("intro");
-  const [introIdx, setIntroIdx] = useState(0);
   const [momentIdx, setMomentIdx] = useState(0);
   const [revealed, setRevealed] = useState(false);
   const [reachDone, setReachDone] = useState(false);
   const [roseOn, setRoseOn] = useState(false);
-  const [outroIdx, setOutroIdx] = useState(0);
 
   useEffect(() => {
     const sources = Object.values(LOOKBACKS).flatMap((memory) => [
@@ -68,12 +66,10 @@ function LookInner() {
   // 同一页面在 /look?id=A → /look?id=B 之间切换时不会卸载，手动归零
   useEffect(() => {
     setPhase("intro");
-    setIntroIdx(0);
     setMomentIdx(0);
     setRevealed(false);
     setReachDone(false);
     setRoseOn(false);
-    setOutroIdx(0);
   }, [id]);
 
   // 接住后:先等右侧立绘淡完(1.2s),玫瑰再开始盛放,两者不同时出现
@@ -86,12 +82,9 @@ function LookInner() {
   const advance = useCallback(() => {
     if (!look) return;
     if (phase === "intro") {
-      if (introIdx < look.intro.length - 1) setIntroIdx((i) => i + 1);
-      else {
-        setPhase("moments");
-        setMomentIdx(0);
-        setRevealed(false);
-      }
+      setPhase("moments");
+      setMomentIdx(0);
+      setRevealed(false);
     } else if (phase === "moments") {
       if (!revealed) {
         playSfx(AUDIO.sfx.roseReveal, LOOKBACK_SFX_VOLUME);
@@ -103,30 +96,24 @@ function LookInner() {
         setPhase("reachback");
       } else {
         setPhase("outro");
-        setOutroIdx(0);
       }
     } else if (phase === "reachback") {
       if (!reachDone) {
         playSfx(AUDIO.sfx.roseReveal, LOOKBACK_SFX_VOLUME);
         setReachDone(true); // 这一次,伸手
-      }
-      else {
+      } else {
         setPhase("outro");
-        setOutroIdx(0);
       }
     } else {
-      if (outroIdx < look.outro.length - 1) setOutroIdx((i) => i + 1);
-      else if (nextId) router.push(`/look?id=${nextId}`);
+      if (nextId) router.push(`/look?id=${nextId}`);
       else router.push("/ending?seen=1");
     }
   }, [
     look,
     phase,
-    introIdx,
     revealed,
     momentIdx,
     reachDone,
-    outroIdx,
     nextId,
     playSfx,
     router,
@@ -137,7 +124,6 @@ function LookInner() {
     if (!look) return;
 
     if (phase === "intro") {
-      if (introIdx > 0) setIntroIdx((i) => i - 1);
       return;
     }
 
@@ -149,7 +135,6 @@ function LookInner() {
         setRevealed(true);
       } else {
         setPhase("intro");
-        setIntroIdx(look.intro.length - 1);
       }
       return;
     }
@@ -166,9 +151,7 @@ function LookInner() {
       return;
     }
 
-    if (outroIdx > 0) {
-      setOutroIdx((i) => i - 1);
-    } else if (look.reachback) {
+    if (look.reachback) {
       setPhase("reachback");
       setReachDone(true);
       setRoseOn(true);
@@ -177,7 +160,7 @@ function LookInner() {
       setMomentIdx(look.moments.length - 1);
       setRevealed(true);
     }
-  }, [look, phase, introIdx, revealed, momentIdx, reachDone, outroIdx]);
+  }, [look, phase, revealed, momentIdx, reachDone]);
 
   useEffect(() => {
     function onKey(e: KeyboardEvent) {
@@ -286,12 +269,11 @@ function LookInner() {
       {/* 前景内容 */}
       <div className="relative z-10 min-h-screen flex flex-col items-center justify-center px-8 text-center">
         {phase === "intro" && (
-          <p
-            key={introIdx}
-            className="fade-in-slow max-w-md text-white/85 text-base leading-loose tracking-wide"
-          >
-            {look.intro[introIdx]}
-          </p>
+          <div className="fade-in-slow max-w-md space-y-4 text-white/85 text-base leading-loose tracking-wide">
+            {look.intro.map((line) => (
+              <p key={line}>{line}</p>
+            ))}
+          </div>
         )}
 
         {phase === "moments" && (
@@ -364,12 +346,11 @@ function LookInner() {
         )}
 
         {phase === "outro" && (
-          <p
-            key={outroIdx}
-            className="fade-in-slow max-w-md text-white/85 text-base leading-loose tracking-wide"
-          >
-            {look.outro[outroIdx]}
-          </p>
+          <div className="fade-in-slow max-w-md space-y-4 text-white/85 text-base leading-loose tracking-wide">
+            {look.outro.map((line) => (
+              <p key={line}>{line}</p>
+            ))}
+          </div>
         )}
 
         {/* 提示 */}
@@ -378,7 +359,7 @@ function LookInner() {
             ? "← 返回 · → 点亮这一刻"
             : phase === "reachback" && !reachDone
             ? "← 返回 · → 这一次，伸手"
-            : phase === "outro" && outroIdx >= look.outro.length - 1
+            : phase === "outro"
             ? nextId
               ? "← 返回 · → 下一段记忆"
               : "← 返回 · → 结束"
