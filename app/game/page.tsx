@@ -245,6 +245,8 @@ function GameInner() {
   const [backIdx, setBackIdx] = useState(0);
   /** 聊天演出开关:整幕(presentation)或幕中 phone 时刻切换 */
   const [phoneOn, setPhoneOn] = useState(scene.presentation === "phone");
+  /** 区分“手机出现前”和“聊天结束后”这两个 phoneOn=false 状态 */
+  const [phoneSequenceCompleted, setPhoneSequenceCompleted] = useState(false);
   const [mode, setMode] = useState<Mode>("flow");
   const [optIdx, setOptIdx] = useState(0);
   const [loading, setLoading] = useState(false);
@@ -258,10 +260,27 @@ function GameInner() {
   const historyRef = useRef<Array<{ role: "vera" | "sean"; text: string }>>([]);
   /** 聊天窗口容器:内容超高时钉在最新一条(旧消息从顶部滑出隐藏) */
   const chatBoxRef = useRef<HTMLDivElement | null>(null);
+  /** 防止 Strict Mode 重跑 effect 时重复触发同一次手机轻震 */
+  const phoneVibrationPlayedRef = useRef(false);
 
   useEffect(() => {
     if (scene.id === "after_konbini") playSfx(AUDIO.sfx.konbiniDoor, 0.2);
   }, [playSfx, scene.id]);
+
+  useEffect(() => {
+    if (!phoneOn) {
+      phoneVibrationPlayedRef.current = false;
+      return;
+    }
+    if (phoneVibrationPlayedRef.current) return;
+    phoneVibrationPlayedRef.current = true;
+
+    // 轻震音负责桌面端反馈；Vibration API 在支持的移动浏览器上补充触觉。
+    playSfx(AUDIO.sfx.phoneVibrate, 0.2);
+    if (typeof navigator.vibrate === "function") {
+      navigator.vibrate([70, 40, 70]);
+    }
+  }, [phoneOn, playSfx]);
 
   /* 进入新场景:重置 */
   useEffect(() => {
@@ -270,6 +289,7 @@ function GameInner() {
     setLog([]);
     setBackIdx(0);
     setPhoneOn(scene.presentation === "phone");
+    setPhoneSequenceCompleted(false);
     setMode("flow");
     setOptIdx(0);
     setLoading(false);
@@ -317,7 +337,7 @@ function GameInner() {
       setIdx((i) => i + 1);
     } else if (m.kind === "phone") {
       setPhoneOn(m.on);
-      if (m.on) playSfx(AUDIO.sfx.phoneVibrate, 0.2);
+      if (!m.on) setPhoneSequenceCompleted(true);
       setIdx((i) => i + 1);
     } else if (m.kind === "beat") {
       setOptIdx(0);
@@ -516,7 +536,10 @@ function GameInner() {
     if (el) el.scrollTop = el.scrollHeight;
   }, [chatWindow.length, backIdx, tw.shown]);
 
-  const showPortraits = !phoneMode && scene.portraits !== "none";
+  const hideBeforeSunnyPhoneChat =
+    scene.id === "end_breakup" && !phoneSequenceCompleted;
+  const showPortraits =
+    !phoneMode && scene.portraits !== "none" && !hideBeforeSunnyPhoneChat;
   const showSean = showPortraits && scene.portraits !== "vera";
 
   return (

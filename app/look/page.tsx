@@ -27,7 +27,8 @@ export default function LookPage() {
 }
 
 type Phase = "intro" | "moments" | "reachback" | "outro";
-const LOOKBACK_SFX_VOLUME = 0.8;
+// 原音量 0.8，按需求降低 40%。
+const LOOKBACK_SFX_VOLUME = 0.48;
 
 function LookInner() {
   const router = useRouter();
