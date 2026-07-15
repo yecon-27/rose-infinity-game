@@ -112,6 +112,9 @@ export function SoundscapeProvider({ children }: PropsWithChildren) {
   );
 
   const unlock = useCallback(() => {
+    // pointerdown 的捕获监听会先于页面 onClick 执行。页面随后再次调用
+    // unlock() 时不应重新启动同一条音轨的淡入。
+    if (unlockedRef.current) return;
     unlockedRef.current = true;
     if (mutedRef.current) return;
     for (const slot of [bgmRef.current, ambienceRef.current]) {
@@ -213,7 +216,10 @@ export function useSoundscape(config?: SoundscapeConfig) {
   useEffect(() => {
     if (!enabled) return;
     setSoundscape({ bgm, ambience, bgmVolume, ambienceVolume });
-    return () => setSoundscape({});
+
+    // SoundscapeProvider 位于根 layout，会跨 App Router 页面持续存在。
+    // 页面卸载时不要清空音轨；下一页会立即提交自己的配置。这样标题页与
+    // prologue 使用同一个 src 时只调整音量，不会 stop → 重建 → 重新解码。
   }, [ambience, ambienceVolume, bgm, bgmVolume, enabled, setSoundscape]);
 
   return controls;

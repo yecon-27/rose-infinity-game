@@ -23,17 +23,22 @@
 # 先看有哪些会话（轮次、时间一目了然）
 node scripts/export-codebuddy-sessions.mjs --list
 
-# 导出所有项目的会话到 ./codebuddy-export/
-node scripts/export-codebuddy-sessions.mjs --all
+# 只导出当前项目到 ./codebuddy-export/
+node scripts/export-codebuddy-sessions.mjs
 
 # 只导出某个 jsonl 或某个目录
 node scripts/export-codebuddy-sessions.mjs ~/.codebuddy/projects/<目录>/
 
-# 自定义输出目录
-node scripts/export-codebuddy-sessions.mjs --all --out docs/codebuddy-log
+# 导出当前项目到比赛材料目录
+node scripts/export-codebuddy-sessions.mjs --out docs/codebuddy-log
+
+# 只有明确需要时才扫描全部项目
+node scripts/export-codebuddy-sessions.mjs --all
 ```
 
-导出后 `codebuddy-export/README.md` 是索引页，每个会话一个 `.md`，工具调用/思考折叠在 `<details>` 里，方便直接给评委看。
+导出器不会在当前项目匹配失败时自动扫描其他仓库。导出后 `codebuddy-export/README.md` 是索引页，每个有效会话一个 `.md`；工具调用折叠在 `<details>` 里，内部 reasoning 与文件快照不导出。
+
+脚本会自动脱敏常见 API Key、腾讯云 SecretId / SecretKey、Bearer Token 和 URL 查询密钥，并把本机主目录替换为 `~`。正式提交前仍应再做一次敏感信息扫描。
 
 ### 补充证据
 
@@ -62,14 +67,14 @@ node scripts/export-codebuddy-sessions.mjs --all --out docs/codebuddy-log
 **从第一天就有意识地留，别临提交才回头找。** 每天收工：
 
 ```bash
-node scripts/export-codebuddy-sessions.mjs --all --out docs/codebuddy-log
+node scripts/export-codebuddy-sessions.mjs --out docs/codebuddy-log
 ```
 
 把当天的关键会话归档一次，比赛后从几十个 session 里翻要轻松得多。
 
 ---
 
-## 本项目当前会话概览（截至整理时）
+## 本项目当前会话概览（2026-07-15）
 
-- 已检测到 14 个会话，时间跨度 7/2–7/12。
-- 轮次最多的几个（176 / 155 / 75 / 71 轮）是《Rose Infinity》的设计与开发主线，是最有价值的留痕素材。
+- 已检测到 14 个会话文件，其中 12 个包含有效对话，时间跨度 7/2–7/14。
+- 新版格式完整解析后共有 785 轮对话、1183 次工具调用；轮次最多的几个会话是《Rose Infinity》的设计与开发主线。
