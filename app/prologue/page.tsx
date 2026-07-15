@@ -28,7 +28,8 @@ const SCREENS: string[][] = [
   ["有些伸过来的手，你当年没接住。", "也许，还来得及。"],
 ];
 
-const TOTAL_STEPS = SCREENS.length;
+const TUTORIAL_STEP = SCREENS.length;
+const TOTAL_STEPS = SCREENS.length + 1;
 
 export default function ProloguePage() {
   const router = useRouter();
@@ -80,6 +81,7 @@ export default function ProloguePage() {
   const bgBlur = Math.max(7, 12 - idx * 0.6);
 
   const screen = SCREENS[idx];
+  const showingTutorial = idx === TUTORIAL_STEP;
 
   return (
     <main
@@ -134,14 +136,92 @@ export default function ProloguePage() {
         </div>
       )}
 
+      {/* 第一幕之前的玩法卡：先说明两遍叙事，再给操作方式。 */}
+      {showingTutorial && (
+        <section
+          key="tutorial"
+          className="relative z-10 w-full max-w-lg border border-white/15 bg-black/30 px-6 py-7 text-left shadow-[0_20px_70px_rgba(0,0,0,0.28)] backdrop-blur-sm fade-in-slow sm:px-8 sm:py-8"
+          onClick={(event) => event.stopPropagation()}
+        >
+          <header className="text-center">
+            <p className="text-[10px] tracking-[0.42em] text-white/40">
+              HOW TO PLAY
+            </p>
+            <h2 className="mt-3 font-serif text-2xl tracking-[0.25em] text-white/90">
+              怎么玩
+            </h2>
+          </header>
+
+          <div className="mt-7 space-y-5 border-y border-white/10 py-6">
+            <div className="grid grid-cols-[4.5rem_1fr] gap-4">
+              <p className="text-xs tracking-[0.18em] text-[#efbec6]">
+                第一遍
+              </p>
+              <div>
+                <p className="text-sm tracking-[0.12em] text-white/85">活过</p>
+                <p className="mt-1.5 text-xs leading-6 text-white/55">
+                  以 Vera 的视角经历七段记忆，在每一个当下做出选择。
+                </p>
+              </div>
+            </div>
+
+            <div className="grid grid-cols-[4.5rem_1fr] gap-4">
+              <p className="text-xs tracking-[0.18em] text-[#efbec6]">
+                第二遍
+              </p>
+              <div>
+                <p className="text-sm tracking-[0.12em] text-white/85">看见</p>
+                <p className="mt-1.5 text-xs leading-6 text-white/55">
+                  故事结束后，六段记忆会重新打开。你会看见 Sean
+                  没说出口的话，也会获得一次重新回应的机会。
+                </p>
+              </div>
+            </div>
+
+            <p className="text-center text-xs leading-6 text-white/70">
+              这里没有正确选项，也不会为一段关系打分。
+            </p>
+          </div>
+
+          <dl className="mt-6 grid grid-cols-2 gap-x-6 gap-y-3 text-[11px]">
+            <div className="flex items-center justify-between gap-3">
+              <dt className="tracking-widest text-white/75">空格 / →</dt>
+              <dd className="text-white/40">推进</dd>
+            </div>
+            <div className="flex items-center justify-between gap-3">
+              <dt className="tracking-widest text-white/75">←</dt>
+              <dd className="text-white/40">返回</dd>
+            </div>
+            <div className="flex items-center justify-between gap-3">
+              <dt className="tracking-widest text-white/75">↑ / ↓</dt>
+              <dd className="text-white/40">切换选项</dd>
+            </div>
+            <div className="flex items-center justify-between gap-3">
+              <dt className="tracking-widest text-white/75">Enter</dt>
+              <dd className="text-white/40">确认</dd>
+            </div>
+          </dl>
+
+          <button
+            type="button"
+            onClick={advance}
+            className="mt-7 w-full border border-white/30 bg-white/[0.06] px-5 py-3 text-xs tracking-[0.28em] text-white/80 transition-colors hover:border-white/60 hover:bg-white/10 hover:text-white focus-visible:outline focus-visible:outline-1 focus-visible:outline-offset-3 focus-visible:outline-white/70"
+          >
+            进入第一段记忆
+          </button>
+        </section>
+      )}
+
       <p className="fixed bottom-10 z-10 text-[10px] tracking-[0.3em] text-white/30 soft-pulse">
-        {idx >= TOTAL_STEPS - 1
-          ? "← 返回 · → 回到那一天"
+        {showingTutorial
+          ? "← 返回 · Enter 进入叫花鸡"
+          : idx === SCREENS.length - 1
+          ? "← 返回 · → 先看看怎么玩"
           : "← 返回 · → 继续 · 空格 / 点击推进"}
       </p>
 
       <p className="fixed bottom-4 z-10 text-[10px] text-white/15 tracking-widest">
-        {idx + 1} / {TOTAL_STEPS}
+        {showingTutorial ? "玩法" : `${idx + 1} / ${SCREENS.length}`}
       </p>
     </main>
   );
