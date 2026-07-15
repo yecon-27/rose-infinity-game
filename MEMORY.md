@@ -60,10 +60,9 @@
 
 ## 7. 美术
 
-- 流程：`generated-images/`(原始, 中文长名) → `scripts/organize-art.mjs` → `public/images/`(干净名)。去背用 `scripts/remove-bg.mjs`。
+- 正式美术资产统一保存在 `public/images/`；新增素材应直接使用代码友好的英文文件名。需要去背时可用 `scripts/remove-bg.mjs`。
 - 立绘：`vera-{warm,focused,composed,wistful}`、`sean-{warm,focused,tired,guilty}`。
 - 场景：`hackathon-venue/stairs`、`mall-fitting`、`konbini-night/later`、`warm-room`、`future-apartment` = 真图；**`campus-bench`/`dorm-room-night`/`fever-night`/`dorm-doorway` = 占位图**（源图未生成，暂用 warm-room/act5_room 顶着，待生成后同名覆盖）。
-- `generated-images/scenes/title-keyart-new.png` 未迁移（是否换上首页待定）。
 - ⚠️ CodeBuddy 越界改了 `game/page.tsx`：把 `VERA_FACES`→`VERA_EMOTIONS`、删了 `focused`、默认表情改 `composed`。表情/图 = **最后统一 polish**（新表情 key 如 anxious/pleading 会优雅回退，不崩）。
 
 ## 8. 协作模型 & 教训

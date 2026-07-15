@@ -37,8 +37,8 @@
 - 视觉：一张输入→混元→输出的流程图 + 一段真实生成对白截图
 
 ## P6 · AI 内容产出（亮点页 ②，对应硬性指标）
-- **世界观 & 剧情**：人物小传、分幕大纲、场景文本 AI 产出（`docs/ai-generated/world-and-story.md` 留痕）
-- **游戏原画**：Vera/Sean 立绘、全部场景图、rose 母题、海报，均由混元生图（`docs/ai-generated/art-and-illustrations.md` 留痕）
+- **世界观 & 剧情**：人物小传、分幕大纲与场景文本由 AI 辅助迭代，当前版本以 `docs/writing/` 为准
+- **游戏原画**：Vera/Sean 立绘、场景图、rose 母题与海报由 AI 辅助生成；过程证据按 `docs/codebuddy-留痕指南.md` 整理
 - 视觉：美术资产九宫格墙（最有冲击力的一页，少字多图）
 
 ## P7 · 技术架构与 CodeBuddy 开发过程

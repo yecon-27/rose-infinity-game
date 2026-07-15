@@ -10,7 +10,7 @@
 
 - **风格**：水彩手绘、颜料晕染、水彩纸纹理、柔光、暖冷对比、留白、微忧郁、胶片颗粒。
 - **立绘**：半身/膝上构图，**透明背景**（去背版 `_remove_bg/*_抠图。png`)；场景图为全图。
-- **命名**：场景 `public/images/scenes/<名>.png`；立绘 `public/images/characters/<vera|sean>-<key>.png`。生成后丢 `generated-images/`，跑 `node scripts/organize-art.mjs` 归位。
+- **命名**：场景直接保存为 `public/images/scenes/<名>.png`；立绘直接保存为 `public/images/characters/<vera|sean>-<key>.png`。
 - **防"换人"铁律**:**同一幕内**，一个角色的所有表情必须**同发型、同服装、同光线、同画风、同机位**，只变面部表情与姿态。最好用同一条 base prompt，只改"表情"那一句。
 
 ## 二、服装随剧情走（本身就是叙事）
@@ -113,7 +113,7 @@
   - `calm` 平静/一点释然——松、眼神稳、淡淡的，不苦。穿得比从前讲究一点点。
 
 #### 甜蜜期补漏
-- **Vera `focused`（必做）**：幕2 挑衣服、幕3 各引用了 `face: "focused"`，但 `vera-focused.png` 当前缺失（引擎回退到默认脸，表情不到位）。`organize-art.mjs` 里"认真专注版"的归位映射还在，出图即接上。
+- **Vera `focused`（必做）**：幕2 挑衣服、幕3 各引用了 `face: "focused"`，但 `vera-focused.png` 当前缺失（引擎回退到默认脸，表情不到位）。补图后直接保存到正式立绘目录。
 
 #### 治愈 / 尾声 · 玫瑰母题
 - 无需人物立绘。用已生成的 `rose-bud`（花苞）、`rose-bloom`（盛放）母题。
@@ -137,7 +137,7 @@
 ## 五、生图工单（直接贴 CodeBuddy · 2026-07-14）
 
 > 用法：每张图 = **基底段 + 那一行表情差分**拼一起贴。同一角色所有图共用基底段，只换表情行，这就是"防换人铁律"的落实。
-> 出图后丢 `generated-images/vera_remove_bg|sean_remove_bg/`（抠图版）按下表命名，跑 `node scripts/organize-art.mjs` 归位。
+> 出图、抠图后按下表命名，直接保存到 `public/images/characters/`。
 
 ### Vera 基底段（照现有 vera-warm 特征写，勿改）
 
@@ -175,7 +175,7 @@
 | `表情：关上了的冷淡，面无表情，脸别向一侧，情绪下线。`（加分） | 同"被刺伤"服装行 | `冷下来版_抠图.png` → sean-cold |
 | `表情：挽留，身体往前半步，眼神急切又抱着希望，像正要说"我们再试试"。`（加分） | 同"落泪"服装行 | `挽留版_抠图.png` → sean-pleading |
 
-### 场景图 ×4（全部必做，替换占位图；出图后丢 generated-images/scenes/，按前缀命名）
+### 场景图 ×4（全部必做，替换占位图；出图后按表中名称直接保存到 `public/images/scenes/`）
 
 场景基底段（每张都以此开头）：
 
