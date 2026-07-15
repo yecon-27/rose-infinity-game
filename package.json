@@ -8,6 +8,7 @@
     "start": "next start",
     "lint": "next lint",
     "gen:voice": "tsx scripts/gen-voice.mts",
+    "gen:audio": "node scripts/gen-audio-assets.mjs",
     "organize:art": "node scripts/organize-art.mjs"
   },
   "dependencies": {
@@ -23,6 +24,7 @@
     "autoprefixer": "10.4.19",
     "postcss": "8.4.39",
     "tailwindcss": "3.4.6",
+    "tencentcloud-sdk-nodejs-tts": "^4.1.237",
     "tsx": "^4.23.0",
     "typescript": "5.5.3"
   }

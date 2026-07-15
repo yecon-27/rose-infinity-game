@@ -45,11 +45,20 @@ export interface Choice {
 
 export type Moment =
   | { kind: "narr"; text: string }
-  | { kind: "line"; who: Exclude<Speaker, "narr">; text: string; face?: string }
+  | {
+      kind: "line";
+      who: Exclude<Speaker, "narr">;
+      text: string;
+      face?: string;
+      /** 聊天演出（presentation:"phone"）里这条消息的时间戳，如 "02:03" */
+      time?: string;
+    }
   /** 幕中切换背景（如从会场走到楼梯间）；瞬间生效，不占对话框 */
   | { kind: "bg"; src: string }
   /** 不带台词地切换某人的表情（emotion key) */
   | { kind: "face"; who: Exclude<Speaker, "narr">; emotion: string }
+  /** 幕中开/关手机聊天演出（如幕6 开场的两周荒漠消息） */
+  | { kind: "phone"; on: boolean }
   | {
       kind: "beat";
       /** 引导语，如"他眼睛没离屏幕。你想凑近他——" */
@@ -74,6 +83,15 @@ export interface Scene {
   /** 进场时的初始表情（emotion key)，默认 warm */
   veraFace?: string;
   seanFace?: string;
+  /**
+   * 立绘套装后缀（按幕换装）：解析为 {who}-{emotion}-{faceSet}.png，
+   * 套装内缺该表情时回退 warm，再回退无后缀基础图。
+   */
+  faceSet?: string;
+  /** 立绘显示："none" 全隐藏（人物已画进背景）；"vera" 只显示她 */
+  portraits?: "none" | "vera";
+  /** 特殊演出："phone" = 聊天记录浮层（幕4 关注列表），同时隐藏立绘 */
+  presentation?: "phone";
   brief: string;
   /** 玩家视角（默认 vera) */
   pov?: Exclude<Speaker, "narr">;
@@ -103,6 +121,10 @@ export interface Lookback {
   /** 开场旁白 */
   intro: string[];
   moments: LookbackMoment[];
+  /** 回看页立绘（文件名去 .png）：回看只看他。缺省 sean-tired-hackthon。 */
+  seanPortrait?: string;
+  /** 整段回看不显示立绘（如外卖粥：分屏背景里人物已画入） */
+  hidePortraits?: boolean;
   /** 看见之后的"接住"：回到那一刻，这一次伸手。治愈的落点（可选）。 */
   reachback?: {
     prompt: string;
@@ -125,6 +147,7 @@ export const HACKATHON_NIGHT: Scene = {
   bg: "/images/scenes/hackathon-venue.png",
   veraFace: "warm",
   seanFace: "focused",
+  faceSet: "hackthon",
   onDone: "/game?scene=warm_shopping",
   brief:
     "黑客松熬到深夜。晚饭凉在长桌那头，他还在赶代码。你也是这队的人，手里端着替他续的第三杯美式。",
@@ -261,7 +284,7 @@ export const HACKATHON_NIGHT: Scene = {
           text: "“你眼里就只有代码。”",
           direction: "带刺先扎。他会缩。",
           reply: [
-            { who: "sean", text: "……我不是。今天真的忙。" },
+            { who: "sean", text: "……我不是。今天真的忙。", face: "guilty" },
             {
               who: "narr",
               text: "他松开手去够筷子。那点想靠近的气，散了。",
@@ -294,7 +317,9 @@ const WARM_SHOPPING: Scene = {
   title: "挑衣服",
   phase: "warm",
   bg: "/images/scenes/mall-fitting.png",
-  seanFace: "focused",
+  veraFace: "earnest",
+  seanFace: "warm",
+  faceSet: "cloth",
   onDone: "/game?scene=warm_nvc",
   brief:
     "周末的商场。你拉着他进店。他的衣柜里全是队服和文化衫，你早就想动手了。",
@@ -320,7 +345,7 @@ const WARM_SHOPPING: Scene = {
       choices: [
         {
           text: "（直接递过去）这件。试试。",
-          face: "focused",
+          face: "earnest",
           reply: [
             { who: "sean", text: "……行。" },
             {
@@ -337,7 +362,7 @@ const WARM_SHOPPING: Scene = {
         },
         {
           text: "这个颜色不会太老气？",
-          face: "focused",
+          face: "earnest",
           reply: [
             { who: "sean", text: "不会吧……你选的应该没问题。" },
             {
@@ -355,7 +380,7 @@ const WARM_SHOPPING: Scene = {
         {
           text: "（拿起另一件）要不，这件也拿上？",
           reach: true,
-          face: "warm",
+          face: "earnest",
           reply: [
             { who: "sean", text: "一次试两件？" },
             {
@@ -372,6 +397,7 @@ const WARM_SHOPPING: Scene = {
         },
       ],
     },
+    { kind: "face", who: "sean", emotion: "neutral" },
     {
       kind: "narr",
       text: "帘子拉开。他没先看镜子，先看你。等你点头，像等一个验收。",
@@ -385,6 +411,7 @@ const WARM_SHOPPING: Scene = {
       kind: "narr",
       text: "镜子里，你俩站在一起。你侧头打量，像在确认一件作品完工。",
     },
+    { kind: "face", who: "vera", emotion: "warm" },
     {
       kind: "beat",
       prompt: "出门前，你还想最后看一眼——",
@@ -456,7 +483,9 @@ const WARM_NVC: Scene = {
   title: "非暴力沟通",
   phase: "warm",
   bg: "/images/scenes/campus-bench.png",
-  seanFace: "focused",
+  veraFace: "warm",
+  seanFace: "thinking",
+  faceSet: "bench",
   onDone: "/game?scene=burst_phone",
   brief:
     "校园长椅，下午。你怀里抱着本《非暴力沟通》，像抱着一份检讨。",
@@ -488,7 +517,7 @@ const WARM_NVC: Scene = {
       kind: "line",
       who: "sean",
       text: "你要是学到什么，多跟我讲讲。",
-      face: "warm",
+      face: "thinking",
     },
     {
       kind: "beat",
@@ -515,9 +544,9 @@ const WARM_NVC: Scene = {
         },
         {
           text: "（笑）你先改你的“等我搞完”吧。",
-          face: "focused",
+          face: "warm",
           reply: [
-            { who: "sean", text: "……这个我认。", face: "warm" },
+            { who: "sean", text: "……这个我认。", face: "thinking" },
             {
               who: "narr",
               text: "他举手投降，你笑出声。空气松下来，谁都没较真。",
@@ -555,19 +584,20 @@ const WARM_NVC: Scene = {
       kind: "narr",
       text: "暮色下来，话题不知怎么拐到了以后。",
     },
+    { kind: "bg", src: "/images/scenes/future-apartment.png" },
     {
       kind: "line",
       who: "vera",
       text: "等毕业了，房子要朝南。阳台要大，能晒被子。",
       face: "warm",
     },
-    { kind: "line", who: "sean", text: "行。狗呢？", face: "warm" },
-    { kind: "line", who: "vera", text: "柯基。腿短，跑不远。" },
+    { kind: "line", who: "sean", text: "行。狗呢？", face: "staring" },
+    { kind: "line", who: "vera", text: "柯基。腿短，跑不远。", face: "staring" },
     {
       kind: "line",
       who: "sean",
       text: "我们努力工作，攒够两百万，被动收入能覆盖咱俩花销，咱们就不用天天打工了。",
-      face: "warm",
+      face: "staring",
     },
     { kind: "line", who: "vera", text: "两百万？你还算上通胀了吗？" },
     {
@@ -584,6 +614,7 @@ const WARM_NVC: Scene = {
       who: "sean",
       text: "未来的事，慢慢来。",
     },
+    { kind: "bg", src: "/images/scenes/campus-bench.png" },
     {
       kind: "narr",
       text: "憧憬越具体，后来被现实压下来时越疼。可此刻，长椅上的两个人谁都没想到要停。",
@@ -600,10 +631,12 @@ const WARM_NVC: Scene = {
  */
 const BURST_PHONE: Scene = {
   id: "burst_phone",
-  title: "查手机",
+  title: "关注列表",
   phase: "strained",
   bg: "/images/scenes/dorm-room-night.png",
-  seanFace: "focused",
+  veraFace: "anxious",
+  seanFace: "wooded",
+  faceSet: "phone",
   onDone: "/game?scene=cold_fever",
   brief:
     "他下周去实习报到。你来他宿舍帮他收拾行李，却在他下楼取快递时，撞见那部亮起来的手机。",
@@ -696,6 +729,7 @@ const BURST_PHONE: Scene = {
       who: "sean",
       text: "你动我手机？",
     },
+    { kind: "face", who: "vera", emotion: "hurt" },
     {
       kind: "narr",
       text: "音量不高。是确认，不是质问。可你听出了底下那层：他在失望。",
@@ -711,11 +745,11 @@ const BURST_PHONE: Scene = {
       choices: [
         {
           text: "（举着屏幕）这些人，你一个都没跟我说过。",
-          face: "composed",
+          face: "accusing",
           reply: [
-            { who: "sean", text: "朋友。骑车认识的，你见过的。" },
+            { who: "sean", text: "朋友。骑车认识的。", face: "wooded" },
             { who: "vera", text: "我什么时候见过？" },
-            { who: "sean", text: "我删了行了吧。我根本没精力管这些，我没有骗你。" },
+            { who: "sean", text: "我删了行了吧。我根本没精力管这些，我没有骗你。", face: "cold" },
             {
               who: "narr",
               text: "他声音没高，却往后退了半步。\"删了行了吧\"这句话，像在哄小孩。被不信任刺到的人，先把自己缩起来。",
@@ -731,11 +765,11 @@ const BURST_PHONE: Scene = {
         {
           text: "你不是跟我说，跟女孩子走得不近吗？那这些是什么？",
           reach: true,
-          face: "composed",
+          face: "accusing",
           reply: [
             { who: "sean", text: "朋友。以前一起骑车的。" },
             { who: "vera", text: "那为什么我不知道？" },
-            { who: "sean", text: "我删了行了吧。我根本没精力管这些，我没有骗你。" },
+            { who: "sean", text: "我删了行了吧。我根本没精力管这些，我没有骗你。", face: "cold" },
             {
               who: "narr",
               text: "他说\"删了行了吧\"，像在妥协。可她听见的是：你闹，我删，然后呢。这句\"没有骗你\"，越说越像辩解。",
@@ -750,9 +784,9 @@ const BURST_PHONE: Scene = {
         },
         {
           text: "（把手机推过去）你自己看，这是\"走得不近\"？",
-          face: "composed",
+          face: "accusing",
           reply: [
-            { who: "sean", text: "……你非要这么想。" },
+            { who: "sean", text: "……你非要这么想。", face: "cold" },
             {
               who: "narr",
               text: "他关掉手机屏幕，像关上一扇门。音量没变，温度骤降。你想要的不是这句，是解释。",
@@ -783,12 +817,13 @@ const BURST_PHONE: Scene = {
       kind: "line",
       who: "sean",
       text: "……不早了。我送你回去。",
-      face: "tired",
+      face: "cold",
     },
     {
       kind: "narr",
       text: "行李收到一半，就那么摊着。下楼的路上，他走在你旁边，隔着半步。谁都没提刚才的事，谁也没提，下周他就走了。",
     },
+    { kind: "bg", src: "/images/scenes/dorm-doorway-night.png" },
     {
       kind: "narr",
       text: "到你楼下，他只说了句“到了”。你很想收回刚才每一句，可一句也没收回来。冷处理，从这晚开始。",
@@ -815,11 +850,7 @@ const COLD_FEVER: Scene = {
   title: "外卖粥",
   phase: "strained",
   bg: "/images/scenes/fever-night.png",
-  bgSplit: [
-    "/images/scenes/fever-night.png",
-    "/images/scenes/konbini-counter.png",
-  ],
-  seanFace: "tired",
+  presentation: "phone",
   onDone: "/game?scene=end_breakup",
   brief:
     "两地。他在实习那边的宿舍，发烧缩在床上，手机亮在手边；你在便利店上夜班，手机扣在收银台边。",
@@ -835,16 +866,19 @@ const COLD_FEVER: Scene = {
     },
     {
       kind: "narr",
-      text: "凌晨两点零三分，手机震了一下。你翻过来：“发烧了，三十八度八。”",
+      text: "凌晨两点零三分，手机震了一下。",
     },
     {
       kind: "line",
       who: "sean",
-      text: "没事，你忙。睡了。",
+      text: "发烧了，三十八度八。",
+      time: "02:03",
     },
     {
-      kind: "narr",
-      text: "两条消息之间，夹着一行灰字：“对方撤回了一条消息”。你盯着那行字看了一会儿，没问。",
+      kind: "line",
+      who: "sean",
+      text: "没事，你忙。睡了🙂",
+      time: "02:04",
     },
     {
       kind: "narr",
@@ -852,7 +886,13 @@ const COLD_FEVER: Scene = {
     },
     {
       kind: "narr",
-      text: "手机震了一下。一个红包。备注：\"我想买你一个晚上。你就休息一下，别让自己那么忙。\"",
+      text: "手机又震了一下。这次不是消息，是一个红包。",
+    },
+    {
+      kind: "line",
+      who: "sean",
+      text: "🧧 我想买你一个晚上。你就休息一下，别让自己那么忙。",
+      time: "02:31",
     },
     {
       kind: "narr",
@@ -930,7 +970,7 @@ const COLD_FEVER: Scene = {
           reach: true,
           face: "composed",
           reply: [
-            { who: "sean", text: "真不用。" },
+            { who: "sean", text: "真不用🙏" },
             {
               who: "narr",
               text: "他收了外卖，没再说话。你以为尽了心，他听见的是“我有用，但排不上前头”。",
@@ -981,16 +1021,18 @@ const COLD_FEVER: Scene = {
     },
     {
       kind: "narr",
-      text: "凌晨四点，他烧得迷糊。打了一句“你来好不好”，盯着看了十秒，删了。最后发出去的还是“没事”。",
+      text: "凌晨四点，手机又亮了。这次不是“没事”。",
     },
+    { kind: "line", who: "sean", text: "你来好不好。", time: "04:12" },
     {
       kind: "narr",
-      text: "可“没事”压不住了。半小时后，那句话来了。",
+      text: "五个字。你站在柜台后面盯着它们，很久。久到他等不到回答。",
     },
     {
       kind: "line",
       who: "sean",
       text: "以后结婚了，工作也比家庭重要吗？",
+      time: "04:47",
     },
     {
       kind: "narr",
@@ -1024,10 +1066,10 @@ const COLD_FEVER: Scene = {
           reach: true,
           face: "warm",
           reply: [
-            { who: "sean", text: "睡吧你。" },
+            { who: "sean", text: "忙完了早点休息🌙" },
             {
               who: "narr",
-              text: "他没接那句“看我”，也没拒绝。空气里那点软，被“睡吧”轻轻按了回去。",
+              text: "他没接那句“看我”，也没拒绝。空气里那点软，被“早点休息”轻轻按了回去。",
             },
           ],
           after: [
@@ -1058,7 +1100,7 @@ const COLD_FEVER: Scene = {
     },
     {
       kind: "narr",
-      text: "早上六点，换班的同事到了，顺口说了句“辛苦”。你愣了一下。这两个字，竟然比那句“多喝水”暖。这个念头，把你自己吓到了。",
+      text: "早上六点，换班的同事到了，顺口说了句“辛苦”。你愣了一下。一个外人顺口的两个字，竟然比他那句“没事，你忙”暖。这个念头，把你自己吓到了。",
     },
     {
       kind: "narr",
@@ -1082,12 +1124,37 @@ const END_BREAKUP: Scene = {
   title: "好天气",
   phase: "strained",
   bg: "/images/scenes/sunny-dorm.png",
-  seanFace: "tired",
+  seanFace: "smile",
+  faceSet: "sunny",
   onDone: "/game?scene=after_konbini",
   brief:
     "他实习后头一次回校的周末。你来收走留在他宿舍的东西，一个轻得不像样的袋子。那天天气很好，好得连一个分手的理由都不给。",
   pov: "vera",
   script: [
+    {
+      kind: "narr",
+      text: "他去实习的第两个星期，周五晚上，手机亮了。",
+    },
+    { kind: "phone", on: true },
+    { kind: "line", who: "sean", text: "早安", time: "昨天 08:37" },
+    { kind: "line", who: "vera", text: "早安" },
+    { kind: "line", who: "sean", text: "晚安，早点睡", time: "昨天 23:41" },
+    { kind: "line", who: "vera", text: "晚安" },
+    {
+      kind: "narr",
+      text: "这两个星期，你们的对话只剩下这些。今晚，是第一句别的。",
+    },
+    { kind: "line", who: "sean", text: "我周末回学校。能不能见一面。", time: "19:02" },
+    { kind: "line", who: "vera", text: "好。正好我有东西落你那了。", face: "composed" },
+    { kind: "phone", on: false },
+    {
+      kind: "narr",
+      text: "你答应得很快，又补了那半句。像需要一个不是为了见他的理由。",
+    },
+    {
+      kind: "narr",
+      text: "周六下午，你到了他宿舍。天气好得过分。",
+    },
     {
       kind: "narr",
       text: "你把落在他这儿的东西收进袋子：一支用秃的眉笔、半包没吃完的糖、一张电影票根。四个季节的痕迹，五分钟就收完了。",
@@ -1105,7 +1172,7 @@ const END_BREAKUP: Scene = {
       kind: "line",
       who: "sean",
       text: "你这支眉笔，都秃成这样了还留着。",
-      face: "warm",
+      face: "smile",
     },
     {
       kind: "narr",
@@ -1125,7 +1192,7 @@ const END_BREAKUP: Scene = {
       kind: "line",
       who: "sean",
       text: "……别搞得这么伤感。大晴天的。",
-      face: "guilty",
+      face: "smile",
     },
     { kind: "narr", text: "他笑了一下，没笑成。窗外的阳光好得不讲道理。" },
     {
@@ -1135,9 +1202,9 @@ const END_BREAKUP: Scene = {
       choices: [
         {
           text: "最近好像都挺忙的……先这样？",
-          face: "composed",
+          face: "smile",
           reply: [
-            { who: "sean", text: "……别这样说。", face: "tired" },
+            { who: "sean", text: "……别这样说。", face: "pleading" },
             { who: "sean", text: "要说，就好好说。" },
             {
               who: "narr",
@@ -1148,9 +1215,9 @@ const END_BREAKUP: Scene = {
         {
           text: "我们谈谈吧。好好谈一次。",
           reach: true,
-          face: "wistful",
+          face: "composed",
           reply: [
-            { who: "sean", text: "嗯。我也想说。", face: "tired" },
+            { who: "sean", text: "嗯。我也想说。", face: "pleading" },
             {
               who: "narr",
               text: "他把椅子转过来，面对你坐下，像从前无数次讨论未来那样。只是这次要谈的，是怎么结束。",
@@ -1162,7 +1229,7 @@ const END_BREAKUP: Scene = {
           face: "composed",
           reply: [
             { who: "narr", text: "沉默涨满整个房间。最后是他先开口。" },
-            { who: "sean", text: "Vera。我们谈谈吧。", face: "tired" },
+            { who: "sean", text: "Vera。我们谈谈吧。", face: "pleading" },
           ],
         },
       ],
@@ -1175,19 +1242,19 @@ const END_BREAKUP: Scene = {
       kind: "line",
       who: "sean",
       text: "我知道我老说“等我搞完”。我想改，一忙起来就忘。你等我的时候，我都知道。",
-      face: "guilty",
+      face: "pleading",
     },
     {
       kind: "line",
       who: "vera",
       text: "我也一样。说好要好好说话，一急，还是那样。",
-      face: "wistful",
+      face: "composed",
     },
     {
       kind: "narr",
-      text: "都认了。认得这么干脆，反而没话了。窗外有人骑车经过，铃响了一声，很远。",
+      text: "都认了。认得这么干脆，反而没话了。楼下传来拍球声，一下，一下，很远。",
     },
-    { kind: "line", who: "sean", text: "……要不，我们再试试？", face: "tired" },
+    { kind: "line", who: "sean", text: "……要不，我们再试试？", face: "pleading" },
     {
       kind: "narr",
       text: "他说得很轻，眼睛却直直看着你。那个眼神你认得，是黑客松楼梯间，他抱住你之前的那个。",
@@ -1200,14 +1267,14 @@ const END_BREAKUP: Scene = {
         {
           text: "我不想就这么结束。",
           reach: true,
-          face: "wistful",
+          face: "crying",
           say: "……我也不想就这么结束。",
           reply: [
             {
               who: "narr",
               text: "话一出口，你们俩都哭了。不是嚎啕，是眼泪自己下来的那种。",
             },
-            { who: "sean", text: "那就不结束。", face: "guilty" },
+            { who: "sean", text: "那就不结束。", face: "grieving" },
             { who: "narr", text: "可谁都没动。因为下一句话，你们都知道。" },
           ],
           after: [
@@ -1222,7 +1289,7 @@ const END_BREAKUP: Scene = {
           text: "试过了。我们都试过了。",
           face: "composed",
           reply: [
-            { who: "sean", text: "……嗯。", face: "tired" },
+            { who: "sean", text: "……嗯。", face: "grieving" },
             {
               who: "narr",
               text: "他点头点得很慢，像在跟自己确认。眼睛红了，声音没抖。",
@@ -1235,13 +1302,13 @@ const END_BREAKUP: Scene = {
         },
         {
           text: "（摇头，眼泪先掉下来）",
-          face: "wistful",
+          face: "crying",
           reply: [
             {
               who: "narr",
               text: "你说不出话。他伸手想替你擦，手到一半停住了。从今晚起，这个动作没有资格了。",
             },
-            { who: "sean", text: "……对不起。不是你的错。", face: "guilty" },
+            { who: "sean", text: "……对不起。不是你的错。", face: "grieving" },
           ],
           after: [
             { who: "vera", text: "也不是你的错。可我们在一起，还是会吵个不停。" },
@@ -1255,12 +1322,12 @@ const END_BREAKUP: Scene = {
       text: "然后是那些没得吵的：毕业就在明年，实习各在一个城市，两份都还没落地的人生。你们把小房子规划到了狗的品种，却没算过，两个人先在哪里站稳。",
     },
     { kind: "line", who: "vera", text: "我们没有输。我们只是，到这了。" },
-    { kind: "line", who: "sean", text: "……嗯。到这了。", face: "tired" },
+    { kind: "line", who: "sean", text: "……嗯。到这了。", face: "grieving" },
     {
       kind: "narr",
       text: "东西收完了。话也说完了。太阳西斜下来，还是好天气。",
     },
-    { kind: "bg", src: "/images/scenes/dorm-doorway.png" },
+    { kind: "bg", src: "/images/scenes/door-doorway-sunny.png" },
     {
       kind: "narr",
       text: "宿舍楼门口，西斜的太阳把两个影子拉得很长。他替你拉开门，像过去每一次送你下楼。",
@@ -1275,9 +1342,9 @@ const END_BREAKUP: Scene = {
         {
           text: "谢谢你。那些都是真的。",
           reach: true,
-          face: "wistful",
+          face: "crying",
           reply: [
-            { who: "sean", text: "……嗯。都是真的。", face: "guilty" },
+            { who: "sean", text: "……嗯。都是真的。", face: "grieving" },
             {
               who: "narr",
               text: "他哭了。没出声，就那么站在夕阳里，眼泪下来了。你第一次看见他哭。也是最后一次。",
@@ -1310,7 +1377,7 @@ const END_BREAKUP: Scene = {
         {
           text: "（抱他一下，很快松开）",
           reach: true,
-          face: "wistful",
+          face: "crying",
           reply: [
             {
               who: "narr",
@@ -1319,7 +1386,7 @@ const END_BREAKUP: Scene = {
             {
               who: "sean",
               text: "……走吧。再不走，我要说话不算话了。",
-              face: "guilty",
+              face: "grieving",
             },
           ],
           after: [
@@ -1356,7 +1423,9 @@ const AFTER_KONBINI: Scene = {
   title: "半年后",
   phase: "warm",
   bg: "/images/scenes/konbini-night.png",
-  seanFace: "focused",
+  veraFace: "calm",
+  faceSet: "konbini",
+  portraits: "vera",
   onDone: "/ending",
   brief:
     "还是那家便利店。玻璃门开开合合，冷气扑脸。你一个人，站在关东煮前。",
@@ -1385,7 +1454,7 @@ const AFTER_KONBINI: Scene = {
     },
     {
       kind: "narr",
-      text: "说完，你想起那个发烧的夜晚。他发来“没事”，前面夹着一条撤回的消息。你到现在都不知道那条写了什么。只记得那晚，你连一句“我想去”，都没能说出口。",
+      text: "说完，你想起那个发烧的夜晚。他发来“你来好不好”，五个字，你盯着看了很久，最后一个字都没能回。那晚，你连“我想去”都没说出口。",
     },
     {
       kind: "narr",
@@ -1403,7 +1472,7 @@ const AFTER_KONBINI: Scene = {
         {
           text: "（对自己笑）慢慢来。",
           reach: true,
-          face: "warm",
+          face: "calm",
           reply: [
             {
               who: "narr",
@@ -1419,7 +1488,7 @@ const AFTER_KONBINI: Scene = {
         },
         {
           text: "（望向窗外）天黑得正好。",
-          face: "composed",
+          face: "calm",
           reply: [
             {
               who: "narr",
@@ -1529,6 +1598,7 @@ export const HACKATHON_LOOKBACK: Lookback = {
 export const SHOPPING_LOOKBACK: Lookback = {
   id: "warm_shopping",
   title: "回看 · 挑衣服",
+  seanPortrait: "sean-warm-cloth",
   intro: [
     "那个下午，你记得的全是甜。",
     "可有些话，他当时没说。",
@@ -1580,6 +1650,7 @@ export const SHOPPING_LOOKBACK: Lookback = {
 export const NVC_LOOKBACK: Lookback = {
   id: "warm_nvc",
   title: "回看 · 非暴力沟通",
+  seanPortrait: "sean-thinking-bench",
   intro: [
     "那条长椅上，你们聊过怎么更好地爱。",
     "你一直以为，只有你在努力。",
@@ -1601,7 +1672,7 @@ export const NVC_LOOKBACK: Lookback = {
       who: "sean",
     },
     {
-      bg: "/images/scenes/campus-bench.png",
+      bg: "/images/scenes/warm-room.png",
       surface: "暮色里你们规划小房子：朝南，阳台要大，狗养柯基。",
       hidden:
         "我说“慢慢来”，其实是心虚。房子、狗、退休，每一样我都想给她。可我连下个月实习落在哪个城市，都不敢跟她细算。",
@@ -1630,7 +1701,8 @@ export const NVC_LOOKBACK: Lookback = {
  */
 export const PHONE_LOOKBACK: Lookback = {
   id: "burst_phone",
-  title: "回看 · 查手机",
+  title: "回看 · 关注列表",
+  seanPortrait: "sean-wooded-phone",
   intro: [
     "那晚是整段关系里，唯一大声的一次。",
     "你记得自己的慌。没看见他的。",
@@ -1646,7 +1718,7 @@ export const PHONE_LOOKBACK: Lookback = {
     },
     {
       bg: "/images/scenes/dorm-room-night.png",
-      surface: "你举着屏幕质问那些关注。他说了句“同事”，往后退了半步。",
+      surface: "你举着屏幕质问那些关注。他说了句“朋友”，往后退了半步。",
       hidden:
         "那半步不是心虚。是我忽然明白，怎么解释都没用了。她眼睛里已经有了答案。我这个人，输给了一列名单。",
       who: "sean",
@@ -1678,23 +1750,24 @@ export const PHONE_LOOKBACK: Lookback = {
 };
 
 /* ─────────── 回看 · 发烧夜（看 Sean 那一侧） ───────────
- * 他一次次打出"你来好不好"，又一次次删掉。他不想绑架她，只是想她在身边。
+ * 那句"你来好不好"他真的发出去了。她盯着五个字，没能答。
  */
 export const FEVER_LOOKBACK: Lookback = {
   id: "cold_fever",
   title: "回看 · 外卖粥",
+  hidePortraits: true,
   intro: [
     "那晚你守住了柜台，守住了“负责”。",
-    "有一行灰字，你一直没问。",
+    "有一句话，你一直没敢答。",
     "再看一遍。这次，看他。",
   ],
   moments: [
     {
       bg: "/images/scenes/fever-night.png",
       surface:
-        "凌晨两点，他发来“发烧了，三十八度八”，又发来“没事，你忙”。中间夹着一条撤回。",
+        "凌晨两点，他发来“发烧了，三十八度八”，紧接着补了一条：“没事，你忙。”",
       hidden:
-        "撤回的那条是：“你来好不好。”打完就删了。三十八度八的人还在算：她还在上夜班，我不能开这个口。",
+        "“没事”是假的。我盯着对话框打了又删，删了又打。那句真话，我攒到凌晨四点，才敢发出去。",
       who: "sean",
     },
     {
@@ -1713,7 +1786,7 @@ export const FEVER_LOOKBACK: Lookback = {
     },
   ],
   reachback: {
-    prompt: "那晚没有对错。只有一个不敢开口的他，和一个不敢放下的你。",
+    prompt: "那晚没有对错。只有一句终于发出来的“你来好不好”，和一个走不开的你。",
     choice:
       "如果能回到那晚，打一个电话过去：“我六点下班，下了班就坐车去看你。你先睡，我说到做到。”",
     response: [
@@ -1730,16 +1803,17 @@ export const FEVER_LOOKBACK: Lookback = {
   ],
 };
 
-/* ─────────── 回看 · 分手夜（看他，也看你自己） ───────────
- * 想挽留又不敢，两边都是。这一幕的"看见"包含她自己——自我看见也是治愈。
+/* ─────────── 回看 · 分手夜（看他） ───────────
+ * 想挽留又不敢，两边都是。回看统一只看他那一侧。
  */
 export const BREAKUP_LOOKBACK: Lookback = {
   id: "end_breakup",
   title: "回看 · 好天气",
+  seanPortrait: "sean-grieving-sunny",
   intro: [
     "那晚你们把话说明白了，好好放了手。",
     "可还有几句，留在了各自心里。",
-    "再看一遍。看他，也看你自己。",
+    "再看一遍。这次，看他。",
   ],
   moments: [
     {
@@ -1757,11 +1831,11 @@ export const BREAKUP_LOOKBACK: Lookback = {
       who: "sean",
     },
     {
-      bg: "/images/scenes/dorm-doorway.png",
+      bg: "/images/scenes/door-doorway-sunny.png",
       surface: "夕阳把影子拉得很长。你转身走出楼门口，没有回头。",
       hidden:
-        "步子是数着走的。数到第七步，我差点回头喊“我们再试试”。是发烧那晚把我按住了。我怕的不是吵，是吵完之后，我们还是会走回这个门口。",
-      who: "vera",
+        "她走得很稳，一次都没回头。我在门口站到她拐过路口，差一点就喊出来了。可我知道，喊住她，我们还是会走回这个门口。",
+      who: "sean",
     },
   ],
   reachback: {

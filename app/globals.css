@@ -209,3 +209,26 @@ body {
 .memory-title {
   animation: memoryTitle 2.2s ease-in-out forwards;
 }
+
+/* 聊天记录演出(幕4 关注列表):手机对话框从画面下方浮起 */
+@keyframes phoneRise {
+  from {
+    transform: translateY(55%);
+    opacity: 0;
+  }
+  to {
+    transform: translateY(0);
+    opacity: 1;
+  }
+}
+.phone-rise {
+  animation: phoneRise 900ms cubic-bezier(0.22, 1, 0.36, 1) both;
+}
+
+/* 聊天窗口:隐藏滚动条(溢出时由代码钉在最新一条) */
+.scrollbar-none {
+  scrollbar-width: none;
+}
+.scrollbar-none::-webkit-scrollbar {
+  display: none;
+}

@@ -19,12 +19,13 @@ export const VOICE_TYPES: Record<VoiceSpeaker, number> = {
   sean: 101018,
 };
 
-/** 配音只读说出口的部分：去掉舞台指示（…）与引号 */
+/** 配音只读说出口的部分：去掉舞台指示（…）、引号与 emoji */
 export function normalizeForVoice(text: string): string {
   return text
     .replace(/（[^）]*）/g, "")
     .replace(/\([^)]*\)/g, "")
     .replace(/[“”"「」]/g, "")
+    .replace(/[\u{1F000}-\u{1FAFF}\u{2600}-\u{27BF}\u{FE0F}]/gu, "")
     .trim();
 }
 

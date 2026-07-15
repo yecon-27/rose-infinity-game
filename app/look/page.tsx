@@ -160,11 +160,11 @@ function LookInner() {
     phase === "reachback" ||
     phase === "outro";
   const whoLabel = (w: "sean" | "vera") => (w === "sean" ? "Sean" : "Vera");
-  // 立绘编排:前两个瞬间左侧(Sean);第三个瞬间起转右侧(Vera)、左侧淡出;接住后右侧也淡出
-  const showLeft = phase === "moments" && momentIdx < 2;
-  const showRight =
-    (phase === "moments" && momentIdx >= 2) ||
-    (phase === "reachback" && !reachDone);
+  // 立绘编排:回看只看他(Sean),全程左侧;接住后淡出,给玫瑰让位。
+  // hidePortraits 的回看(如外卖粥,背景分屏图已含人物)整段不出立绘
+  const showLeft =
+    !look.hidePortraits &&
+    (phase === "moments" || (phase === "reachback" && !reachDone));
 
   return (
     <main
@@ -191,38 +191,26 @@ function LookInner() {
         <div className="absolute inset-0 bg-black/45" />
       </div>
 
-      {/* 左侧 · Sean(前两个瞬间:你正看着的那个人) */}
+      {/* 左侧 · Sean(你正看着的那个人;回看不出 Vera) */}
       <div
         className="fixed bottom-0 left-2 z-[6] h-[60vh] w-[28vw] max-w-[320px] min-w-[150px] pointer-events-none"
         style={{ opacity: showLeft ? 1 : 0, transition: "opacity 1200ms ease" }}
       >
         <Image
-          src="/images/characters/sean-tired.png"
+          src={`/images/characters/${look.seanPortrait ?? "sean-tired-hackthon"}.png`}
           alt="Sean"
           fill
           className="object-contain object-bottom drop-shadow-2xl"
         />
       </div>
 
-      {/* 右侧 · Vera(第三个瞬间起:回到自己) */}
-      <div
-        className="fixed bottom-0 right-2 z-[6] h-[60vh] w-[28vw] max-w-[320px] min-w-[150px] pointer-events-none"
-        style={{ opacity: showRight ? 1 : 0, transition: "opacity 1200ms ease" }}
-      >
-        <Image
-          src="/images/characters/vera-composed.png"
-          alt="Vera"
-          fill
-          className="object-contain object-bottom drop-shadow-2xl"
-        />
-      </div>
-
-      {/* 接住:等右侧立绘淡完后,玫瑰才完整盛放(浮在下方约 1/4 处),不与立绘同时出现 */}
+      {/* 接住:等立绘淡完后,玫瑰才完整盛放(浮在下方约 1/4 处),不与立绘同时出现 */}
       {roseOn && (
         <div className="fixed inset-x-0 bottom-[10%] z-[5] flex justify-center pointer-events-none">
           <div className="relative w-60 h-60 fade-in-slow opacity-90">
+            {/* 回看只到"看懂":开的是花苞;盛放留给结局 */}
             <Image
-              src="/images/motifs/rose-bloom.png"
+              src="/images/motifs/rose-bud.png"
               alt=""
               fill
               className="object-contain"

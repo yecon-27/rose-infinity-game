@@ -1,6 +1,6 @@
 "use client";
 
-import { Suspense } from "react";
+import { Suspense, useEffect, useState } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
 import Image from "next/image";
 import { LOOKBACK_SEQUENCE } from "@/lib/story";
@@ -23,16 +23,44 @@ function EndingInner() {
   const params = useSearchParams();
   const seen = params.get("seen") === "1";
 
+  /* 键盘：↑↓（或←→）选择，Enter/空格 确认 */
+  const actions = seen
+    ? [{ label: "玫 瑰 还 在", to: "/" }]
+    : [
+        { label: "回 看 记 忆", to: `/look?id=${LOOKBACK_SEQUENCE[0]}` },
+        { label: "返 回 首 页", to: "/" },
+      ];
+  const [sel, setSel] = useState(0);
+  useEffect(() => setSel(0), [seen]);
+  useEffect(() => {
+    function onKey(e: KeyboardEvent) {
+      const n = actions.length;
+      if (e.key === "ArrowDown" || e.key === "ArrowRight") {
+        e.preventDefault();
+        setSel((i) => (i + 1) % n);
+      } else if (e.key === "ArrowUp" || e.key === "ArrowLeft") {
+        e.preventDefault();
+        setSel((i) => (i - 1 + n) % n);
+      } else if (e.key === "Enter" || e.code === "Space") {
+        e.preventDefault();
+        router.push(actions[sel].to);
+      }
+    }
+    window.addEventListener("keydown", onKey);
+    return () => window.removeEventListener("keydown", onKey);
+  }, [seen, sel, router]);
+
   return (
     <main className="relative min-h-screen overflow-hidden bg-black flex flex-col items-center justify-center px-8">
       {/* 背景 */}
       <div className="fixed inset-0 z-0">
+        {/* 花苞 → 盛放：回看完成前是 rose-bud，看懂之后才开 */}
         <Image
-          src="/images/motifs/rose-bloom.png"
+          src={seen ? "/images/motifs/rose-bloom.png" : "/images/motifs/rose-bud.png"}
           alt=""
           fill
           className="object-contain"
-          style={{ opacity: seen ? 0.45 : 0.2, transition: "opacity 2s ease" }}
+          style={{ opacity: seen ? 0.45 : 0.25, transition: "opacity 2s ease" }}
         />
         <div className="absolute inset-0 bg-gradient-to-b from-black/80 via-black/60 to-black/80" />
       </div>
@@ -63,35 +91,32 @@ function EndingInner() {
         </div>
 
         <div className="space-y-4">
-          {seen ? (
+          {actions.map((a, i) => (
             <button
+              key={a.label}
               type="button"
-              onClick={() => router.push("/")}
-              className="block w-full py-4 px-6 border border-accent/60 text-accent/90 hover:border-accent hover:bg-accent hover:text-ink transition-colors duration-500 tracking-[0.4em] text-sm"
+              onMouseEnter={() => setSel(i)}
+              onClick={() => router.push(a.to)}
+              className={
+                i === 0
+                  ? `block w-full py-4 px-6 border transition-colors duration-300 tracking-[0.4em] text-sm ${
+                      sel === i
+                        ? "border-accent bg-accent/15 text-accent"
+                        : "border-accent/50 text-accent/75"
+                    }`
+                  : `block w-full py-3 px-6 border transition-colors text-xs tracking-[0.3em] ${
+                      sel === i
+                        ? "border-white/40 text-white/90"
+                        : "border-transparent text-white/50"
+                    }`
+              }
             >
-              玫 瑰 还 在
+              {a.label}
             </button>
-          ) : (
-            <>
-              <button
-                type="button"
-                onClick={() =>
-                  router.push(`/look?id=${LOOKBACK_SEQUENCE[0]}`)
-                }
-                className="block w-full py-4 px-6 border border-accent/60 text-accent/90 hover:border-accent hover:bg-accent hover:text-ink transition-colors duration-500 tracking-[0.4em] text-sm"
-              >
-                回 看 记 忆
-              </button>
-
-              <button
-                type="button"
-                onClick={() => router.push("/")}
-                className="block w-full py-3 px-6 text-white/50 hover:text-white/80 transition-colors text-xs tracking-[0.3em]"
-              >
-                返 回 首 页
-              </button>
-            </>
-          )}
+          ))}
+          <p className="text-[10px] tracking-[0.3em] text-white/25">
+            ↑↓ 选择 · Enter 确认
+          </p>
         </div>
 
         <p className="text-[10px] text-white/30 tracking-widest leading-relaxed">

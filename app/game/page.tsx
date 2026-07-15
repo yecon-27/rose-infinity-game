@@ -20,28 +20,80 @@ interface DisplayLine {
   text: string;
   /** 这句显示时,说话者切换到的表情(emotion key) */
   face?: string;
+  /** 聊天演出里这条消息的时间戳(如 "02:03") */
+  time?: string;
 }
 
 type Mode = "flow" | "beat" | "done";
 
-/* Vera 立绘:按情绪切换,默认表情由周目决定
- *  - 一周目(现场,玩家=Vera,pov=vera)默认 composed(压着情绪的平静)
- *  - 二周目/回看(视角对调,pov=sean)默认 wistful(回忆里的怅然)
- *  - 特定情感拍可被剧情临时覆盖为 warm(如被接住、和解的瞬间)
+/* 立绘 · 按幕套装解析
+ * public/images/characters/ 实际存在的文件（去 .png 注册在这），
+ * 解析顺序：{who}-{emotion}-{faceSet} → {who}-{emotion} → {who}-warm-{faceSet} → 默认。
+ * 新增/删除图片后同步这份注册表。
  */
-const VERA_EMOTIONS: Record<string, string> = {
-  composed: "/images/characters/vera-composed.png",
-  wistful: "/images/characters/vera-wistful.png",
-  warm: "/images/characters/vera-warm.png",
-};
+const PORTRAIT_FILES = new Set([
+  // vera
+  "vera-warm",
+  "vera-composed",
+  "vera-wistful",
+  "vera-warm-cloth",
+  "vera-earnest-cloth",
+  "vera-warm-bench",
+  "vera-staring-bench",
+  "vera-anxious-phone",
+  "vera-accusing-phone",
+  "vera-hurt-phone",
+  "vera-crying-sunny",
+  "vera-smile-sunny",
+  "vera-composed-sunny",
+  "vera-calm-konbini",
+  // sean
+  "sean-focused-hackthon",
+  "sean-tired-hackthon",
+  "sean-guilty-hackthon",
+  "sean-warm-cloth",
+  "sean-neutral-cloth",
+  "sean-thinking-bench",
+  "sean-staring-bench",
+  "sean-cold-phone",
+  "sean-wooded-phone",
+  "sean-smile-sunny",
+  "sean-pleading-sunny",
+  "sean-grieving-sunny",
+]);
+
+function portraitSrc(
+  who: "vera" | "sean",
+  emotion: string,
+  faceSet?: string
+): string {
+  const fallback = who === "vera" ? "vera-composed" : "sean-focused-hackthon";
+  // 有套装的幕优先在套装内解决(缺的表情用套装 warm/composed 顶),
+  // 避免退回无后缀基础图导致服装跳戏;套装内全无才落到基础图。
+  const candidates = [
+    faceSet ? `${who}-${emotion}-${faceSet}` : "",
+    faceSet ? `${who}-warm-${faceSet}` : "",
+    faceSet ? `${who}-composed-${faceSet}` : "",
+    `${who}-${emotion}`,
+    fallback,
+  ].filter(Boolean);
+  const hit = candidates.find((c) => PORTRAIT_FILES.has(c)) ?? fallback;
+  return `/images/characters/${hit}.png`;
+}
+
+/** 聊天里"说出口"的部分;纯动作选项(如"（没回，放下手机）")保留原样 */
+function chatText(t: string): string {
+  const spoken = t.replace(/（[^）]*）?/g, "").trim();
+  return spoken || t;
+}
+/** 这行是不是一条真正发出去的消息(纯动作/旁白不进手机) */
+function isChatMsg(l: DisplayLine): boolean {
+  return l.who !== "narr" && l.text.replace(/（[^）]*）/g, "").trim() !== "";
+}
+
+/* Vera 默认表情由周目决定:一周目 composed,二周目(pov=sean)wistful */
 const veraDefaultEmotion = (pov?: string) =>
   pov === "sean" ? "wistful" : "composed";
-const SEAN_FACES: Record<string, string> = {
-  warm: "/images/characters/sean-warm.png",
-  focused: "/images/characters/sean-focused.png",
-  tired: "/images/characters/sean-tired.png",
-  guilty: "/images/characters/sean-guilty.png",
-};
 
 /**
  * 立绘 · 交叉淡入
@@ -155,6 +207,12 @@ function GameInner() {
 
   const [idx, setIdx] = useState(0);
   const [queue, setQueue] = useState<DisplayLine[]>([]);
+  /** 已读台词历史:聊天演出的消息流复用它,←倒退查看也走它 */
+  const [log, setLog] = useState<DisplayLine[]>([]);
+  /** 回退查看:0=跟随当前;n>0=正在看倒数第 n 条已读台词(只查看,不回滚剧情) */
+  const [backIdx, setBackIdx] = useState(0);
+  /** 聊天演出开关:整幕(presentation)或幕中 phone 时刻切换 */
+  const [phoneOn, setPhoneOn] = useState(scene.presentation === "phone");
   const [mode, setMode] = useState<Mode>("flow");
   const [optIdx, setOptIdx] = useState(0);
   const [loading, setLoading] = useState(false);
@@ -166,11 +224,16 @@ function GameInner() {
   const [seanEmotion, setSeanEmotion] = useState(scene.seanFace ?? "warm");
 
   const historyRef = useRef<Array<{ role: "vera" | "sean"; text: string }>>([]);
+  /** 聊天窗口容器:内容超高时钉在最新一条(旧消息从顶部滑出隐藏) */
+  const chatBoxRef = useRef<HTMLDivElement | null>(null);
 
   /* 进入新场景:重置 */
   useEffect(() => {
     setIdx(0);
     setQueue([]);
+    setLog([]);
+    setBackIdx(0);
+    setPhoneOn(scene.presentation === "phone");
     setMode("flow");
     setOptIdx(0);
     setLoading(false);
@@ -215,12 +278,15 @@ function GameInner() {
       setBg(m.src);
       setIdx((i) => i + 1);
     } else if (m.kind === "line") {
-      setQueue([{ who: m.who, text: m.text, face: m.face }]);
+      setQueue([{ who: m.who, text: m.text, face: m.face, time: m.time }]);
       historyRef.current.push({ role: m.who, text: m.text });
       setIdx((i) => i + 1);
     } else if (m.kind === "face") {
       if (m.who === "sean") setSeanEmotion(m.emotion);
       else setVeraEmotion(m.emotion);
+      setIdx((i) => i + 1);
+    } else if (m.kind === "phone") {
+      setPhoneOn(m.on);
       setIdx((i) => i + 1);
     } else if (m.kind === "beat") {
       setOptIdx(0);
@@ -228,16 +294,31 @@ function GameInner() {
     }
   }, [idx, queue.length, mode, entering, loading, script]);
 
-  /* 推进对话框 */
+  /* 推进对话框;回退查看中则先一步步走回当前 */
   const advance = useCallback(() => {
-    if (entering || loading || mode === "beat") return;
+    if (entering || loading) return;
+    if (backIdx > 0) {
+      setBackIdx((i) => i - 1);
+      return;
+    }
+    if (mode === "beat") return;
     if (queue.length > 0) {
       if (!tw.done) tw.skip();
-      else setQueue((q) => q.slice(1));
+      else {
+        const head = queue[0];
+        if (head) setLog((l) => [...l, head]);
+        setQueue((q) => q.slice(1));
+      }
     } else if (mode === "done") {
       router.push(scene.onDone ?? "/");
     }
-  }, [entering, loading, mode, queue.length, tw, router, scene]);
+  }, [entering, loading, backIdx, mode, queue, tw, router, scene]);
+
+  /* ← 倒退一句:只在已读历史里查看,不改变剧情进度 */
+  const goBack = useCallback(() => {
+    if (entering || loading) return;
+    setBackIdx((i) => Math.min(i + 1, log.length));
+  }, [entering, loading, log.length]);
 
   /* 玩家做出选择 */
   const npcRole: "vera" | "sean" = scene.pov === "sean" ? "vera" : "sean";
@@ -338,15 +419,30 @@ function GameInner() {
     if (beatMoment) voice.play("narr", beatMoment.prompt);
   }, [beatMoment, voice.play]);
 
+  /* 配音：回退查看时重读那一句 */
+  useEffect(() => {
+    if (backIdx > 0) {
+      const l = log[log.length - backIdx];
+      if (l) voice.play(l.who, l.text);
+    }
+  }, [backIdx, log, voice.play]);
+
   useEffect(() => {
     function onKey(e: KeyboardEvent) {
       if (entering || loading) return;
       if (beatMoment) {
         const n = beatMoment.choices.length;
-        if (e.key === "ArrowDown" || e.key === "ArrowRight") {
+        if (e.key === "ArrowLeft") {
+          // 选择前也能倒回去重读
+          e.preventDefault();
+          goBack();
+        } else if (e.key === "ArrowRight" && backIdx > 0) {
+          e.preventDefault();
+          advance();
+        } else if (e.key === "ArrowDown" || e.key === "ArrowRight") {
           e.preventDefault();
           setOptIdx((i) => (i + 1) % n);
-        } else if (e.key === "ArrowUp" || e.key === "ArrowLeft") {
+        } else if (e.key === "ArrowUp") {
           e.preventDefault();
           setOptIdx((i) => (i - 1 + n) % n);
         } else if (e.key === "Enter") {
@@ -358,21 +454,50 @@ function GameInner() {
         }
         return;
       }
-      if (e.code === "Space" || e.key === "Enter") {
+      if (e.code === "Space" || e.key === "Enter" || e.key === "ArrowRight") {
         e.preventDefault();
         advance();
+      } else if (e.key === "ArrowLeft") {
+        e.preventDefault();
+        goBack();
       }
     }
     window.addEventListener("keydown", onKey);
     return () => window.removeEventListener("keydown", onKey);
-  }, [beatMoment, optIdx, choose, advance, entering, loading]);
+  }, [beatMoment, optIdx, choose, advance, goBack, backIdx, entering, loading]);
 
   /* ────────────────────────── 渲染 ────────────────────────── */
 
-  const veraPortrait =
-    VERA_EMOTIONS[veraEmotion] ?? VERA_EMOTIONS[veraDefaultEmotion(scene.pov)];
-  const seanPortrait = SEAN_FACES[seanEmotion] ?? SEAN_FACES.warm;
-  const speaker = current?.who;
+  const veraPortrait = portraitSrc("vera", veraEmotion, scene.faceSet);
+  const seanPortrait = portraitSrc("sean", seanEmotion, scene.faceSet);
+  /** 回退查看中显示的那句 */
+  const reviewLine = backIdx > 0 ? log[log.length - backIdx] : undefined;
+  /** 对话框实际显示的行与文本（回看时显示历史全文，否则打字机） */
+  const boxLine = reviewLine ?? current;
+  const boxText = reviewLine ? reviewLine.text : tw.shown;
+  const speaker = boxLine?.who;
+  const phoneMode = phoneOn;
+  /* 聊天演出:手机里只放消息(旁白不进手机);回退查看时窗口跟着往回翻 */
+  const chatWindow = phoneMode
+    ? (backIdx > 0
+        ? log.slice(0, log.length - backIdx + 1)
+        : [...log, ...(current ? [current] : [])]
+      )
+        .filter(isChatMsg)
+    : [];
+  const chatTyping =
+    phoneMode && backIdx === 0 && !!current && isChatMsg(current);
+  const chatClock =
+    [...chatWindow].reverse().find((l) => l.time)?.time ?? "02:03";
+
+  /* 聊天窗口钉底:新消息、打字机推进、回退查看时都滚到最新一条可见 */
+  useEffect(() => {
+    const el = chatBoxRef.current;
+    if (el) el.scrollTop = el.scrollHeight;
+  }, [chatWindow.length, backIdx, tw.shown]);
+
+  const showPortraits = !phoneMode && scene.portraits !== "none";
+  const showSean = showPortraits && scene.portraits !== "vera";
 
   return (
     <main
@@ -417,21 +542,26 @@ function GameInner() {
       </div>
 
       {/* 立绘:Vera + Sean,表情交叉淡入,高亮当前说话者
-       * 一周目(pov=vera)交换站位:Sean 在左、Vera 在右;二周目恢复默认。 */}
-      <div className="absolute inset-0 z-10 pointer-events-none">
-        <Portrait
-          src={veraPortrait}
-          alt="Vera"
-          active={speaker === "vera"}
-          side={scene.pov === "vera" ? "right" : "left"}
-        />
-        <Portrait
-          src={seanPortrait}
-          alt="Sean"
-          active={speaker === "sean"}
-          side={scene.pov === "vera" ? "left" : "right"}
-        />
-      </div>
+       * 一周目(pov=vera)交换站位:Sean 在左、Vera 在右;二周目恢复默认。
+       * portraits/presentation 可整幕隐藏(人物已画进背景,或聊天演出)。 */}
+      {showPortraits && (
+        <div className="absolute inset-0 z-10 pointer-events-none">
+          <Portrait
+            src={veraPortrait}
+            alt="Vera"
+            active={speaker === "vera"}
+            side={scene.pov === "vera" ? "right" : "left"}
+          />
+          {showSean && (
+            <Portrait
+              src={seanPortrait}
+              alt="Sean"
+              active={speaker === "sean"}
+              side={scene.pov === "vera" ? "left" : "right"}
+            />
+          )}
+        </div>
+      )}
 
       {/* 进场:记忆对焦时,幕名浮在正在清晰的画面上,再隐去(不经过纯黑) */}
       {entering && (
@@ -459,11 +589,121 @@ function GameInner() {
         {voice.muted ? "声 · 关" : "声 · 开"}
       </button>
 
+      {/* 悬浮手机:聊天演出。固定尺寸;底边贴住旁白框上沿,水平对齐旁白框中线。
+       * 第一条消息进来("手机震了一下")才浮起,旁白不进手机。 */}
+      {phoneMode && (chatWindow.length > 0 || !!beatMoment) && (
+        <div className="fixed bottom-[12.5rem] left-1/2 z-20 -translate-x-1/2">
+          <div className="phone-rise flex h-[min(620px,66vh)] aspect-[10/19] flex-col overflow-hidden rounded-[2.2rem] border-2 border-white/20 bg-black/85 shadow-2xl backdrop-blur-md">
+            {/* 状态栏 + 刘海 */}
+            <div className="relative flex items-center justify-between px-5 pb-1 pt-2.5 text-[9px] text-white/45">
+              <span>{chatClock}</span>
+              <span className="absolute left-1/2 top-2 h-3.5 w-14 -translate-x-1/2 rounded-full bg-white/10" />
+              <span className="flex items-center gap-1.5">
+                {/* 信号 */}
+                <span className="flex items-end gap-[2px]">
+                  <span className="h-1 w-[3px] rounded-sm bg-white/45" />
+                  <span className="h-1.5 w-[3px] rounded-sm bg-white/45" />
+                  <span className="h-2 w-[3px] rounded-sm bg-white/45" />
+                  <span className="h-2.5 w-[3px] rounded-sm bg-white/25" />
+                </span>
+                {/* 电量 */}
+                <span className="flex items-center">
+                  <span className="flex h-2.5 w-5 items-center rounded-[3px] border border-white/40 px-[2px]">
+                    <span className="h-1.5 w-3/5 rounded-[1px] bg-white/45" />
+                  </span>
+                  <span className="ml-[1px] h-1 w-[2px] rounded-r-sm bg-white/40" />
+                </span>
+              </span>
+            </div>
+            <p className="border-b border-white/10 pb-2 pt-0.5 text-center text-xs tracking-[0.3em] text-white/60">
+              Sean
+            </p>
+            <div
+              ref={chatBoxRef}
+              className="scrollbar-none flex flex-1 flex-col justify-start space-y-2 overflow-y-auto px-3 pb-3 pt-2"
+            >
+              {chatWindow.map((l, i, arr) => {
+                const isCur = chatTyping && i === arr.length - 1;
+                const shown = (isCur ? tw.shown : l.text).replace(
+                  /（[^）]*）?/g,
+                  ""
+                );
+                const mine = l.who === "vera";
+                return (
+                  <div key={i}>
+                    {l.time && (
+                      <p className="py-1 text-center text-[10px] text-white/35">
+                        {l.time}
+                      </p>
+                    )}
+                    <div
+                      className={`flex ${mine ? "justify-end" : "justify-start"}`}
+                    >
+                      <p
+                        className={`max-w-[82%] rounded-2xl px-3 py-2 text-sm leading-relaxed ${
+                          mine
+                            ? "rounded-br-sm bg-accent/25 text-white"
+                            : "rounded-bl-sm bg-white/10 text-white/90"
+                        }`}
+                      >
+                        {shown}
+                      </p>
+                    </div>
+                  </div>
+                );
+              })}
+            </div>
+
+            {/* 选择 · 输入法候选条:她想说的话浮在候选栏里,点哪句发哪句 */}
+            {beatMoment && !reviewLine && (
+              <div
+                className="border-t border-white/10 px-3 pb-3 pt-2"
+                onClick={(e) => e.stopPropagation()}
+              >
+                <div className="flex flex-wrap gap-1.5 pb-2">
+                  {beatMoment.choices.map((c, i) => (
+                    <button
+                      key={i}
+                      type="button"
+                      onMouseEnter={() => setOptIdx(i)}
+                      onClick={() => choose(c)}
+                      disabled={loading}
+                      className={`rounded px-2 py-1 text-left text-xs leading-snug transition-colors ${
+                        i === optIdx
+                          ? "bg-accent/30 text-white"
+                          : "bg-white/10 text-white/70 hover:bg-white/20"
+                      }`}
+                    >
+                      <span className="mr-1 text-white/35">{i + 1}</span>
+                      {chatText(c.text)}
+                    </button>
+                  ))}
+                </div>
+                <div className="flex items-center gap-1 rounded-full bg-white/10 px-3 py-2">
+                  <span className="flex-1 truncate text-xs text-white/85">
+                    {chatText(beatMoment.choices[optIdx]?.text ?? "")}
+                  </span>
+                  <span className="soft-pulse text-white/60">丨</span>
+                  <button
+                    type="button"
+                    onClick={() => choose(beatMoment.choices[optIdx])}
+                    disabled={loading}
+                    className="ml-1 rounded-full bg-accent/40 px-2.5 py-1 text-[11px] tracking-widest text-white transition-colors hover:bg-accent/60"
+                  >
+                    发送
+                  </button>
+                </div>
+              </div>
+            )}
+          </div>
+        </div>
+      )}
+
       {/* 底部:对话框 or 选择 */}
       <div className="fixed inset-x-0 bottom-0 z-30 px-6 pb-10">
         <div className="mx-auto max-w-2xl">
-          {/* 选择 */}
-          {beatMoment ? (
+          {/* 选择（回退查看时先让位给历史台词；聊天演出的选择走输入法候选条） */}
+          {beatMoment && !reviewLine && !phoneMode ? (
             <div
               className="space-y-3"
               onClick={(e) => e.stopPropagation()}
@@ -488,25 +728,36 @@ function GameInner() {
                 </button>
               ))}
             </div>
-          ) : current ? (
-            <div className="bg-black/55 backdrop-blur-sm border border-white/10 rounded px-6 py-5 min-h-[7rem] cursor-pointer">
-              {current.who !== "narr" && (
+          ) : phoneMode && beatMoment && !reviewLine ? (
+            /* 聊天演出的引导语走旁白框(手机里只放消息和候选) */
+            <div className="bg-black/55 backdrop-blur-sm border border-white/10 rounded px-6 py-5 min-h-[7rem]">
+              <p className="leading-loose text-white/70 italic text-center">
+                {beatMoment.prompt}
+              </p>
+            </div>
+          ) : boxLine && (!phoneMode || !isChatMsg(boxLine)) ? (
+            <div
+              className={`bg-black/55 backdrop-blur-sm border rounded px-6 py-5 min-h-[7rem] cursor-pointer ${
+                reviewLine ? "border-white/30" : "border-white/10"
+              }`}
+            >
+              {boxLine.who !== "narr" && (
                 <p
                   className={`text-xs tracking-[0.3em] mb-2 ${
-                    current.who === npcRole ? "text-accent" : "text-white/80"
+                    boxLine.who === npcRole ? "text-accent" : "text-white/80"
                   }`}
                 >
-                  {current.who === "sean" ? "Sean" : "Vera"}
+                  {boxLine.who === "sean" ? "Sean" : "Vera"}
                 </p>
               )}
               <p
                 className={`leading-loose ${
-                  current.who === "narr"
+                  boxLine.who === "narr"
                     ? "text-white/70 italic text-center"
                     : "text-white/95"
                 }`}
               >
-                {tw.shown}
+                {boxText}
               </p>
             </div>
           ) : mode === "done" ? (
@@ -519,9 +770,15 @@ function GameInner() {
           ) : null}
 
           {/* 提示行 */}
-          {!beatMoment && current && (
+          {(reviewLine || (!beatMoment && current)) && (
             <p className="mt-3 text-center text-[10px] tracking-[0.3em] text-white/30 soft-pulse">
-              {loading ? "……" : tw.done ? "空格 / 点击 继续" : ""}
+              {backIdx > 0
+                ? `◂ 回看 ${log.length - backIdx + 1}/${log.length} · → 返回`
+                : loading
+                ? "……"
+                : tw.done
+                ? "空格 / 点击 继续 · ← 上一句"
+                : ""}
             </p>
           )}
         </div>

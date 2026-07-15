@@ -14,6 +14,7 @@
 import crypto from "node:crypto";
 import fs from "node:fs";
 import path from "node:path";
+import { tts } from "tencentcloud-sdk-nodejs-tts";
 import { STORY, LOOKBACKS } from "../lib/story";
 import {
   VOICE_TYPES,
@@ -46,6 +47,7 @@ const SECRET_ID = env.TENCENT_SECRET_ID;
 const SECRET_KEY = env.TENCENT_SECRET_KEY;
 const REGION = env.TENCENT_REGION || "ap-guangzhou";
 const DRY = process.argv.includes("--dry");
+const AUDITION = process.argv.includes("--audition");
 
 /* ── 收集全部待配音句子 ── */
 interface Utt {
@@ -87,17 +89,25 @@ for (const lb of Object.values(LOOKBACKS)) {
   for (const t of lb.outro) push("narr", t);
 }
 
-/* ── 腾讯云 API v3（TC3-HMAC-SHA256）签名与调用 ── */
-function sha256hex(s: string): string {
-  return crypto.createHash("sha256").update(s, "utf-8").digest("hex");
-}
-function hmac(key: crypto.BinaryLike, msg: string): Buffer {
-  return crypto.createHmac("sha256", key).update(msg, "utf-8").digest();
-}
+/* ── 腾讯云官方 SDK（负责 TC3 签名与请求） ── */
+const TtsClient = tts.v20190823.Client;
+const ttsClient = new TtsClient({
+  credential: {
+    secretId: SECRET_ID || "",
+    secretKey: SECRET_KEY || "",
+  },
+  region: REGION,
+  profile: {
+    signMethod: "TC3-HMAC-SHA256",
+    httpProfile: {
+      reqMethod: "POST",
+      reqTimeout: 30,
+    },
+  },
+});
 
 async function ttsOnce(text: string, voiceType: number): Promise<Buffer> {
-  const host = "tts.tencentcloudapi.com";
-  const payload = JSON.stringify({
+  const response = await ttsClient.TextToVoice({
     Text: text,
     SessionId: crypto.randomUUID(),
     VoiceType: voiceType,
@@ -106,51 +116,8 @@ async function ttsOnce(text: string, voiceType: number): Promise<Buffer> {
     ModelType: 1,
     Speed: 0,
   });
-  const ts = Math.floor(Date.now() / 1000);
-  const date = new Date(ts * 1000).toISOString().slice(0, 10);
-  const ct = "application/json; charset=utf-8";
-  const canonical = [
-    "POST",
-    "/",
-    "",
-    `content-type:${ct}\nhost:${host}\n`,
-    "content-type;host",
-    sha256hex(payload),
-  ].join("\n");
-  const scope = `${date}/tts/tc3_request`;
-  const stringToSign = [
-    "TC3-HMAC-SHA256",
-    String(ts),
-    scope,
-    sha256hex(canonical),
-  ].join("\n");
-  const kSigning = hmac(hmac(hmac(`TC3${SECRET_KEY}`, date), "tts"), "tc3_request");
-  const signature = crypto
-    .createHmac("sha256", kSigning)
-    .update(stringToSign, "utf-8")
-    .digest("hex");
-
-  const res = await fetch(`https://${host}`, {
-    method: "POST",
-    headers: {
-      Authorization: `TC3-HMAC-SHA256 Credential=${SECRET_ID}/${scope}, SignedHeaders=content-type;host, Signature=${signature}`,
-      "Content-Type": ct,
-      "X-TC-Action": "TextToVoice",
-      "X-TC-Timestamp": String(ts),
-      "X-TC-Version": "2019-08-23",
-      "X-TC-Region": REGION,
-    },
-    body: payload,
-  });
-  const data = (await res.json()) as {
-    Response?: { Audio?: string; Error?: { Code: string; Message: string } };
-  };
-  if (data.Response?.Error)
-    throw new Error(
-      `${data.Response.Error.Code}: ${data.Response.Error.Message}`
-    );
-  if (!data.Response?.Audio) throw new Error("TTS 无音频返回");
-  return Buffer.from(data.Response.Audio, "base64");
+  if (!response.Audio) throw new Error("TTS 无音频返回");
+  return Buffer.from(response.Audio, "base64");
 }
 
 /** 基础音色单次上限约 150 字：按句切 ≤110 字的块，逐块合成后拼接 mp3 */
@@ -184,7 +151,23 @@ const sleep = (ms: number) => new Promise((r) => setTimeout(r, ms));
 /* ── 主流程：去重、跳过已有、生成、写清单 ── */
 async function main() {
   const dedup = new Map<string, Utt>();
-  for (const u of utts) dedup.set(voiceHash(u.who, u.text), u);
+  const source: Utt[] = AUDITION
+    ? [
+        {
+          who: "narr",
+          text: "深夜的黑客松现场。长桌那头，主办方包的晚饭凉了。屏幕的光把一屋子人的脸照得发青。",
+        },
+        {
+          who: "vera",
+          text: "今天你这个队长，撑得很好。……可我说了三次我饿，你一次都没抬头。我不是怪你，我知道你难。",
+        },
+        {
+          who: "sean",
+          text: "……谢谢你能跟我说。我都没意识到。我就是太累了，累到没法回应你。",
+        },
+      ]
+    : utts;
+  for (const u of source) dedup.set(voiceHash(u.who, u.text), u);
 
   if (DRY) {
     const stats: Record<string, { n: number; chars: number }> = {};

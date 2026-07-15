@@ -1,0 +1,26 @@
+{
+  "generatedAt": "2026-07-15T02:42:41.478Z",
+  "generator": "scripts/gen-audio-assets.mjs",
+  "source": "Original procedural synthesis; no third-party samples",
+  "bgm": [
+    "/audio/bgm/m01-rosebud.ogg",
+    "/audio/bgm/m02-side-by-side.ogg",
+    "/audio/bgm/m03-blue-light.ogg",
+    "/audio/bgm/m04-half-step.ogg",
+    "/audio/bgm/m05-bloom.ogg"
+  ],
+  "ambience": [
+    "/audio/ambience/hackathon-room.ogg",
+    "/audio/ambience/campus-wind.ogg",
+    "/audio/ambience/dorm-rain.ogg",
+    "/audio/ambience/konbini-hum.ogg"
+  ],
+  "sfx": [
+    "/audio/sfx/rose-reveal.ogg",
+    "/audio/sfx/phone-vibrate-soft.ogg",
+    "/audio/sfx/phone-lock.ogg",
+    "/audio/sfx/konbini-door.ogg",
+    "/audio/sfx/bag-rustle.ogg",
+    "/audio/sfx/ui-soft-tap.ogg"
+  ]
+}
