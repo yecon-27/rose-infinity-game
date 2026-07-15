@@ -27,3 +27,16 @@ yarn-error.log*
 # typescript
 *.tsbuildinfo
 next-env.d.ts
+
+# non-game artifacts (pitch / build materials, not part of the running app)
+/poster/
+/outputs/
+/scripts/
+/prd.md
+/MEMORY.md
+
+# working docs (keep images the README embeds: readme-banner.png, ppt-screenshots/)
+/docs/*.md
+/docs/*.pdf
+/docs/codebuddy-log/
+/docs/writing/
