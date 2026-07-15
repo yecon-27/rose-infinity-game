@@ -84,7 +84,7 @@ export interface Scene {
   veraFace?: string;
   seanFace?: string;
   /**
-   * 立绘套装后缀（按幕换装）：解析为 {who}-{emotion}-{faceSet}.png，
+   * 立绘套装后缀（按幕换装）：解析为 {who}-{emotion}-{faceSet}.webp，
    * 套装内缺该表情时回退 warm，再回退无后缀基础图。
    */
   faceSet?: string;
@@ -121,7 +121,7 @@ export interface Lookback {
   /** 开场旁白 */
   intro: string[];
   moments: LookbackMoment[];
-  /** 回看页立绘（文件名去 .png）：回看只看他。缺省 sean-tired-hackthon。 */
+  /** 回看页立绘（文件名去 .webp）：回看只看他。缺省 sean-tired-hackthon。 */
   seanPortrait?: string;
   /** 整段回看不显示立绘（如外卖粥：分屏背景里人物已画入） */
   hidePortraits?: boolean;
@@ -144,7 +144,7 @@ export const HACKATHON_NIGHT: Scene = {
   id: "warm_hackathon",
   title: "叫花鸡",
   phase: "warm",
-  bg: "/images/scenes/hackathon-venue.png",
+  bg: "/images/scenes/hackathon-venue.webp",
   veraFace: "warm",
   seanFace: "focused",
   faceSet: "hackthon",
@@ -218,7 +218,7 @@ export const HACKATHON_NIGHT: Scene = {
         },
       ],
     },
-    { kind: "bg", src: "/images/scenes/hackathon-stairs.png" },
+    { kind: "bg", src: "/images/scenes/hackathon-stairs.webp" },
     {
       kind: "narr",
       text: "外卖到了。你把他从屏幕前拽起来。楼梯间，夜黑透了，有人陆续下楼回家，脚步声在楼道里荡。",
@@ -316,7 +316,7 @@ const WARM_SHOPPING: Scene = {
   id: "warm_shopping",
   title: "挑衣服",
   phase: "warm",
-  bg: "/images/scenes/mall-fitting.png",
+  bg: "/images/scenes/mall-fitting.webp",
   veraFace: "earnest",
   seanFace: "warm",
   faceSet: "cloth",
@@ -482,7 +482,7 @@ const WARM_NVC: Scene = {
   id: "warm_nvc",
   title: "非暴力沟通",
   phase: "warm",
-  bg: "/images/scenes/campus-bench.png",
+  bg: "/images/scenes/campus-bench.webp",
   veraFace: "warm",
   seanFace: "thinking",
   faceSet: "bench",
@@ -584,7 +584,7 @@ const WARM_NVC: Scene = {
       kind: "narr",
       text: "暮色下来，话题不知怎么拐到了以后。",
     },
-    { kind: "bg", src: "/images/scenes/future-apartment.png" },
+    { kind: "bg", src: "/images/scenes/future-apartment.webp" },
     {
       kind: "line",
       who: "vera",
@@ -614,7 +614,7 @@ const WARM_NVC: Scene = {
       who: "sean",
       text: "未来的事，慢慢来。",
     },
-    { kind: "bg", src: "/images/scenes/campus-bench.png" },
+    { kind: "bg", src: "/images/scenes/campus-bench.webp" },
     {
       kind: "narr",
       text: "憧憬越具体，后来被现实压下来时越疼。可此刻，长椅上的两个人谁都没想到要停。",
@@ -633,7 +633,7 @@ const BURST_PHONE: Scene = {
   id: "burst_phone",
   title: "关注列表",
   phase: "strained",
-  bg: "/images/scenes/dorm-room-night.png",
+  bg: "/images/scenes/dorm-room-night.webp",
   veraFace: "anxious",
   seanFace: "wooded",
   faceSet: "phone",
@@ -823,12 +823,12 @@ const BURST_PHONE: Scene = {
       kind: "narr",
       text: "行李收到一半，就那么摊着。下楼的路上，他走在你旁边，隔着半步。谁都没提刚才的事，谁也没提，下周他就走了。",
     },
-    { kind: "bg", src: "/images/scenes/dorm-doorway-night.png" },
+    { kind: "bg", src: "/images/scenes/dorm-doorway-night.webp" },
     {
       kind: "narr",
       text: "到你楼下，他只说了句“到了”。你很想收回刚才每一句，可一句也没收回来。冷处理，从这晚开始。",
     },
-    { kind: "bg", src: "/images/scenes/departure-station.png" },
+    { kind: "bg", src: "/images/scenes/departure-station.webp" },
     {
       kind: "narr",
       text: "一周后，他走了。行李箱是他自己拖下楼的。",
@@ -849,7 +849,7 @@ const COLD_FEVER: Scene = {
   id: "cold_fever",
   title: "外卖粥",
   phase: "strained",
-  bg: "/images/scenes/fever-night.png",
+  bg: "/images/scenes/fever-night.webp",
   presentation: "phone",
   onDone: "/game?scene=end_breakup",
   brief:
@@ -1123,7 +1123,7 @@ const END_BREAKUP: Scene = {
   id: "end_breakup",
   title: "好天气",
   phase: "strained",
-  bg: "/images/scenes/sunny-dorm.png",
+  bg: "/images/scenes/sunny-dorm.webp",
   seanFace: "smile",
   faceSet: "sunny",
   onDone: "/game?scene=after_konbini",
@@ -1327,7 +1327,7 @@ const END_BREAKUP: Scene = {
       kind: "narr",
       text: "东西收完了。话也说完了。太阳西斜下来，还是好天气。",
     },
-    { kind: "bg", src: "/images/scenes/door-doorway-sunny.png" },
+    { kind: "bg", src: "/images/scenes/door-doorway-sunny.webp" },
     {
       kind: "narr",
       text: "宿舍楼门口，西斜的太阳把两个影子拉得很长。他替你拉开门，像过去每一次送你下楼。",
@@ -1422,7 +1422,7 @@ const AFTER_KONBINI: Scene = {
   id: "after_konbini",
   title: "半年后",
   phase: "warm",
-  bg: "/images/scenes/konbini-night.png",
+  bg: "/images/scenes/konbini-night.webp",
   veraFace: "calm",
   faceSet: "konbini",
   portraits: "vera",
@@ -1554,21 +1554,21 @@ export const HACKATHON_LOOKBACK: Lookback = {
   ],
   moments: [
     {
-      bg: "/images/scenes/hackathon-venue.png",
+      bg: "/images/scenes/hackathon-venue.webp",
       surface: "你握住他敲键盘的那只手。他“嗯”了一声，把手抽了回去。",
       hidden:
         "我知道那是她的手。可我一抬头，那个 bug 就从脑子里溜了。等我搞完，一定好好牵回来。我总是说“等我搞完”。",
       who: "sean",
     },
     {
-      bg: "/images/scenes/hackathon-venue.png",
+      bg: "/images/scenes/hackathon-venue.webp",
       surface: "你问他吃什么，他头也不抬：“随便，你点吧。”",
       hidden:
         "不是随便。是我连挑一个菜的力气，都想省下来给代码。她记得我不吃辣、爱清淡。我却把这份记得，当成了理所当然。",
       who: "sean",
     },
     {
-      bg: "/images/scenes/hackathon-stairs.png",
+      bg: "/images/scenes/hackathon-stairs.webp",
       surface: "楼梯上，他抱住你，一口气倒完了一肚子苦水。",
       hidden:
         "她等了我一整晚。我却先说了我的累。等她开口我才发现，原来我一直在被她接住，却从没问过她，累不累。",
@@ -1606,21 +1606,21 @@ export const SHOPPING_LOOKBACK: Lookback = {
   ],
   moments: [
     {
-      bg: "/images/scenes/mall-fitting.png",
+      bg: "/images/scenes/mall-fitting.webp",
       surface: "你直接把那件深蓝的递给他：\"这件。试试。\"他说了句\"行\"，拎着衣服进了试衣间。",
       hidden:
         "我是真喜欢她挑的。可那天我口袋里存着一张自己看中的外套的照片，比了一路，最后没好意思拿出来。",
       who: "sean",
     },
     {
-      bg: "/images/scenes/mall-fitting.png",
+      bg: "/images/scenes/mall-fitting.webp",
       surface: "你问他：\"这个颜色不会太老气？\"他说：\"你选的应该没问题。\"",
       hidden:
         "我说\"应该\"，其实是\"肯定\"。我从来不觉得她选的有问题。只是那句话，我本来想说\"我也喜欢\"，最后还是等她定了。",
       who: "sean",
     },
     {
-      bg: "/images/scenes/mall-fitting.png",
+      bg: "/images/scenes/mall-fitting.webp",
       surface: "你拿起另一件：\"要不，这件也拿上？\"他\"又来了\"地笑，还是接了过去。",
       hidden:
         "她一兴奋起来就停不下。我说\"又来了\"，是宠她。但那天其实有点累，两件一起试，镜子前前后后站了挺久。我没说，怕她扫兴。",
@@ -1658,21 +1658,21 @@ export const NVC_LOOKBACK: Lookback = {
   ],
   moments: [
     {
-      bg: "/images/scenes/campus-bench.png",
+      bg: "/images/scenes/campus-bench.webp",
       surface: "你说想学非暴力沟通。他说：“我挺喜欢你这股劲的。”",
       hidden:
         "她敢把自己的毛病摊开来讲。我不敢。“等我搞完”这四个字，我心里检讨过一百遍，一次都没说出口。",
       who: "sean",
     },
     {
-      bg: "/images/scenes/campus-bench.png",
+      bg: "/images/scenes/campus-bench.webp",
       surface: "他说“你要是学到什么，多跟我讲讲”。你干脆把书塞给了他：一起看。",
       hidden:
         "我真翻了，翻到第三章。后来赶一个截止日期，书垫到了显示器底下。我一直想着要补上。",
       who: "sean",
     },
     {
-      bg: "/images/scenes/warm-room.png",
+      bg: "/images/scenes/warm-room.webp",
       surface: "暮色里你们规划小房子：朝南，阳台要大，狗养柯基。",
       hidden:
         "我说“慢慢来”，其实是心虚。房子、狗、退休，每一样我都想给她。可我连下个月实习落在哪个城市，都不敢跟她细算。",
@@ -1710,21 +1710,21 @@ export const PHONE_LOOKBACK: Lookback = {
   ],
   moments: [
     {
-      bg: "/images/scenes/dorm-room-night.png",
+      bg: "/images/scenes/dorm-room-night.webp",
       surface: "他拖着新买的行李箱推门进来，看见你举着他的手机。他问：“你动我手机？”",
       hidden:
         "密码是她的生日，设了两年，没换过。我以为这就算把话说清楚了。原来该说的话，不能只靠一串密码替我说。",
       who: "sean",
     },
     {
-      bg: "/images/scenes/dorm-room-night.png",
+      bg: "/images/scenes/dorm-room-night.webp",
       surface: "你举着屏幕质问那些关注。他说了句“朋友”，往后退了半步。",
       hidden:
         "那半步不是心虚。是我忽然明白，怎么解释都没用了。她眼睛里已经有了答案。我这个人，输给了一列名单。",
       who: "sean",
     },
     {
-      bg: "/images/scenes/dorm-room-night.png",
+      bg: "/images/scenes/dorm-room-night.webp",
       surface: "送你回去的路上，他隔着半步。到你楼下，他只说了句“到了”。",
       hidden:
         "回去我没睡。行李收到一半的屋子里，我把那些关注一个个想了一遍，想我到底哪里让她这么不安。想到最后只剩一个问题：她为什么不能好好问我，我又为什么，不能好好说。",
@@ -1763,7 +1763,7 @@ export const FEVER_LOOKBACK: Lookback = {
   ],
   moments: [
     {
-      bg: "/images/scenes/fever-night.png",
+      bg: "/images/scenes/fever-night.webp",
       surface:
         "凌晨两点，他发来“发烧了，三十八度八”，紧接着补了一条：“没事，你忙。”",
       hidden:
@@ -1771,14 +1771,14 @@ export const FEVER_LOOKBACK: Lookback = {
       who: "sean",
     },
     {
-      bg: "/images/scenes/fever-night.png",
+      bg: "/images/scenes/fever-night.webp",
       surface: "他发来一个红包，一百五十块。备注：\"我想买你一个晚上。\"你盯着屏幕，不知道该收还是退。",
       hidden:
         "我不是真想用钱买她的时间。我只是想不出别的办法了。我知道她缺钱，知道她为了多赚五十块排夜班。可我打出这句的时候，就知道它一定会伤人。我还是发了。我想让她知道，我是认真的。",
       who: "sean",
     },
     {
-      bg: "/images/scenes/fever-night.png",
+      bg: "/images/scenes/fever-night.webp",
       surface: "凌晨四点半，他发来那句：“以后结婚了，工作也比家庭重要吗？”",
       hidden:
         "发完我就后悔了。我不是要审判她。我是烧得只剩一个念头：连生病都等不来她，那些说好的以后算什么。这句话一出口就变了形，成了刀。",
@@ -1817,21 +1817,21 @@ export const BREAKUP_LOOKBACK: Lookback = {
   ],
   moments: [
     {
-      bg: "/images/scenes/sunny-dorm.png",
+      bg: "/images/scenes/sunny-dorm.webp",
       surface: "他把卷好的充电线递给你，用你教他的绕法。",
       hidden:
         "那个绕法是她教我的。卷的时候我在想，往后我大概一辈子都会这么卷线。她带来的东西收得走，她教会我的，收不走。",
       who: "sean",
     },
     {
-      bg: "/images/scenes/sunny-dorm.png",
+      bg: "/images/scenes/sunny-dorm.webp",
       surface: "他说“要不，我们再试试”。你说：可我们在一起，还是会吵个不停。",
       hidden:
         "她说得对，我没反驳。可那句“再试试”不是随口说的。我是真想赌一把。只是她清醒，我就不能拖着她陪我赌。",
       who: "sean",
     },
     {
-      bg: "/images/scenes/door-doorway-sunny.png",
+      bg: "/images/scenes/door-doorway-sunny.webp",
       surface: "夕阳把影子拉得很长。你转身走出楼门口，没有回头。",
       hidden:
         "她走得很稳，一次都没回头。我在门口站到她拐过路口，差一点就喊出来了。可我知道，喊住她，我们还是会走回这个门口。",

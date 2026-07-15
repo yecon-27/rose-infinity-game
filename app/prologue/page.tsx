@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useCallback, useEffect, useState } from "react";
 import Image from "next/image";
 import { useRouter } from "next/navigation";
 import { useSoundscape } from "@/components/soundscape-provider";
@@ -35,16 +35,20 @@ export default function ProloguePage() {
   const [idx, setIdx] = useState(0);
   const { playSfx } = useSoundscape(PROLOGUE_SOUND);
 
-  function advance() {
+  const advance = useCallback(() => {
     playSfx(AUDIO.sfx.softTap, 0.12);
     if (idx >= TOTAL_STEPS - 1) {
       router.push("/game");
     } else {
       setIdx(idx + 1);
     }
-  }
+  }, [idx, playSfx, router]);
 
-  // 键盘：空格/Enter 推进，Esc 跳过
+  const goBack = useCallback(() => {
+    if (idx > 0) setIdx(idx - 1);
+  }, [idx]);
+
+  // 键盘：→/空格/Enter 推进，← 返回，Esc 跳过
   useEffect(() => {
     function onKey(e: KeyboardEvent) {
       if (
@@ -52,16 +56,23 @@ export default function ProloguePage() {
         e.target instanceof HTMLInputElement
       )
         return;
-      if (e.code === "Space" || e.key === "Enter") {
+      if (
+        e.code === "Space" ||
+        e.key === "Enter" ||
+        e.key === "ArrowRight"
+      ) {
         e.preventDefault();
         advance();
+      } else if (e.key === "ArrowLeft") {
+        e.preventDefault();
+        goBack();
       } else if (e.key === "Escape") {
         router.push("/game");
       }
     }
     window.addEventListener("keydown", onKey);
     return () => window.removeEventListener("keydown", onKey);
-  });
+  }, [advance, goBack, router]);
 
   // 承接标题页离场的"变暗虚化"状态：开场就有一张压暗、虚化的同一张图，
   // 随推进极缓慢地清晰一点点（记忆尚未完全对焦，真正对焦留到进入场景时）。
@@ -85,7 +96,7 @@ export default function ProloguePage() {
         }}
       >
         <Image
-          src="/images/scenes/title_keyart.png"
+          src="/images/scenes/title_keyart.webp"
           alt=""
           fill
           priority
@@ -124,7 +135,9 @@ export default function ProloguePage() {
       )}
 
       <p className="fixed bottom-10 z-10 text-[10px] tracking-[0.3em] text-white/30 soft-pulse">
-        {idx >= TOTAL_STEPS - 1 ? "▼ 回到那一天" : "空格 / 点击 继续"}
+        {idx >= TOTAL_STEPS - 1
+          ? "← 返回 · → 回到那一天"
+          : "← 返回 · → 继续 · 空格 / 点击推进"}
       </p>
 
       <p className="fixed bottom-4 z-10 text-[10px] text-white/15 tracking-widest">

@@ -5,6 +5,7 @@ import { useRouter, useSearchParams } from "next/navigation";
 import Image from "next/image";
 import { useSoundscape } from "@/components/soundscape-provider";
 import { AUDIO, soundscapeForScene } from "@/lib/audio";
+import { preloadImageSources } from "@/lib/preload";
 import {
   getLookback,
   getNextLookbackId,
@@ -26,6 +27,7 @@ export default function LookPage() {
 }
 
 type Phase = "intro" | "moments" | "reachback" | "outro";
+const LOOKBACK_SFX_VOLUME = 0.8;
 
 function LookInner() {
   const router = useRouter();
@@ -42,6 +44,25 @@ function LookInner() {
   const [reachDone, setReachDone] = useState(false);
   const [roseOn, setRoseOn] = useState(false);
   const [outroIdx, setOutroIdx] = useState(0);
+
+  useEffect(() => {
+    const sources = Object.values(LOOKBACKS).flatMap((memory) => [
+      ...memory.moments.map((moment) => moment.bg),
+      `/images/characters/${
+        memory.seanPortrait ?? "sean-tired-hackthon"
+      }.webp`,
+    ]);
+    const timer = window.setTimeout(
+      () =>
+        preloadImageSources([
+          ...sources,
+          "/images/motifs/rose-bud.webp",
+          "/images/motifs/rose-bloom.webp",
+        ]),
+      500
+    );
+    return () => window.clearTimeout(timer);
+  }, []);
 
   // 同一页面在 /look?id=A → /look?id=B 之间切换时不会卸载，手动归零
   useEffect(() => {
@@ -72,7 +93,7 @@ function LookInner() {
       }
     } else if (phase === "moments") {
       if (!revealed) {
-        playSfx(AUDIO.sfx.roseReveal, 0.24);
+        playSfx(AUDIO.sfx.roseReveal, LOOKBACK_SFX_VOLUME);
         setRevealed(true); // 点开:看清这一刻
       } else if (momentIdx < look.moments.length - 1) {
         setMomentIdx((i) => i + 1);
@@ -85,7 +106,7 @@ function LookInner() {
       }
     } else if (phase === "reachback") {
       if (!reachDone) {
-        playSfx(AUDIO.sfx.roseReveal, 0.3);
+        playSfx(AUDIO.sfx.roseReveal, LOOKBACK_SFX_VOLUME);
         setReachDone(true); // 这一次,伸手
       }
       else {
@@ -110,16 +131,70 @@ function LookInner() {
     router,
   ]);
 
+  /* ← 回到上一拍：按回看本身的状态逐级倒退，不改变记忆段落顺序。 */
+  const goBack = useCallback(() => {
+    if (!look) return;
+
+    if (phase === "intro") {
+      if (introIdx > 0) setIntroIdx((i) => i - 1);
+      return;
+    }
+
+    if (phase === "moments") {
+      if (revealed) {
+        setRevealed(false);
+      } else if (momentIdx > 0) {
+        setMomentIdx((i) => i - 1);
+        setRevealed(true);
+      } else {
+        setPhase("intro");
+        setIntroIdx(look.intro.length - 1);
+      }
+      return;
+    }
+
+    if (phase === "reachback") {
+      if (reachDone) {
+        setReachDone(false);
+        setRoseOn(false);
+      } else {
+        setPhase("moments");
+        setMomentIdx(look.moments.length - 1);
+        setRevealed(true);
+      }
+      return;
+    }
+
+    if (outroIdx > 0) {
+      setOutroIdx((i) => i - 1);
+    } else if (look.reachback) {
+      setPhase("reachback");
+      setReachDone(true);
+      setRoseOn(true);
+    } else {
+      setPhase("moments");
+      setMomentIdx(look.moments.length - 1);
+      setRevealed(true);
+    }
+  }, [look, phase, introIdx, revealed, momentIdx, reachDone, outroIdx]);
+
   useEffect(() => {
     function onKey(e: KeyboardEvent) {
-      if (e.code === "Space" || e.key === "Enter") {
+      if (
+        e.code === "Space" ||
+        e.key === "Enter" ||
+        e.key === "ArrowRight"
+      ) {
         e.preventDefault();
         advance();
+      } else if (e.key === "ArrowLeft") {
+        e.preventDefault();
+        goBack();
       }
     }
     window.addEventListener("keydown", onKey);
     return () => window.removeEventListener("keydown", onKey);
-  }, [advance]);
+  }, [advance, goBack]);
 
   if (!look) {
     return (
@@ -185,7 +260,7 @@ function LookInner() {
         style={{ opacity: showLeft ? 1 : 0, transition: "opacity 1200ms ease" }}
       >
         <Image
-          src={`/images/characters/${look.seanPortrait ?? "sean-tired-hackthon"}.png`}
+          src={`/images/characters/${look.seanPortrait ?? "sean-tired-hackthon"}.webp`}
           alt="Sean"
           fill
           className="object-contain object-bottom drop-shadow-2xl"
@@ -198,7 +273,7 @@ function LookInner() {
           <div className="relative w-60 h-60 fade-in-slow opacity-90">
             {/* 回看只到"看懂":开的是花苞;盛放留给结局 */}
             <Image
-              src="/images/motifs/rose-bud.png"
+              src="/images/motifs/rose-bud.webp"
               alt=""
               fill
               className="object-contain"
@@ -299,14 +374,14 @@ function LookInner() {
         {/* 提示 */}
         <p className="fixed bottom-10 text-[10px] tracking-[0.3em] text-white/30 soft-pulse">
           {phase === "moments" && !revealed
-            ? "点亮 · 看清这一刻"
+            ? "← 返回 · → 点亮这一刻"
             : phase === "reachback" && !reachDone
-            ? "这一次 · 伸手"
+            ? "← 返回 · → 这一次，伸手"
             : phase === "outro" && outroIdx >= look.outro.length - 1
             ? nextId
-              ? "▼ 下一段记忆"
-              : "空格 / 点击 结束"
-            : "空格 / 点击 继续"}
+              ? "← 返回 · → 下一段记忆"
+              : "← 返回 · → 结束"
+            : "← 返回 · → 继续 · 空格 / 点击推进"}
         </p>
       </div>
 

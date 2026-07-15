@@ -46,7 +46,7 @@ export default function Home() {
         }}
       >
         <Image
-          src="/images/scenes/title_keyart.png"
+          src="/images/scenes/title_keyart.webp"
           alt=""
           fill
           priority

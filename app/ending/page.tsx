@@ -58,21 +58,55 @@ function EndingInner() {
   }, [seen, sel, router, playSfx]);
 
   return (
-    <main className="relative min-h-screen overflow-hidden bg-black flex flex-col items-center justify-center px-8">
+    <main className="relative min-h-screen overflow-hidden bg-[#4a3a3a] flex flex-col items-center justify-center px-8">
       {/* 背景 */}
       <div className="fixed inset-0 z-0">
+        {/*
+          先用同一张水彩图铺满并虚化，延展原画的粉、绿与旧纸色；
+          再叠一层清晰花朵。这样宽屏不会在方形素材两侧露出大片纯黑。
+        */}
+        <Image
+          src={seen ? "/images/motifs/rose-bloom.webp" : "/images/motifs/rose-bud.webp"}
+          alt=""
+          fill
+          priority
+          className="object-cover scale-110"
+          style={{
+            opacity: seen ? 0.78 : 0.72,
+            filter: "blur(34px) saturate(0.78)",
+            transition: "opacity 2s ease",
+          }}
+        />
+
         {/* 花苞 → 盛放：回看完成前是 rose-bud，看懂之后才开 */}
         <Image
-          src={seen ? "/images/motifs/rose-bloom.png" : "/images/motifs/rose-bud.png"}
+          src={seen ? "/images/motifs/rose-bloom.webp" : "/images/motifs/rose-bud.webp"}
           alt=""
           fill
           className="object-contain"
-          style={{ opacity: seen ? 0.45 : 0.25, transition: "opacity 2s ease" }}
+          style={{
+            opacity: seen ? 0.78 : 0.74,
+            filter: "saturate(0.88) contrast(0.96)",
+            maskImage:
+              "radial-gradient(ellipse 58% 76% at 50% 50%, black 42%, transparent 78%)",
+            WebkitMaskImage:
+              "radial-gradient(ellipse 58% 76% at 50% 50%, black 42%, transparent 78%)",
+            transition: "opacity 2s ease",
+          }}
         />
-        <div className="absolute inset-0 bg-gradient-to-b from-black/80 via-black/60 to-black/80" />
+
+        {/* 中央只做轻柔压暗以托住文字，保留水彩背景的明度与颜色。 */}
+        <div
+          className="absolute inset-0"
+          style={{
+            background:
+              "radial-gradient(ellipse 43% 66% at 50% 48%, rgba(45,31,34,0.58) 0%, rgba(45,31,34,0.34) 42%, rgba(45,31,34,0.08) 72%, transparent 100%)",
+          }}
+        />
+        <div className="absolute inset-0 bg-gradient-to-b from-[#3d2d35]/25 via-transparent to-[#26342f]/45" />
       </div>
 
-      <div className="relative z-10 max-w-xl text-center space-y-12">
+      <div className="relative z-10 max-w-xl text-center space-y-12 [text-shadow:0_2px_18px_rgba(35,23,27,0.82)]">
         <div className="space-y-6">
           <h1 className="text-4xl font-serif tracking-[0.3em] text-white">
             玫瑰无限

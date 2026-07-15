@@ -1,0 +1,269 @@
+{"kind":"deck","id":"pr/mq8ghu","name":"Deck"}
+{"kind":"layout","layoutId":"263ca25e-677c-4c0e-9fcd-7884b1826d47","name":"Master","type":"master"}
+{"kind":"layout","layoutId":"ed9dbf98-a345-464f-bb1b-23029b0f6222","name":"Title Slide","type":"title"}
+{"kind":"slide","id":"sl/dc0wxf","slide":1,"title":"腾讯云黑客松 2026 · 个人参赛作品","textShapes":1}
+{"kind":"shape","id":"sh/ny9wzq9g","slide":1,"bbox":[48,34,330,34]}
+{"kind":"textbox","id":"sh/mx0vql8v","slide":1,"text":"腾讯云黑客松 2026 · 个人参赛作品","textPreview":"腾讯云黑客松 2026 · 个人参赛作品","textChars":20,"textLines":1,"bbox":[62,41,302,20]}
+{"kind":"image","id":"im/9svyh4rq","slide":1,"name":"","geometry":"rect","alt":"Rose Infinity title artwork","bbox":[0,0,1280,720]}
+{"kind":"notes","id":"nt/dc0wxf","slide":1,"text":""}
+{"kind":"slide","id":"sl/e5q9mm","slide":2,"title":"02 · THEME","textShapes":6}
+{"kind":"shape","id":"sh/72t8nelw","slide":2,"bbox":[0,0,744,720]}
+{"kind":"textbox","id":"sh/m1kre94b","slide":2,"text":"02 · THEME","textPreview":"02 · THEME","textChars":10,"textLines":1,"bbox":[48,38,260,22]}
+{"kind":"textbox","id":"sh/l0bql43q","slide":2,"text":"恋爱游戏常教人赢，\n本作让玩家学会看见","textPreview":"恋爱游戏常教人赢， | 本作让玩家学会看见","textChars":19,"textLines":2,"bbox":[48,92,620,146]}
+{"kind":"textbox","id":"sh/kz2pczml","slide":2,"text":"两个都没有恶意的人，为什么仍会走散？","textPreview":"两个都没有恶意的人，为什么仍会走散？","textChars":18,"textLines":1,"bbox":[48,286,610,44]}
+{"kind":"shape","id":"sh/zyt8jul0","slide":2,"bbox":[48,355,548,0.01]}
+{"kind":"textbox","id":"sh/ydk7ap4f","slide":2,"text":"没有坏人。\n只有一次次没被看见的伸手。","textPreview":"没有坏人。 | 只有一次次没被看见的伸手。","textChars":19,"textLines":2,"bbox":[48,390,560,108]}
+{"kind":"textbox","id":"sh/5wfqx83a","slide":2,"text":"结局不以“复合”为奖赏，\n而以获得爱人的能力为落点。","textPreview":"结局不以“复合”为奖赏， | 而以获得爱人的能力为落点。","textChars":26,"textLines":2,"bbox":[48,540,560,74]}
+{"kind":"textbox","id":"sh/4v69o3mp","slide":2,"text":"02","textPreview":"02","textChars":2,"textLines":1,"bbox":[620,674,62,18]}
+{"kind":"image","id":"im/1obi1sjy","slide":2,"name":"","geometry":"rect","alt":"Split cool and warm Rose Infinity key art","bbox":[700,0,580,720]}
+{"kind":"notes","id":"nt/e5q9mm","slide":2,"text":""}
+{"kind":"slide","id":"sl/q240rr","slide":3,"title":"GAMEPLAY","textShapes":13}
+{"kind":"textbox","id":"sh/v694j2ts","slide":3,"text":"GAMEPLAY","textPreview":"GAMEPLAY","textChars":8,"textLines":1,"bbox":[48,34,450,24]}
+{"kind":"textbox","id":"sh/wrils7ad","slide":3,"text":"先活一遍，再回到记忆里看见","textPreview":"先活一遍，再回到记忆里看见","textChars":13,"textLines":1,"bbox":[48,68,1184,76]}
+{"kind":"shape","id":"sh/hsrmlcby","slide":3,"bbox":[48,153,1184,0.01]}
+{"kind":"textbox","id":"sh/itk3uhsj","slide":3,"text":"03","textPreview":"03","textChars":2,"textLines":1,"bbox":[1170,674,62,18]}
+{"kind":"shape","id":"sh/jut4n2to","slide":3,"bbox":[48,182,376,426]}
+{"kind":"textbox","id":"sh/5wbmpcbu","slide":3,"text":"01","textPreview":"01","textChars":2,"textLines":1,"bbox":[72,420,58,30]}
+{"kind":"textbox","id":"sh/yxg3idsz","slide":3,"text":"亲历","textPreview":"亲历","textChars":2,"textLines":1,"bbox":[72,454,160,42]}
+{"kind":"textbox","id":"sh/zyp4bitk","slide":3,"text":"以 Vera 视角走完整段关系；\n每个选择在当下都合理。","textPreview":"以 Vera 视角走完整段关系； | 每个选择在当下都合理。","textChars":28,"textLines":2,"bbox":[72,512,326,70]}
+{"kind":"shape","id":"sh/fitkrm5o","slide":3,"bbox":[452,182,376,426]}
+{"kind":"textbox","id":"sh/1kb2twne","slide":3,"text":"02","textPreview":"02","textChars":2,"textLines":1,"bbox":[476,420,58,30]}
+{"kind":"textbox","id":"sh/gj2lkrmt","slide":3,"text":"回看","textPreview":"回看","textChars":2,"textLines":1,"bbox":[476,454,160,42]}
+{"kind":"textbox","id":"sh/re9knm5c","slide":3,"text":"回到同一场景，主动找出\n那次被忽略的“伸手”。","textPreview":"回到同一场景，主动找出 | 那次被忽略的“伸手”。","textChars":23,"textLines":2,"bbox":[476,512,326,70]}
+{"kind":"shape","id":"sh/6d0jeh4r","slide":3,"bbox":[856,182,376,426]}
+{"kind":"textbox","id":"sh/sfi1g7mx","slide":3,"text":"03","textPreview":"03","textChars":2,"textLines":1,"bbox":[880,420,58,30]}
+{"kind":"textbox","id":"sh/jqpkj25g","slide":3,"text":"接住","textPreview":"接住","textChars":2,"textLines":1,"bbox":[880,454,160,42]}
+{"kind":"textbox","id":"sh/ipgjax4v","slide":3,"text":"揭示 Sean 没说出口的心情，\n重新回应那个瞬间。","textPreview":"揭示 Sean 没说出口的心情， | 重新回应那个瞬间。","textChars":26,"textLines":2,"bbox":[880,512,326,70]}
+{"kind":"textbox","id":"sh/mlg3mxon","slide":3,"text":"同一段关系，两次观看；玩法目标从“选对”改为“看见”。","textPreview":"同一段关系，两次观看；玩法目标从“选对”改为“看见”。","textChars":27,"textLines":1,"bbox":[48,628,1050,32]}
+{"kind":"image","id":"im/l0jy1cf6","slide":3,"name":"","geometry":"roundRect","alt":"hackathon-venue.png","bbox":[62,196,348,198]}
+{"kind":"image","id":"im/poj61of2","slide":3,"name":"","geometry":"roundRect","alt":"fever-night.png","bbox":[466,196,348,198]}
+{"kind":"image","id":"im/apc7atgn","slide":3,"name":"","geometry":"roundRect","alt":"rose-bloom.png","bbox":[870,196,348,198]}
+{"kind":"notes","id":"nt/q240rr","slide":3,"text":""}
+{"kind":"slide","id":"sl/1gzkrd","slide":4,"title":"AI TOOL USE · 40","textShapes":16}
+{"kind":"textbox","id":"sh/hs7y1ob6","slide":4,"text":"AI TOOL USE · 40","textPreview":"AI TOOL USE · 40","textChars":16,"textLines":1,"bbox":[48,34,450,24]}
+{"kind":"textbox","id":"sh/upgf6tsv","slide":4,"text":"AI 直接实现了“对话”与“看见”","textPreview":"AI 直接实现了“对话”与“看见”","textChars":17,"textLines":1,"bbox":[48,68,1184,76]}
+{"kind":"shape","id":"sh/vqpgzytg","slide":4,"bbox":[48,153,1184,0.01]}
+{"kind":"textbox","id":"sh/4vixc3ax","slide":4,"text":"04","textPreview":"04","textChars":2,"textLines":1,"bbox":[1170,674,62,18]}
+{"kind":"shape","id":"sh/5wry58bi","slide":4,"bbox":[1050,92,150,32]}
+{"kind":"textbox","id":"sh/it0fatsr","slide":4,"text":"运行时 AI","textPreview":"运行时 AI","textChars":6,"textLines":1,"bbox":[1062,97,126,22]}
+{"kind":"shape","id":"sh/3u9g3ytc","slide":4,"bbox":[335,298,84,0.01]}
+{"kind":"shape","id":"sh/kzex0zat","slide":4,"bbox":[779,298,84,0.01]}
+{"kind":"textbox","id":"sh/l0net4be","slide":4,"text":"›","textPreview":"›","textChars":1,"textLines":1,"bbox":[381,280,32,42]}
+{"kind":"textbox","id":"sh/9cjydobe","slide":4,"text":"›","textPreview":"›","textChars":1,"textLines":1,"bbox":[825,280,32,42]}
+{"kind":"shape","id":"sh/8bah4jut","slide":4,"bbox":[335,480,84,0.01]}
+{"kind":"shape","id":"sh/7a1gbet8","slide":4,"bbox":[779,480,84,0.01]}
+{"kind":"textbox","id":"sh/m98z29cn","slide":4,"text":"›","textPreview":"›","textChars":1,"textLines":1,"bbox":[381,462,32,42]}
+{"kind":"textbox","id":"sh/h0jihoba","slide":4,"text":"›","textPreview":"›","textChars":1,"textLines":1,"bbox":[825,462,32,42]}
+{"kind":"shape","id":"sh/wzah8jup","slide":4,"bbox":[48,238,288,120]}
+{"kind":"textbox","id":"sh/ve10fyt4","slide":4,"text":"玩家输入\n+ 人物 / 关系阶段","textPreview":"玩家输入 | + 人物 / 关系阶段","textChars":16,"textLines":2,"bbox":[70,262,244,74]}
+{"kind":"shape","id":"sh/udsz6tcz","slide":4,"bbox":[420,238,360,120]}
+{"kind":"textbox","id":"sh/543il8bm","slide":4,"text":"腾讯混元\n/api/npc","textPreview":"腾讯混元 | /api/npc","textChars":13,"textLines":2,"bbox":[442,262,316,74]}
+{"kind":"shape","id":"sh/43uhc3u1","slide":4,"bbox":[864,238,368,120]}
+{"kind":"textbox","id":"sh/4721o72x","slide":4,"text":"Sean 的\n实时回应","textPreview":"Sean 的 | 实时回应","textChars":11,"textLines":2,"bbox":[886,262,324,74]}
+{"kind":"shape","id":"sh/p8b2hcji","slide":4,"bbox":[48,420,288,120]}
+{"kind":"textbox","id":"sh/25kjmxk7","slide":4,"text":"场景记忆\n+ 已说出口的话","textPreview":"场景记忆 | + 已说出口的话","textChars":13,"textLines":2,"bbox":[70,444,244,74]}
+{"kind":"shape","id":"sh/36tkf21s","slide":4,"bbox":[420,420,360,120]}
+{"kind":"textbox","id":"sh/cb21cri9","slide":4,"text":"腾讯混元\n/api/reveal","textPreview":"腾讯混元 | /api/reveal","textChars":16,"textLines":2,"bbox":[442,444,316,74]}
+{"kind":"shape","id":"sh/dcb2lwju","slide":4,"bbox":[864,420,368,120]}
+{"kind":"textbox","id":"sh/q9kjahk3","slide":4,"text":"另一侧\n没说出口的内心","textPreview":"另一侧 | 没说出口的内心","textChars":11,"textLines":2,"bbox":[886,444,324,74]}
+{"kind":"shape","id":"sh/ratkjm1o","slide":4,"bbox":[48,590,1184,58]}
+{"kind":"textbox","id":"sh/sfi1gn2p","slide":4,"text":"AI 不是幕后素材，而是玩家每次冲突与每次理解发生的地方。","textPreview":"AI 不是幕后素材，而是玩家每次冲突与每次理解发生的地方。","textChars":29,"textLines":1,"bbox":[72,607,1136,28]}
+{"kind":"textbox","id":"sh/tgri9sja","slide":4,"text":"角色一致兜底 · 网络失败仍能完成游戏","textPreview":"角色一致兜底 · 网络失败仍能完成游戏","textChars":19,"textLines":1,"bbox":[48,660,650,22]}
+{"kind":"notes","id":"nt/1gzkrd","slide":4,"text":""}
+{"kind":"slide","id":"sl/qkl6m3","slide":5,"title":"AI TOOL USE · 40","textShapes":10}
+{"kind":"textbox","id":"sh/o3a1kni9","slide":5,"text":"AI TOOL USE · 40","textPreview":"AI TOOL USE · 40","textChars":16,"textLines":1,"bbox":[48,34,450,24]}
+{"kind":"textbox","id":"sh/ni10riho","slide":5,"text":"完整 AI 内容产出，形成统一叙事语言","textPreview":"完整 AI 内容产出，形成统一叙事语言","textChars":19,"textLines":1,"bbox":[48,68,1184,76]}
+{"kind":"shape","id":"sh/2hszix03","slide":5,"bbox":[48,153,1184,0.01]}
+{"kind":"textbox","id":"sh/x8jixczq","slide":5,"text":"05","textPreview":"05","textChars":2,"textLines":1,"bbox":[1170,674,62,18]}
+{"kind":"shape","id":"sh/qpk3ido3","slide":5,"bbox":[1048,184,184,436]}
+{"kind":"textbox","id":"sh/rqtkbi5o","slide":5,"text":"01","textPreview":"01","textChars":2,"textLines":1,"bbox":[1070,212,50,26]}
+{"kind":"textbox","id":"sh/sr2lkn69","slide":5,"text":"原画","textPreview":"原画","textChars":2,"textLines":1,"bbox":[1070,244,130,42]}
+{"kind":"textbox","id":"sh/dsbmd8nu","slide":5,"text":"角色、场景、\n玫瑰母题与海报\n完整由 AI 生成","textPreview":"角色、场景、 | 玫瑰母题与海报 | 完整由 AI 生成","textChars":24,"textLines":3,"bbox":[1070,296,138,108]}
+{"kind":"shape","id":"sh/etk3mdof","slide":5,"bbox":[1070,426,130,0.01]}
+{"kind":"textbox","id":"sh/fut4fi50","slide":5,"text":"02","textPreview":"02","textChars":2,"textLines":1,"bbox":[1070,448,50,26]}
+{"kind":"textbox","id":"sh/0v2lon65","slide":5,"text":"CodeBuddy","textPreview":"CodeBuddy","textChars":9,"textLines":1,"bbox":[1070,480,138,35]}
+{"kind":"textbox","id":"sh/1wvmhsnq","slide":5,"text":"世界观、分幕、\n台词与代码实装","textPreview":"世界观、分幕、 | 台词与代码实装","textChars":15,"textLines":2,"bbox":[1070,526,138,62]}
+{"kind":"textbox","id":"sh/2x43qxob","slide":5,"text":"原创程序化配乐 / 环境音 / 音效","textPreview":"原创程序化配乐 / 环境音 / 音效","textChars":18,"textLines":1,"bbox":[48,642,700,26]}
+{"kind":"image","id":"im/d8fmh4zu","slide":5,"name":"","geometry":"roundRect","alt":"hackathon-venue.png","bbox":[48,184,520,260]}
+{"kind":"image","id":"im/q5o3m903","slide":5,"name":"","geometry":"roundRect","alt":"mall-fitting.png","bbox":[48,454,255,166]}
+{"kind":"image","id":"im/b6x4feho","slide":5,"name":"","geometry":"roundRect","alt":"campus-bench.png","bbox":[313,454,255,166]}
+{"kind":"image","id":"im/0b6lsji5","slide":5,"name":"","geometry":"roundRect","alt":"vera-warm.png","bbox":[588,184,220,436]}
+{"kind":"image","id":"im/lczmlozq","slide":5,"name":"","geometry":"roundRect","alt":"sean-tired-hackthon.png","bbox":[818,184,220,436]}
+{"kind":"notes","id":"nt/qkl6m3","slide":5,"text":""}
+{"kind":"slide","id":"sl/uxs99z","slide":6,"title":"THEME FIT · 30","textShapes":16}
+{"kind":"textbox","id":"sh/4nax8rq9","slide":6,"text":"THEME FIT · 30","textPreview":"THEME FIT · 30","textChars":14,"textLines":1,"bbox":[48,34,450,24]}
+{"kind":"textbox","id":"sh/32hgzmpo","slide":6,"text":"主题不是被讲出来，而是被玩家亲历","textPreview":"主题不是被讲出来，而是被玩家亲历","textChars":16,"textLines":1,"bbox":[48,68,1184,76]}
+{"kind":"shape","id":"sh/i18f6183","slide":6,"bbox":[48,153,1184,0.01]}
+{"kind":"textbox","id":"sh/dsjy5g7q","slide":6,"text":"06","textPreview":"06","textChars":2,"textLines":1,"bbox":[1170,674,62,18]}
+{"kind":"shape","id":"sh/sraxcbq5","slide":6,"bbox":[92,385,1094,0.01]}
+{"kind":"shape","id":"sh/qpsfa18z","slide":6,"bbox":[56,372,38,38]}
+{"kind":"textbox","id":"sh/1w3y9g7m","slide":6,"text":"01","textPreview":"01","textChars":2,"textLines":1,"bbox":[60,382,30,18]}
+{"kind":"textbox","id":"sh/0vuxgbqh","slide":6,"text":"甜蜜","textPreview":"甜蜜","textChars":2,"textLines":1,"bbox":[48,430,278,38]}
+{"kind":"textbox","id":"sh/2l0b29o3","slide":6,"text":"彼此记得，\n却开始替对方吞掉需求","textPreview":"彼此记得， | 却开始替对方吞掉需求","textChars":16,"textLines":2,"bbox":[48,482,278,76]}
+{"kind":"shape","id":"sh/o7it4j6t","slide":6,"bbox":[358,372,38,38]}
+{"kind":"textbox","id":"sh/p8rudone","slide":6,"text":"02","textPreview":"02","textChars":2,"textLines":1,"bbox":[362,382,30,18]}
+{"kind":"textbox","id":"sh/a90b6toz","slide":6,"text":"爆发","textPreview":"爆发","textChars":2,"textLines":1,"bbox":[350,430,278,38]}
+{"kind":"textbox","id":"sh/ba9cfe5k","slide":6,"text":"焦虑追问与回避下线\n彼此放大","textPreview":"焦虑追问与回避下线 | 彼此放大","textChars":14,"textLines":2,"bbox":[350,482,278,76]}
+{"kind":"shape","id":"sh/xcbuhonq","slide":6,"bbox":[660,372,38,38]}
+{"kind":"textbox","id":"sh/6dgbupov","slide":6,"text":"03","textPreview":"03","textChars":2,"textLines":1,"bbox":[664,382,30,18]}
+{"kind":"textbox","id":"sh/reps3u5g","slide":6,"text":"分开","textPreview":"分开","textChars":2,"textLines":1,"bbox":[652,430,278,38]}
+{"kind":"textbox","id":"sh/vil8bql8","slide":6,"text":"爱是真的，\n走不下去也是真的","textPreview":"爱是真的， | 走不下去也是真的","textChars":14,"textLines":2,"bbox":[652,482,278,76]}
+{"kind":"shape","id":"sh/hknqd03y","slide":6,"bbox":[962,372,38,38]}
+{"kind":"textbox","id":"sh/wjup4vmd","slide":6,"text":"04","textPreview":"04","textChars":2,"textLines":1,"bbox":[966,382,30,18]}
+{"kind":"textbox","id":"sh/7ul876lw","slide":6,"text":"回看","textPreview":"回看","textChars":2,"textLines":1,"bbox":[954,430,278,38]}
+{"kind":"textbox","id":"sh/mtc7yl4b","slide":6,"text":"获得第二种视角，\n而不是一个道德答案","textPreview":"获得第二种视角， | 而不是一个道德答案","textChars":18,"textLines":2,"bbox":[954,482,278,76]}
+{"kind":"shape","id":"sh/9g3q9g32","slide":6,"bbox":[48,590,1184,54]}
+{"kind":"textbox","id":"sh/8vup0bmh","slide":6,"text":"没有坏人，冲突来自一次次没被看见的伸手。","textPreview":"没有坏人，冲突来自一次次没被看见的伸手。","textChars":20,"textLines":1,"bbox":[72,604,1136,28]}
+{"kind":"image","id":"im/axc7itcf","slide":6,"name":"","geometry":"roundRect","alt":"mall-fitting.png","bbox":[48,184,278,168]}
+{"kind":"image","id":"im/cfi1ofqh","slide":6,"name":"","geometry":"roundRect","alt":"dorm-room-night.png","bbox":[350,184,278,168]}
+{"kind":"image","id":"im/zi9kjups","slide":6,"name":"","geometry":"roundRect","alt":"departure-station.png","bbox":[652,184,278,168]}
+{"kind":"image","id":"im/t43uhcji","slide":6,"name":"","geometry":"roundRect","alt":"future-apartment.png","bbox":[954,184,278,168]}
+{"kind":"notes","id":"nt/uxs99z","slide":6,"text":""}
+{"kind":"slide","id":"sl/hpnatf","slide":7,"title":"GAME QUALITY · 30","textShapes":25}
+{"kind":"textbox","id":"sh/76l0r2ts","slide":7,"text":"GAME QUALITY · 30","textPreview":"GAME QUALITY · 30","textChars":17,"textLines":1,"bbox":[48,34,450,24]}
+{"kind":"textbox","id":"sh/s7u1k7ax","slide":7,"text":"完整闭环，把情绪变成可玩的目标","textPreview":"完整闭环，把情绪变成可玩的目标","textChars":15,"textLines":1,"bbox":[48,68,1184,76]}
+{"kind":"shape","id":"sh/t83itcbi","slide":7,"bbox":[48,153,1184,0.01]}
+{"kind":"textbox","id":"sh/i1szuxcv","slide":7,"text":"07","textPreview":"07","textChars":2,"textLines":1,"bbox":[1170,674,62,18]}
+{"kind":"shape","id":"sh/j210nitg","slide":7,"bbox":[302,332,48,0.01]}
+{"kind":"textbox","id":"sh/k3ahwnu1","slide":7,"text":"›","textPreview":"›","textChars":1,"textLines":1,"bbox":[316,312,32,44]}
+{"kind":"shape","id":"sh/54jipsbm","slide":7,"bbox":[48,206,254,252]}
+{"kind":"textbox","id":"sh/2xwjqhsf","slide":7,"text":"01","textPreview":"01","textChars":2,"textLines":1,"bbox":[72,232,60,24]}
+{"kind":"textbox","id":"sh/3y50zmtk","slide":7,"text":"标题 / 序章","textPreview":"标题 / 序章","textChars":7,"textLines":1,"bbox":[72,276,206,50]}
+{"kind":"textbox","id":"sh/vu94jyls","slide":7,"text":"进入关系","textPreview":"进入关系","textChars":4,"textLines":1,"bbox":[72,352,206,64]}
+{"kind":"shape","id":"sh/ut03atkn","slide":7,"bbox":[604,332,48,0.01]}
+{"kind":"textbox","id":"sh/hwbml83y","slide":7,"text":"›","textPreview":"›","textChars":1,"textLines":1,"bbox":[618,312,32,44]}
+{"kind":"shape","id":"sh/gvilc32d","slide":7,"bbox":[350,206,254,252]}
+{"kind":"textbox","id":"sh/3yt4nil4","slide":7,"text":"02","textPreview":"02","textChars":2,"textLines":1,"bbox":[374,232,60,24]}
+{"kind":"textbox","id":"sh/ixk3edkj","slide":7,"text":"亲历七幕","textPreview":"亲历七幕","textChars":4,"textLines":1,"bbox":[374,276,206,50]}
+{"kind":"textbox","id":"sh/50bmp83a","slide":7,"text":"做出当下合理的选择","textPreview":"做出当下合理的选择","textChars":9,"textLines":1,"bbox":[374,352,206,64]}
+{"kind":"shape","id":"sh/4z25g32p","slide":7,"bbox":[906,332,48,0.01]}
+{"kind":"textbox","id":"sh/r2t4ril0","slide":7,"text":"›","textPreview":"›","textChars":1,"textLines":1,"bbox":[920,312,32,44]}
+{"kind":"shape","id":"sh/q1knidkf","slide":7,"bbox":[652,206,254,252]}
+{"kind":"textbox","id":"sh/2xo7ah4n","slide":7,"text":"03","textPreview":"03","textChars":2,"textLines":1,"bbox":[676,232,60,24]}
+{"kind":"textbox","id":"sh/nixojm58","slide":7,"text":"回看","textPreview":"回看","textChars":2,"textLines":1,"bbox":[676,276,206,50]}
+{"kind":"textbox","id":"sh/oj6pcrmt","slide":7,"text":"发现没看见的伸手","textPreview":"发现没看见的伸手","textChars":8,"textLines":1,"bbox":[676,352,206,64]}
+{"kind":"shape","id":"sh/pkf6lwne","slide":7,"bbox":[954,206,254,252]}
+{"kind":"textbox","id":"sh/et476h4r","slide":7,"text":"04","textPreview":"04","textChars":2,"textLines":1,"bbox":[978,232,60,24]}
+{"kind":"textbox","id":"sh/fudof25c","slide":7,"text":"结局","textPreview":"结局","textChars":2,"textLines":1,"bbox":[978,276,206,50]}
+{"kind":"textbox","id":"sh/0v6p87mx","slide":7,"text":"完成一次“接住”","textPreview":"完成一次“接住”","textChars":8,"textLines":1,"bbox":[978,352,206,64]}
+{"kind":"shape","id":"sh/1wf6hcni","slide":7,"bbox":[48,504,270,120]}
+{"kind":"textbox","id":"sh/yp87i14v","slide":7,"text":"7","textPreview":"7","textChars":1,"textLines":1,"bbox":[70,520,226,52]}
+{"kind":"textbox","id":"sh/zqh8r6lg","slide":7,"text":"幕关系弧线","textPreview":"幕关系弧线","textChars":5,"textLines":1,"bbox":[70,576,226,28]}
+{"kind":"shape","id":"sh/tkjah07i","slide":7,"bbox":[340,504,270,120]}
+{"kind":"textbox","id":"sh/8ja9ov6d","slide":7,"text":"2","textPreview":"2","textChars":1,"textLines":1,"bbox":[362,520,226,52]}
+{"kind":"textbox","id":"sh/7i1sfqps","slide":7,"text":"种观看方式","textPreview":"种观看方式","textChars":5,"textLines":1,"bbox":[362,576,226,28]}
+{"kind":"shape","id":"sh/6hsrm5o7","slide":7,"bbox":[632,504,270,120]}
+{"kind":"textbox","id":"sh/lgjad07m","slide":7,"text":"1","textPreview":"1","textChars":1,"textLines":1,"bbox":[654,520,226,52]}
+{"kind":"textbox","id":"sh/kfa9kv61","slide":7,"text":"个完整情绪闭环","textPreview":"个完整情绪闭环","textChars":7,"textLines":1,"bbox":[654,576,226,28]}
+{"kind":"shape","id":"sh/ze1sbqpg","slide":7,"bbox":[924,504,308,120]}
+{"kind":"textbox","id":"sh/yd8rilov","slide":7,"text":"浏览器独立运行\n键盘 / 鼠标可操作\n静音不影响完成","textPreview":"浏览器独立运行 | 键盘 / 鼠标可操作 | 静音不影响完成","textChars":26,"textLines":3,"bbox":[950,526,256,76]}
+{"kind":"notes","id":"nt/hpnatf","slide":7,"text":""}
+{"kind":"slide","id":"sl/7kfdjy","slide":8,"title":"BUILD","textShapes":26}
+{"kind":"textbox","id":"sh/hkra1gfi","slide":8,"text":"BUILD","textPreview":"BUILD","textChars":5,"textLines":1,"bbox":[48,34,450,24]}
+{"kind":"textbox","id":"sh/uxgbq1g7","slide":8,"text":"从 CodeBuddy 到浏览器，AI 工作流完整落地","textPreview":"从 CodeBuddy 到浏览器，AI 工作流完整落地","textChars":27,"textLines":1,"bbox":[48,68,1184,76]}
+{"kind":"shape","id":"sh/vipsz6xs","slide":8,"bbox":[48,153,1184,0.01]}
+{"kind":"textbox","id":"sh/4nitwby9","slide":8,"text":"08","textPreview":"08","textChars":2,"textLines":1,"bbox":[1170,674,62,18]}
+{"kind":"shape","id":"sh/pora5gfu","slide":8,"bbox":[300,314,46,0.01]}
+{"kind":"textbox","id":"sh/2l0bu1g3","slide":8,"text":"›","textPreview":"›","textChars":1,"textLines":1,"bbox":[312,294,30,42]}
+{"kind":"shape","id":"sh/3m9s36xo","slide":8,"bbox":[48,220,252,190]}
+{"kind":"textbox","id":"sh/kre9kry5","slide":8,"text":"01","textPreview":"01","textChars":2,"textLines":1,"bbox":[70,242,46,22]}
+{"kind":"textbox","id":"sh/lsnatwza","slide":8,"text":"CodeBuddy","textPreview":"CodeBuddy","textChars":9,"textLines":1,"bbox":[70,282,208,42]}
+{"kind":"textbox","id":"sh/1gjip47m","slide":8,"text":"架构 / 剧情实装 / 调试","textPreview":"架构 / 剧情实装 / 调试","textChars":14,"textLines":1,"bbox":[70,344,208,48]}
+{"kind":"shape","id":"sh/0fahwzqh","slide":8,"bbox":[598,314,46,0.01]}
+{"kind":"textbox","id":"sh/fe1gnepw","slide":8,"text":"›","textPreview":"›","textChars":1,"textLines":1,"bbox":[610,294,30,42]}
+{"kind":"shape","id":"sh/etszu98b","slide":8,"bbox":[346,220,252,190]}
+{"kind":"textbox","id":"sh/pk3ito7y","slide":8,"text":"02","textPreview":"02","textChars":2,"textLines":1,"bbox":[368,242,46,22]}
+{"kind":"textbox","id":"sh/ojah0jqd","slide":8,"text":"Next.js 游戏","textPreview":"Next.js 游戏","textChars":10,"textLines":1,"bbox":[368,282,208,42]}
+{"kind":"textbox","id":"sh/ni10reps","slide":8,"text":"场景状态 / 交互 / 兜底","textPreview":"场景状态 / 交互 / 兜底","textChars":14,"textLines":1,"bbox":[368,344,208,48]}
+{"kind":"shape","id":"sh/2hszy987","slide":8,"bbox":[896,314,46,0.01]}
+{"kind":"textbox","id":"sh/xo3ixo7u","slide":8,"text":"›","textPreview":"›","textChars":1,"textLines":1,"bbox":[908,294,30,42]}
+{"kind":"shape","id":"sh/cnuh4jqp","slide":8,"bbox":[644,220,252,190]}
+{"kind":"textbox","id":"sh/g3mtgr2x","slide":8,"text":"03","textPreview":"03","textChars":2,"textLines":1,"bbox":[666,242,46,22]}
+{"kind":"textbox","id":"sh/h4vapwji","slide":8,"text":"腾讯混元","textPreview":"腾讯混元","textChars":4,"textLines":1,"bbox":[666,282,208,42]}
+{"kind":"textbox","id":"sh/u1kbehkr","slide":8,"text":"npc + reveal 双路由","textPreview":"npc + reveal 双路由","textChars":16,"textLines":1,"bbox":[666,344,208,48]}
+{"kind":"shape","id":"sh/v2dsnm1c","slide":8,"bbox":[942,220,252,190]}
+{"kind":"textbox","id":"sh/47mtkb2t","slide":8,"text":"04","textPreview":"04","textChars":2,"textLines":1,"bbox":[964,242,46,22]}
+{"kind":"textbox","id":"sh/5svatgje","slide":8,"text":"浏览器体验","textPreview":"浏览器体验","textChars":5,"textLines":1,"bbox":[964,282,208,42]}
+{"kind":"textbox","id":"sh/i54bi1k3","slide":8,"text":"亲历 → 回看 → 结局","textPreview":"亲历 → 回看 → 结局","textChars":12,"textLines":1,"bbox":[964,344,208,48]}
+{"kind":"shape","id":"sh/36dsr61o","slide":8,"bbox":[48,446,1184,80]}
+{"kind":"textbox","id":"sh/kb29872p","slide":8,"text":"AI 原画 + 原创程序化声音","textPreview":"AI 原画 + 原创程序化声音","textChars":15,"textLines":1,"bbox":[74,470,420,34]}
+{"kind":"textbox","id":"sh/lwbahcja","slide":8,"text":"统一进入结构化场景数据，与运行时 AI 一起支撑完整作品。","textPreview":"统一进入结构化场景数据，与运行时 AI 一起支撑完整作品。","textChars":29,"textLines":1,"bbox":[500,474,700,30]}
+{"kind":"shape","id":"sh/nqhwnals","slide":8,"bbox":[48,558,370,120]}
+{"kind":"textbox","id":"sh/2p8ve547","slide":8,"text":"40","textPreview":"40","textChars":2,"textLines":1,"bbox":[70,574,326,52]}
+{"kind":"textbox","id":"sh/psjepk3y","slide":8,"text":"AI 工具使用","textPreview":"AI 工具使用","textChars":7,"textLines":1,"bbox":[70,630,326,28]}
+{"kind":"shape","id":"sh/orqdgfmd","slide":8,"bbox":[455,558,370,120]}
+{"kind":"textbox","id":"sh/fmhwjalw","slide":8,"text":"30","textPreview":"30","textChars":2,"textLines":1,"bbox":[477,574,326,52]}
+{"kind":"textbox","id":"sh/e18va54b","slide":8,"text":"主题契合","textPreview":"主题契合","textChars":4,"textLines":1,"bbox":[477,630,326,28]}
+{"kind":"shape","id":"sh/1ozelk3m","slide":8,"bbox":[862,558,370,120]}
+{"kind":"textbox","id":"sh/0nqdcfm1","slide":8,"text":"30","textPreview":"30","textChars":2,"textLines":1,"bbox":[884,574,326,52]}
+{"kind":"textbox","id":"sh/ryxcfqlk","slide":8,"text":"游戏品质","textPreview":"游戏品质","textChars":4,"textLines":1,"bbox":[884,630,326,28]}
+{"kind":"notes","id":"nt/7kfdjy","slide":8,"text":""}
+{"kind":"slide","id":"sl/yhak93","slide":9,"title":"DEMO · 2 MIN","textShapes":19}
+{"kind":"textbox","id":"sh/dwjax43y","slide":9,"text":"DEMO · 2 MIN","textPreview":"DEMO · 2 MIN","textChars":12,"textLines":1,"bbox":[48,34,450,24]}
+{"kind":"textbox","id":"sh/q98rmpk7","slide":9,"text":"只演示一个完整因果链","textPreview":"只演示一个完整因果链","textChars":10,"textLines":1,"bbox":[48,68,1184,76]}
+{"kind":"shape","id":"sh/ru1svuls","slide":9,"bbox":[48,153,1184,0.01]}
+{"kind":"textbox","id":"sh/47q9kf21","slide":9,"text":"09","textPreview":"09","textChars":2,"textLines":1,"bbox":[1170,674,62,18]}
+{"kind":"shape","id":"sh/258ripkv","slide":9,"bbox":[64,206,52,32]}
+{"kind":"textbox","id":"sh/36h8rulg","slide":9,"text":"01","textPreview":"01","textChars":2,"textLines":1,"bbox":[76,211,28,22]}
+{"kind":"textbox","id":"sh/g3q9gf25","slide":9,"text":"黑客松那夜","textPreview":"黑客松那夜","textChars":5,"textLines":1,"bbox":[48,438,278,40]}
+{"kind":"textbox","id":"sh/h4zqpk3q","slide":9,"text":"看见仍然相爱的具体方式","textPreview":"看见仍然相爱的具体方式","textChars":11,"textLines":1,"bbox":[48,492,278,58]}
+{"kind":"textbox","id":"sh/1obqt0b2","slide":9,"text":"→","textPreview":"→","textChars":1,"textLines":1,"bbox":[322,272,32,46]}
+{"kind":"shape","id":"sh/fmt8rqtw","slide":9,"bbox":[366,206,52,32]}
+{"kind":"textbox","id":"sh/elkrilsb","slide":9,"text":"02","textPreview":"02","textChars":2,"textLines":1,"bbox":[378,211,28,22]}
+{"kind":"textbox","id":"sh/dkrqpgbq","slide":9,"text":"查手机","textPreview":"查手机","textChars":3,"textLines":1,"bbox":[350,438,278,40]}
+{"kind":"textbox","id":"sh/sji9gva5","slide":9,"text":"展示 LLM 实时冲突回应","textPreview":"展示 LLM 实时冲突回应","textChars":13,"textLines":1,"bbox":[350,492,278,58]}
+{"kind":"textbox","id":"sh/ry98nqtk","slide":9,"text":"→","textPreview":"→","textChars":1,"textLines":1,"bbox":[624,272,32,46]}
+{"kind":"shape","id":"sh/5wrqlgbu","slide":9,"bbox":[668,206,52,32]}
+{"kind":"textbox","id":"sh/4vi9cba9","slide":9,"text":"03","textPreview":"03","textChars":2,"textLines":1,"bbox":[680,211,28,22]}
+{"kind":"textbox","id":"sh/wzm9sbi5","slide":9,"text":"回看记忆","textPreview":"回看记忆","textChars":4,"textLines":1,"bbox":[652,438,278,40]}
+{"kind":"textbox","id":"sh/x0va1gjq","slide":9,"text":"揭示没说出口的心情","textPreview":"揭示没说出口的心情","textChars":9,"textLines":1,"bbox":[652,492,278,58]}
+{"kind":"textbox","id":"sh/adkrq10z","slide":9,"text":"→","textPreview":"→","textChars":1,"textLines":1,"bbox":[926,272,32,46]}
+{"kind":"shape","id":"sh/8b294bit","slide":9,"bbox":[970,206,52,32]}
+{"kind":"textbox","id":"sh/9cbqxgje","slide":9,"text":"04","textPreview":"04","textChars":2,"textLines":1,"bbox":[982,211,28,22]}
+{"kind":"textbox","id":"sh/m9kr2103","slide":9,"text":"玫瑰盛放","textPreview":"玫瑰盛放","textChars":4,"textLines":1,"bbox":[954,438,278,40]}
+{"kind":"textbox","id":"sh/nat8v618","slide":9,"text":"完成“看见”的闭环","textPreview":"完成“看见”的闭环","textChars":9,"textLines":1,"bbox":[954,492,278,58]}
+{"kind":"shape","id":"sh/s7690vid","slide":9,"bbox":[48,590,1184,54]}
+{"kind":"textbox","id":"sh/t8fa90ji","slide":9,"text":"亲历冲突 → AI 生成回应 → 回看揭示 → 玩家重新接住","textPreview":"亲历冲突 → AI 生成回应 → 回看揭示 → 玩家重新接住","textChars":30,"textLines":1,"bbox":[72,604,1136,28]}
+{"kind":"image","id":"im/07yt87e5","slide":9,"name":"","geometry":"roundRect","alt":"hackathon-venue.png","bbox":[48,190,278,220]}
+{"kind":"image","id":"im/vu1kra1w","slide":9,"name":"","geometry":"roundRect","alt":"dorm-room-night.png","bbox":[350,190,278,220]}
+{"kind":"image","id":"im/5k32x4je","slide":9,"name":"","geometry":"roundRect","alt":"fever-night.png","bbox":[652,190,278,220]}
+{"kind":"image","id":"im/o76hkry1","slide":9,"name":"","geometry":"roundRect","alt":"rose-bloom.png","bbox":[954,190,278,220]}
+{"kind":"notes","id":"nt/yhak93","slide":9,"text":""}
+{"kind":"slide","id":"sl/cqw1ln","slide":10,"title":"TEAM","textShapes":17}
+{"kind":"textbox","id":"sh/gzydgj2h","slide":10,"text":"TEAM","textPreview":"TEAM","textChars":4,"textLines":1,"bbox":[48,34,450,24]}
+{"kind":"textbox","id":"sh/fypcne1w","slide":10,"text":"一人团队，完成从叙事到提交","textPreview":"一人团队，完成从叙事到提交","textChars":13,"textLines":1,"bbox":[48,68,1184,76]}
+{"kind":"shape","id":"sh/exgvetkb","slide":10,"bbox":[48,153,1184,0.01]}
+{"kind":"textbox","id":"sh/tcnulojq","slide":10,"text":"10","textPreview":"10","textChars":2,"textLines":1,"bbox":[1170,674,62,18]}
+{"kind":"shape","id":"sh/sbedcj25","slide":10,"bbox":[48,184,488,444]}
+{"kind":"textbox","id":"sh/ra5cje1k","slide":10,"text":"01","textPreview":"01","textChars":2,"textLines":1,"bbox":[76,216,60,24]}
+{"kind":"textbox","id":"sh/69wva9kz","slide":10,"text":"yecon-27","textPreview":"yecon-27","textChars":8,"textLines":1,"bbox":[76,266,404,58]}
+{"kind":"textbox","id":"sh/x8rex8ju","slide":10,"text":"独立开发者 / 个人参赛","textPreview":"独立开发者 / 个人参赛","textChars":12,"textLines":1,"bbox":[76,334,404,34]}
+{"kind":"shape","id":"sh/c7ido32p","slide":10,"bbox":[76,398,404,0.01]}
+{"kind":"textbox","id":"sh/ux0nix87","slide":10,"text":"产品与叙事设计\n前端开发与 AI 接口\nPrompt 工程\n美术与声音统筹","textPreview":"产品与叙事设计 | 前端开发与 AI 接口 | Prompt 工程 | 美术与声音统筹","textChars":37,"textLines":4,"bbox":[76,430,404,146]}
+{"kind":"shape","id":"sh/vy94ri9s","slide":10,"bbox":[572,184,660,444]}
+{"kind":"textbox","id":"sh/wj25knqd","slide":10,"text":"提交闭环","textPreview":"提交闭环","textChars":4,"textLines":1,"bbox":[606,216,560,44]}
+{"kind":"shape","id":"sh/hkbmtsry","slide":10,"bbox":[606,286,34,34]}
+{"kind":"textbox","id":"sh/mt03ed8b","slide":10,"text":"✓","textPreview":"✓","textChars":1,"textLines":1,"bbox":[612,292,22,20]}
+{"kind":"textbox","id":"sh/7u94ni9w","slide":10,"text":"浏览器游戏链接","textPreview":"浏览器游戏链接","textChars":7,"textLines":1,"bbox":[660,289,500,28]}
+{"kind":"shape","id":"sh/8vilgnqh","slide":10,"bbox":[606,352,34,34]}
+{"kind":"textbox","id":"sh/9wrmpsrm","slide":10,"text":"✓","textPreview":"✓","textChars":1,"textLines":1,"bbox":[612,358,22,20]}
+{"kind":"textbox","id":"sh/6pknqh8f","slide":10,"text":"2 分钟 Demo 视频","textPreview":"2 分钟 Demo 视频","textChars":12,"textLines":1,"bbox":[660,355,500,28]}
+{"kind":"shape","id":"sh/rqd4zmp0","slide":10,"bbox":[606,418,34,34]}
+{"kind":"textbox","id":"sh/nu5krepc","slide":10,"text":"✓","textPreview":"✓","textChars":1,"textLines":1,"bbox":[612,424,22,20]}
+{"kind":"textbox","id":"sh/2twji9or","slide":10,"text":"作品 PPT","textPreview":"作品 PPT","textChars":6,"textLines":1,"bbox":[660,421,500,28]}
+{"kind":"shape","id":"sh/pwn2t47i","slide":10,"bbox":[606,484,34,34]}
+{"kind":"textbox","id":"sh/ove1kz6x","slide":10,"text":"✓","textPreview":"✓","textChars":1,"textLines":1,"bbox":[612,490,22,20]}
+{"kind":"textbox","id":"sh/by5kvepo","slide":10,"text":"CodeBuddy 历史对话","textPreview":"CodeBuddy 历史对话","textChars":14,"textLines":1,"bbox":[660,487,500,28]}
+{"kind":"shape","id":"sh/axwjm9o3","slide":10,"bbox":[606,566,560,0.01]}
+{"kind":"textbox","id":"sh/x072xo7e","slide":10,"text":"在线体验地址将在正式部署后加入提交版；本版不放虚构链接。","textPreview":"在线体验地址将在正式部署后加入提交版；本版不放虚构链接。","textChars":28,"textLines":1,"bbox":[606,584,560,28]}
+{"kind":"notes","id":"nt/cqw1ln","slide":10,"text":""}
+{"kind":"slide","id":"sl/34bhgi","slide":11,"title":"ROSE INFINITY · 玫瑰无限","textShapes":4}
+{"kind":"shape","id":"sh/dcrax8vq","slide":11,"bbox":[0,0,720,720]}
+{"kind":"textbox","id":"sh/ra9svidk","slide":11,"text":"ROSE INFINITY · 玫瑰无限","textPreview":"ROSE INFINITY · 玫瑰无限","textChars":20,"textLines":1,"bbox":[54,54,540,24]}
+{"kind":"textbox","id":"sh/0z298nuh","slide":11,"text":"玫瑰不是为哪一对开的。\n它为学会的人开。","textPreview":"玫瑰不是为哪一对开的。 | 它为学会的人开。","textChars":20,"textLines":2,"bbox":[54,170,620,150]}
+{"kind":"shape","id":"sh/10ba1svm","slide":11,"bbox":[54,368,470,0.01]}
+{"kind":"textbox","id":"sh/edkr6dcb","slide":11,"text":"玩家带走的不是“选对答案”，\n而是下一次认出伸手的能力。","textPreview":"玩家带走的不是“选对答案”， | 而是下一次认出伸手的能力。","textChars":28,"textLines":2,"bbox":[54,410,560,94]}
+{"kind":"shape","id":"sh/fytszidw","slide":11,"bbox":[54,588,134,32]}
+{"kind":"textbox","id":"sh/g3y9wjux","slide":11,"text":"THANK YOU","textPreview":"THANK YOU","textChars":9,"textLines":1,"bbox":[66,593,110,22]}
+{"kind":"image","id":"im/n2tsjq50","slide":11,"name":"","geometry":"rect","alt":"Blooming rose motif","bbox":[650,0,630,720]}
+{"kind":"notes","id":"nt/34bhgi","slide":11,"text":""}

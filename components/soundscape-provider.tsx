@@ -60,6 +60,16 @@ export function SoundscapeProvider({ children }: PropsWithChildren) {
     [],
   );
 
+  const stopAudio = useCallback((audio: HTMLAudioElement) => {
+    const frame = fadesRef.current.get(audio);
+    if (frame) cancelAnimationFrame(frame);
+    fadesRef.current.delete(audio);
+    audio.pause();
+    audio.currentTime = 0;
+    audio.removeAttribute("src");
+    audio.load();
+  }, []);
+
   const replaceTrack = useCallback(
     (slot: TrackSlot, src: string | undefined, volume: number) => {
       slot.volume = volume;
@@ -69,12 +79,9 @@ export function SoundscapeProvider({ children }: PropsWithChildren) {
       }
 
       const previous = slot.audio;
-      if (previous) {
-        fade(previous, 0, 700, () => {
-          previous.pause();
-          previous.removeAttribute("src");
-        });
-      }
+      // 主轨切换时不让两首 BGM 交叉播放。开发模式的 Strict Mode / 热更新
+      // 会重复执行 effect，旧的 700ms crossfade 容易累积成“开场曲一直垫着”。
+      if (previous) stopAudio(previous);
 
       slot.src = src;
       slot.audio = null;
@@ -86,10 +93,10 @@ export function SoundscapeProvider({ children }: PropsWithChildren) {
       next.volume = 0;
       slot.audio = next;
       if (unlockedRef.current && !mutedRef.current) {
-        void next.play().then(() => fade(next, volume)).catch(() => {});
+        void next.play().then(() => fade(next, volume, 420)).catch(() => {});
       }
     },
-    [fade],
+    [fade, stopAudio],
   );
 
   const setSoundscape = useCallback(
@@ -165,10 +172,12 @@ export function SoundscapeProvider({ children }: PropsWithChildren) {
       window.removeEventListener("keydown", onFirstGesture, true);
       document.removeEventListener("visibilitychange", onVisibility);
       for (const frame of fadesRef.current.values()) cancelAnimationFrame(frame);
-      for (const slot of [bgmRef.current, ambienceRef.current]) slot.audio?.pause();
+      for (const slot of [bgmRef.current, ambienceRef.current]) {
+        if (slot.audio) stopAudio(slot.audio);
+      }
       for (const sound of sfxRef.current) sound.pause();
     };
-  }, [unlock]);
+  }, [stopAudio, unlock]);
 
   const controls = useMemo<SoundscapeControls>(
     () => ({ muted, toggleMuted, unlock, setSoundscape, playSfx }),

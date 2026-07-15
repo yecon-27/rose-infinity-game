@@ -2,9 +2,33 @@
 const nextConfig = {
   reactStrictMode: true,
   images: {
-    // 开发时跳过图片优化缓存,换同名图即时生效(免去 rm -rf .next/cache/images);
-    // 生产构建仍然优化。
-    unoptimized: process.env.NODE_ENV === "development",
+    // 原画在仓库内预先转成 WebP。直接从 Vercel 静态 CDN 返回，避免
+    // /_next/image 第一次访问时现场转码造成换幕空白。
+    unoptimized: true,
+  },
+  async headers() {
+    return [
+      {
+        source: "/images/:path*",
+        headers: [
+          {
+            key: "Cache-Control",
+            value:
+              "public, max-age=86400, s-maxage=31536000, stale-while-revalidate=604800",
+          },
+        ],
+      },
+      {
+        source: "/audio/:path*",
+        headers: [
+          {
+            key: "Cache-Control",
+            value:
+              "public, max-age=86400, s-maxage=31536000, stale-while-revalidate=604800",
+          },
+        ],
+      },
+    ];
   },
 };
 

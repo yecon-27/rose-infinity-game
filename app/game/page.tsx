@@ -5,6 +5,7 @@ import { useRouter, useSearchParams } from "next/navigation";
 import Image from "next/image";
 import { useSoundscape } from "@/components/soundscape-provider";
 import { AUDIO, soundscapeForScene } from "@/lib/audio";
+import { preloadImageSources } from "@/lib/preload";
 import {
   STORY,
   getStoryScene,
@@ -28,7 +29,7 @@ interface DisplayLine {
 type Mode = "flow" | "beat" | "done";
 
 /* 立绘 · 按幕套装解析
- * public/images/characters/ 实际存在的文件（去 .png 注册在这），
+ * public/images/characters/ 实际存在的文件（去 .webp 注册在这），
  * 解析顺序：{who}-{emotion}-{faceSet} → {who}-{emotion} → {who}-warm-{faceSet} → 默认。
  * 新增/删除图片后同步这份注册表。
  */
@@ -63,6 +64,24 @@ const PORTRAIT_FILES = new Set([
   "sean-grieving-sunny",
 ]);
 
+const GAME_IMAGE_SOURCES = Array.from(
+  new Set([
+    ...STORY.flatMap((storyScene) => [
+      storyScene.bg,
+      ...(storyScene.bgSplit ?? []),
+      ...storyScene.script.flatMap((moment) =>
+        moment.kind === "bg" ? [moment.src] : []
+      ),
+    ]),
+    ...Array.from(
+      PORTRAIT_FILES,
+      (name) => `/images/characters/${name}.webp`
+    ),
+    "/images/motifs/rose-bud.webp",
+    "/images/motifs/rose-bloom.webp",
+  ])
+);
+
 function portraitSrc(
   who: "vera" | "sean",
   emotion: string,
@@ -79,7 +98,7 @@ function portraitSrc(
     fallback,
   ].filter(Boolean);
   const hit = candidates.find((c) => PORTRAIT_FILES.has(c)) ?? fallback;
-  return `/images/characters/${hit}.png`;
+  return `/images/characters/${hit}.webp`;
 }
 
 /** 聊天里"说出口"的部分;纯动作选项(如"（没回，放下手机）")保留原样 */
@@ -138,6 +157,7 @@ function Portrait({
             src={l.src}
             alt={alt}
             fill
+            priority
             className={`object-contain object-bottom drop-shadow-2xl ${
               top ? "fade-in" : ""
             }`}
@@ -206,6 +226,16 @@ function GameInner() {
   const scene: Scene = getStoryScene(sceneId) ?? STORY[0];
   const script = scene.script;
   const { playSfx } = useSoundscape(soundscapeForScene(scene.id));
+
+  // 当前背景由 priority 先取；稍后后台加载其余场景与表情，避免生产环境
+  // 每次换幕、换脸都等 CDN 首次下载。
+  useEffect(() => {
+    const timer = window.setTimeout(
+      () => preloadImageSources(GAME_IMAGE_SOURCES),
+      600
+    );
+    return () => window.clearTimeout(timer);
+  }, []);
 
   const [idx, setIdx] = useState(0);
   const [queue, setQueue] = useState<DisplayLine[]>([]);
