@@ -4,6 +4,8 @@ import { Suspense, useEffect, useState } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
 import Image from "next/image";
 import { LOOKBACK_SEQUENCE } from "@/lib/story";
+import { useSoundscape } from "@/components/soundscape-provider";
+import { AUDIO } from "@/lib/audio";
 
 /**
  * 结局页面 · 两种状态
@@ -22,6 +24,10 @@ function EndingInner() {
   const router = useRouter();
   const params = useSearchParams();
   const seen = params.get("seen") === "1";
+  const { playSfx } = useSoundscape({
+    bgm: seen ? AUDIO.bgm.bloom : AUDIO.bgm.halfStep,
+    bgmVolume: 0.17,
+  });
 
   /* 键盘：↑↓（或←→）选择，Enter/空格 确认 */
   const actions = seen
@@ -43,12 +49,13 @@ function EndingInner() {
         setSel((i) => (i - 1 + n) % n);
       } else if (e.key === "Enter" || e.code === "Space") {
         e.preventDefault();
+        playSfx(AUDIO.sfx.softTap, 0.2);
         router.push(actions[sel].to);
       }
     }
     window.addEventListener("keydown", onKey);
     return () => window.removeEventListener("keydown", onKey);
-  }, [seen, sel, router]);
+  }, [seen, sel, router, playSfx]);
 
   return (
     <main className="relative min-h-screen overflow-hidden bg-black flex flex-col items-center justify-center px-8">
@@ -96,7 +103,10 @@ function EndingInner() {
               key={a.label}
               type="button"
               onMouseEnter={() => setSel(i)}
-              onClick={() => router.push(a.to)}
+              onClick={() => {
+                playSfx(AUDIO.sfx.softTap, 0.2);
+                router.push(a.to);
+              }}
               className={
                 i === 0
                   ? `block w-full py-4 px-6 border transition-colors duration-300 tracking-[0.4em] text-sm ${

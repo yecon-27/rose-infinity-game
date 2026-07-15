@@ -3,13 +3,14 @@
 import { Suspense, useCallback, useEffect, useState } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
 import Image from "next/image";
+import { useSoundscape } from "@/components/soundscape-provider";
+import { AUDIO, soundscapeForScene } from "@/lib/audio";
 import {
   getLookback,
   getNextLookbackId,
   Lookback,
   LOOKBACKS,
 } from "@/lib/story";
-import { useVoice } from "@/lib/use-voice";
 
 /**
  * "看见" · 回看
@@ -32,6 +33,7 @@ function LookInner() {
   const id = params.get("id") ?? Object.keys(LOOKBACKS)[0];
   const look: Lookback | undefined = getLookback(id);
   const nextId = getNextLookbackId(id);
+  const { playSfx } = useSoundscape(soundscapeForScene(id, true));
 
   const [phase, setPhase] = useState<Phase>("intro");
   const [introIdx, setIntroIdx] = useState(0);
@@ -59,25 +61,6 @@ function LookInner() {
     return () => clearTimeout(t);
   }, [reachDone]);
 
-  /* 配音：随当前展示的文字播对应音频（未生成的句子静默跳过） */
-  const voice = useVoice();
-  useEffect(() => {
-    if (!look) return;
-    if (phase === "intro") {
-      voice.play("narr", look.intro[introIdx] ?? "");
-    } else if (phase === "moments") {
-      const mo = look.moments[momentIdx];
-      if (!mo) return;
-      if (!revealed) voice.play("narr", mo.surface);
-      else voice.play(mo.who, mo.hidden);
-    } else if (phase === "reachback" && look.reachback) {
-      if (!reachDone) voice.play("narr", look.reachback.prompt);
-      else voice.play("narr", look.reachback.response);
-    } else if (phase === "outro") {
-      voice.play("narr", look.outro[outroIdx] ?? "");
-    }
-  }, [look, phase, introIdx, momentIdx, revealed, reachDone, outroIdx, voice.play]);
-
   const advance = useCallback(() => {
     if (!look) return;
     if (phase === "intro") {
@@ -89,6 +72,7 @@ function LookInner() {
       }
     } else if (phase === "moments") {
       if (!revealed) {
+        playSfx(AUDIO.sfx.roseReveal, 0.24);
         setRevealed(true); // 点开:看清这一刻
       } else if (momentIdx < look.moments.length - 1) {
         setMomentIdx((i) => i + 1);
@@ -100,7 +84,10 @@ function LookInner() {
         setOutroIdx(0);
       }
     } else if (phase === "reachback") {
-      if (!reachDone) setReachDone(true); // 这一次,伸手
+      if (!reachDone) {
+        playSfx(AUDIO.sfx.roseReveal, 0.3);
+        setReachDone(true); // 这一次,伸手
+      }
       else {
         setPhase("outro");
         setOutroIdx(0);
@@ -119,6 +106,7 @@ function LookInner() {
     reachDone,
     outroIdx,
     nextId,
+    playSfx,
     router,
   ]);
 
@@ -339,17 +327,6 @@ function LookInner() {
         {look.title}
       </p>
 
-      {/* 声音开关 */}
-      <button
-        type="button"
-        onClick={(e) => {
-          e.stopPropagation();
-          voice.toggleMuted();
-        }}
-        className="fixed top-6 left-6 z-30 text-[10px] tracking-widest text-white/25 hover:text-white/60 transition-colors"
-      >
-        {voice.muted ? "声 · 关" : "声 · 开"}
-      </button>
     </main>
   );
 }

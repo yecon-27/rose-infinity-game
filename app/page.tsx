@@ -3,19 +3,26 @@
 import { useCallback, useEffect, useRef, useState } from "react";
 import Image from "next/image";
 import { useRouter } from "next/navigation";
+import { useSoundscape } from "@/components/soundscape-provider";
+import { AUDIO } from "@/lib/audio";
+
+const HOME_SOUND = { bgm: AUDIO.bgm.rosebud, bgmVolume: 0.16 };
 
 export default function Home() {
   const router = useRouter();
   const [leaving, setLeaving] = useState(false);
   const leavingRef = useRef(false);
+  const { playSfx, unlock } = useSoundscape(HOME_SOUND);
 
   // 开始：先淡出到黑，再跳序章（序章本就是黑底，过渡顺滑，不再硬切黑屏）
   const start = useCallback(() => {
     if (leavingRef.current) return;
+    unlock();
+    playSfx(AUDIO.sfx.softTap, 0.22);
     leavingRef.current = true;
     setLeaving(true);
     setTimeout(() => router.push("/prologue"), 800);
-  }, [router]);
+  }, [playSfx, router, unlock]);
 
   useEffect(() => {
     function onKey(e: KeyboardEvent) {

@@ -3,6 +3,10 @@
 import { useEffect, useState } from "react";
 import Image from "next/image";
 import { useRouter } from "next/navigation";
+import { useSoundscape } from "@/components/soundscape-provider";
+import { AUDIO } from "@/lib/audio";
+
+const PROLOGUE_SOUND = { bgm: AUDIO.bgm.rosebud, bgmVolume: 0.14 };
 
 /**
  * 序章 · 回到那一天
@@ -29,8 +33,10 @@ const TOTAL_STEPS = SCREENS.length;
 export default function ProloguePage() {
   const router = useRouter();
   const [idx, setIdx] = useState(0);
+  const { playSfx } = useSoundscape(PROLOGUE_SOUND);
 
   function advance() {
+    playSfx(AUDIO.sfx.softTap, 0.12);
     if (idx >= TOTAL_STEPS - 1) {
       router.push("/game");
     } else {

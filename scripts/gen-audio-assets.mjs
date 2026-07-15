@@ -4,7 +4,8 @@
  *
  * Generates original, sample-free music and sound effects as PCM WAV, then
  * converts them to Ogg/Opus with ffmpeg. No third-party audio assets
- * are used. Re-running with the same seed produces the same files.
+ * are used. M02 and M04 are approved project masters and deliberately preserved;
+ * all generated files are deterministic for a given script version.
  */
 
 import { execFileSync } from "node:child_process";
@@ -64,18 +65,65 @@ function addPiano(buffer, note, start, gain = 0.1, pan = 0, duration = 2.5) {
     start,
     duration,
     (t, d) => {
-      const attack = Math.min(1, t / 0.008);
-      const release = Math.max(0, 1 - t / d) ** 1.4;
-      const body = Math.exp(-2.25 * t) * release * attack;
-      return body * (
+      const attack = Math.min(1, t / 0.014);
+      const release = Math.max(0, 1 - t / d) ** 1.7;
+      const body = Math.exp(-1.45 * t) * release * attack;
+      const felt = Math.exp(-24 * t) *
+        (0.025 * Math.sin(TAU * 1870 * t + phase) + 0.018 * Math.sin(TAU * 2630 * t));
+      return felt + body * (
         Math.sin(TAU * f * t + phase) +
-        0.36 * Math.exp(-1.2 * t) * Math.sin(TAU * f * 2.002 * t + 0.3) +
-        0.12 * Math.exp(-2.1 * t) * Math.sin(TAU * f * 3.01 * t + 1.1)
+        0.31 * Math.exp(-1.05 * t) * Math.sin(TAU * f * 2.0015 * t + 0.3) +
+        0.1 * Math.exp(-1.9 * t) * Math.sin(TAU * f * 3.004 * t + 1.1) +
+        0.035 * Math.exp(-2.8 * t) * Math.sin(TAU * f * 4.012 * t + 0.7)
       );
     },
     pan,
     gain,
   );
+}
+
+function addCello(buffer, note, start, duration, gain = 0.018, pan = 0) {
+  const f = midi(note);
+  const phase = random() * TAU;
+  addWrapped(
+    buffer,
+    start,
+    duration,
+    (t, d) => {
+      const attack = Math.min(1, t / 0.75);
+      const release = Math.min(1, Math.max(0, d - t) / 1.2);
+      const bow = 0.93 + 0.07 * Math.sin(TAU * 0.31 * t + phase);
+      return attack * release * bow * (
+        Math.sin(TAU * f * t + phase) +
+        0.24 * Math.sin(TAU * f * 2 * t + 0.4) +
+        0.08 * Math.sin(TAU * f * 3 * t + 1.2)
+      );
+    },
+    pan,
+    gain,
+  );
+}
+
+function addCircularReverb(buffer, wet = 0.22) {
+  const dryL = buffer.left.slice();
+  const dryR = buffer.right.slice();
+  const n = dryL.length;
+  const taps = [
+    [0.109, 0.28],
+    [0.173, 0.22],
+    [0.293, 0.17],
+    [0.487, 0.12],
+    [0.811, 0.08],
+    [1.337, 0.052],
+  ];
+  for (const [delay, gain] of taps) {
+    const offset = Math.round(delay * SR);
+    for (let i = 0; i < n; i++) {
+      const source = (i - offset + n) % n;
+      buffer.left[i] += dryR[source] * gain * wet;
+      buffer.right[i] += dryL[source] * gain * wet;
+    }
+  }
 }
 
 function addPluck(buffer, note, start, gain = 0.06, pan = 0, duration = 0.9) {
@@ -178,63 +226,71 @@ function buildMusic({ bpm, bars, chords, mode }) {
   const bar = beat * 4;
   const buffer = makeBuffer(bar * bars);
 
-  for (let b = 0; b < bars; b += 2) {
-    const chord = chords[(b / 2) % chords.length];
-    const padGain = mode === "cold" ? 0.026 : mode === "sparse" ? 0.023 : 0.031;
-    addPad(buffer, chord.pad, b * bar, bar * 2, padGain);
-  }
+  let wet = 0.28;
 
   if (mode === "rosebud") {
-    for (let b = 0; b < bars; b += 4) addRoseMotif(buffer, b * bar + beat * 0.45, beat, 0.085);
-    for (let b = 2; b < bars; b += 4) {
+    // Warm, suspended and high-register. The empty bars are part of the phrase.
+    for (let b = 0; b < bars; b += 4) {
       const chord = chords[(b / 2) % chords.length];
-      addPiano(buffer, chord.piano[0], b * bar + beat * 0.5, 0.055, -0.35);
-      addPiano(buffer, chord.piano[1], b * bar + beat * 2.2, 0.045, 0.3);
+      addPad(buffer, chord.pad.slice(2), b * bar, bar * 4, 0.006);
     }
-  }
-
-  if (mode === "warm") {
+    const phrase = [66, 69, 64, 62, 61, 64, 57, 59];
     for (let b = 0; b < bars; b++) {
       const chord = chords[Math.floor(b / 2) % chords.length];
-      for (let e = 0; e < 8; e++) {
-        const note = chord.pluck[e % chord.pluck.length] + (e === 7 ? 12 : 0);
-        addPluck(buffer, note, b * bar + e * beat * 0.5, 0.037, e % 2 ? 0.35 : -0.35);
-        if (e % 2 === 1) addSoftTick(buffer, b * bar + e * beat * 0.5, 0.011, e % 4 ? 0.25 : -0.25);
+      if (b % 2 === 0) addPiano(buffer, chord.piano[0], b * bar + beat * 0.3, 0.053, -0.18, 5.8);
+      addPiano(buffer, phrase[b % phrase.length], b * bar + beat * (1.1 + (b % 3) * 0.52), 0.068, 0.14, 5.5);
+      if (b % 4 === 3) addPiano(buffer, phrase[(b + 2) % phrase.length] + 12, b * bar + beat * 3.1, 0.033, 0.27, 4.8);
+    }
+    wet = 0.3;
+  } else if (mode === "cold") {
+    // Low register, narrow intervals and unresolved upper semitones.
+    for (let b = 0; b < bars; b += 2) {
+      const chord = chords[(b / 2) % chords.length];
+      addPad(buffer, [chord.pad[0], chord.pad[1], chord.pad[3]], b * bar, bar * 2, 0.014);
+      if (b % 4 === 0) addCello(buffer, chord.piano[0] - 12, b * bar, bar * 3.8, 0.017, -0.18);
+    }
+    for (let b = 0; b < bars; b++) {
+      const chord = chords[Math.floor(b / 2) % chords.length];
+      addPiano(buffer, chord.piano[0] - 12, b * bar + beat * 0.18, 0.063, -0.25, 6.3);
+      if (b % 2 === 0) {
+        const upper = chord.piano[1] + (b % 4 === 0 ? 1 : -1);
+        addPiano(buffer, upper, b * bar + beat * 2.35, 0.047, 0.23, 5.8);
+        addPiano(buffer, upper - 1, b * bar + beat * 2.78, 0.025, 0.12, 5.2);
       }
     }
-    for (let b = 0; b < bars; b += 4) addRoseMotif(buffer, b * bar + beat, beat, 0.061);
-  }
-
-  if (mode === "cold") {
-    for (let b = 0; b < bars; b++) {
-      const root = chords[Math.floor(b / 2) % chords.length].piano[0] - 12;
-      addPulse(buffer, root, b * bar, 0.053, 0.62, -0.08);
-      addPulse(buffer, root, b * bar + beat * 2.5, 0.027, 0.46, 0.08);
-      if (b % 4 === 2) addPiano(buffer, root + 24, b * bar + beat * 1.25, 0.048, 0.25, 3.5);
+    wet = 0.36;
+  } else if (mode === "sparse") {
+    // Almost silence: isolated notes and one distant bowed line.
+    const isolated = [47, 62, 43, 59, 45, 61, 42, 57];
+    for (let b = 0; b < bars; b += 4) {
+      const chord = chords[(b / 2) % chords.length];
+      addCello(buffer, chord.piano[0] - 12, b * bar, bar * 3.9, 0.019, -0.2);
     }
-  }
-
-  if (mode === "sparse") {
-    const sparseNotes = [64, 67, 66, 62, 59, 62, 61, 57];
-    sparseNotes.forEach((note, i) => {
-      const b = i * 2;
-      if (b < bars) addPiano(buffer, note, b * bar + beat * (i % 2 ? 2.15 : 0.7), 0.087, i % 2 ? 0.2 : -0.2, 4.4);
-    });
-  }
-
-  if (mode === "bloom") {
-    for (let b = 0; b < bars; b++) {
-      const chord = chords[Math.floor(b / 2) % chords.length];
-      [0, 2.5].forEach((offset, i) => {
-        addPluck(buffer, chord.pluck[(b + i) % chord.pluck.length], b * bar + offset * beat, 0.027, i ? 0.32 : -0.32, 1.1);
+    for (let b = 0; b < bars; b += 2) {
+      addPiano(buffer, isolated[b % isolated.length], b * bar + beat * 0.46, 0.075, -0.2, 7.2);
+      addPiano(buffer, isolated[(b + 1) % isolated.length] + 12, b * bar + beat * 3.05, 0.043, 0.21, 6.4);
+    }
+    wet = 0.42;
+  } else if (mode === "bloom") {
+    // Wider, consonant and grounded. The final contour rises instead of hanging.
+    for (let b = 0; b < bars; b += 2) {
+      const chord = chords[(b / 2) % chords.length];
+      addPad(buffer, chord.pad.slice(1), b * bar, bar * 2, 0.012);
+      if (b % 4 === 0) addCello(buffer, chord.piano[0] - 12, b * bar, bar * 3.7, 0.013, -0.16);
+      [chord.piano[0], chord.piano[1], chord.pluck[1]].forEach((note, i) => {
+        addPiano(buffer, note, b * bar + beat * (0.28 + i * 0.42), 0.055 - i * 0.006, -0.24 + i * 0.24, 5.8);
       });
     }
-    for (let b = 0; b < bars; b += 4) addRoseMotif(buffer, b * bar + beat * 0.4, beat, 0.079, b === bars - 4);
+    const resolved = [62, 64, 66, 69, 74];
+    for (let b = 1; b < bars; b += 4) {
+      resolved.forEach((note, i) => addPiano(buffer, note, b * bar + beat * (0.45 + i * 0.62), 0.047, -0.2 + i * 0.1, 5.1));
+    }
+    wet = 0.31;
   }
 
-  // Leave roughly 6 dB of headroom so the soundtrack sits under dialogue
-  // without requiring every page to compensate for a hot master.
-  gentleMaster(buffer, 0.41);
+  addCircularReverb(buffer, wet);
+  // Quieter master: there is no dialogue ducking, but text remains the focus.
+  gentleMaster(buffer, 0.34);
   return buffer;
 }
 
@@ -257,7 +313,7 @@ function makePeriodicNoise(seconds, voices = 80) {
 }
 
 function buildAmbience(kind, seconds = 24) {
-  const buffer = makePeriodicNoise(seconds, kind === "rain" ? 150 : 70);
+  const buffer = makePeriodicNoise(seconds, 70);
   const n = buffer.left.length;
   let lpL = 0;
   let lpR = 0;
@@ -268,27 +324,22 @@ function buildAmbience(kind, seconds = 24) {
     const amount = kind === "wind" ? 0.002 : kind === "store" ? 0.014 : 0.035;
     lpL += (rawL - lpL) * amount;
     lpR += (rawR - lpR) * amount;
-    let l = kind === "rain" ? rawL * 0.027 + lpL * 0.025 : lpL * 0.06;
-    let r = kind === "rain" ? rawR * 0.027 + lpR * 0.025 : lpR * 0.06;
+    let l = lpL * 0.06;
+    let r = lpR * 0.06;
     if (kind === "store") {
       const hum = Math.sin(TAU * 50 * t) * 0.012 + Math.sin(TAU * 100 * t) * 0.004;
       l += hum;
       r += hum * 0.92;
     }
-    if (kind === "room") {
-      const fan = Math.sin(TAU * 84 * t) * 0.005 + Math.sin(TAU * 168 * t) * 0.0015;
-      l += fan;
-      r += fan;
-    }
     buffer.left[i] = l;
     buffer.right[i] = r;
   }
-  gentleMaster(buffer, kind === "rain" ? 0.48 : 0.32);
+  gentleMaster(buffer, 0.32);
   return buffer;
 }
 
 function buildSfx(kind) {
-  const lengths = { rose: 1.45, vibrate: 0.58, lock: 0.32, door: 1.2, rustle: 0.9, tap: 0.18 };
+  const lengths = { rose: 1.45, vibrate: 0.58, lock: 0.32, door: 1.2, tap: 0.18 };
   const buffer = makeBuffer(lengths[kind]);
   const { left, right } = buffer;
 
@@ -318,15 +369,6 @@ function buildSfx(kind) {
       const f = midi(note);
       addWrapped(buffer, start, 0.9, (t) => Math.exp(-3.1 * t) * (Math.sin(TAU * f * t) + 0.2 * Math.sin(TAU * f * 2 * t)), i ? 0.2 : -0.2, 0.12);
     });
-  } else if (kind === "rustle") {
-    let lp = 0;
-    for (let i = 0; i < left.length; i++) {
-      const t = i / SR;
-      lp += ((random() * 2 - 1) - lp) * 0.22;
-      const movement = Math.sin(Math.PI * Math.min(1, t / buffer.seconds)) ** 2 * (0.45 + 0.55 * Math.sin(TAU * 5.3 * t) ** 2);
-      left[i] = lp * movement * 0.13;
-      right[i] = lp * movement * 0.11;
-    }
   }
 
   gentleMaster(buffer, kind === "vibrate" ? 0.46 : 0.62);
@@ -395,26 +437,40 @@ const CHORDS_COLD = [
 ];
 
 const jobs = [
-  ["bgm/m01-rosebud.ogg", () => buildMusic({ bpm: 68, bars: 16, chords: CHORDS_WARM, mode: "rosebud" }), 112_000],
-  ["bgm/m02-side-by-side.ogg", () => buildMusic({ bpm: 76, bars: 16, chords: CHORDS_WARM, mode: "warm" }), 112_000],
-  ["bgm/m03-blue-light.ogg", () => buildMusic({ bpm: 60, bars: 16, chords: CHORDS_COLD, mode: "cold" }), 104_000],
-  ["bgm/m04-half-step.ogg", () => buildMusic({ bpm: 52, bars: 12, chords: CHORDS_COLD, mode: "sparse" }), 104_000],
-  ["bgm/m05-bloom.ogg", () => buildMusic({ bpm: 72, bars: 16, chords: CHORDS_WARM, mode: "bloom" }), 112_000],
-  ["ambience/hackathon-room.ogg", () => buildAmbience("room"), 72_000],
+  ["bgm/m01-rosebud.ogg", () => buildMusic({ bpm: 52, bars: 12, chords: CHORDS_WARM, mode: "rosebud" }), 112_000],
+  ["bgm/m02-side-by-side.ogg", null, 112_000, true],
+  ["bgm/m03-blue-light.ogg", () => buildMusic({ bpm: 48, bars: 12, chords: CHORDS_COLD, mode: "cold" }), 104_000],
+  ["bgm/m04-half-step.ogg", null, 104_000, true],
+  ["bgm/m05-bloom.ogg", () => buildMusic({ bpm: 56, bars: 12, chords: CHORDS_WARM, mode: "bloom" }), 112_000],
   ["ambience/campus-wind.ogg", () => buildAmbience("wind"), 72_000],
-  ["ambience/dorm-rain.ogg", () => buildAmbience("rain"), 80_000],
   ["ambience/konbini-hum.ogg", () => buildAmbience("store"), 72_000],
   ["sfx/rose-reveal.ogg", () => buildSfx("rose"), 64_000],
   ["sfx/phone-vibrate-soft.ogg", () => buildSfx("vibrate"), 64_000],
   ["sfx/phone-lock.ogg", () => buildSfx("lock"), 64_000],
   ["sfx/konbini-door.ogg", () => buildSfx("door"), 64_000],
-  ["sfx/bag-rustle.ogg", () => buildSfx("rustle"), 64_000],
   ["sfx/ui-soft-tap.ogg", () => buildSfx("tap"), 64_000],
 ];
 
+const onlyIndex = process.argv.indexOf("--only");
+const selectedFiles = onlyIndex === -1 ? null : new Set(process.argv.slice(onlyIndex + 1));
+if (selectedFiles?.size === 0) throw new Error("--only requires at least one audio path");
+for (const file of selectedFiles ?? []) {
+  if (!jobs.some(([jobFile]) => jobFile === file)) throw new Error(`Unknown audio path: ${file}`);
+}
+
 try {
   console.log("Rose Infinity — generating original soundtrack\n");
-  for (const [file, build, bitrate] of jobs) encode(file, build(), bitrate);
+  for (const [file, build, bitrate, preserve] of jobs) {
+    const target = path.join(OUT, file);
+    if (preserve && fs.existsSync(target)) {
+      console.log(`${file}  preserved approved master`);
+      continue;
+    }
+    if (!build) throw new Error(`Missing approved master: ${file}`);
+    const buffer = build();
+    if (selectedFiles && !selectedFiles.has(file)) continue;
+    encode(file, buffer, bitrate);
+  }
   const manifest = {
     generatedAt: new Date().toISOString(),
     generator: "scripts/gen-audio-assets.mjs",

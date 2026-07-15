@@ -1,4 +1,5 @@
 import type { Metadata } from "next";
+import { SoundscapeProvider } from "@/components/soundscape-provider";
 import "./globals.css";
 
 export const metadata: Metadata = {
@@ -14,7 +15,9 @@ export default function RootLayout({
 }) {
   return (
     <html lang="zh-CN">
-      <body className="font-serif min-h-screen">{children}</body>
+      <body className="font-serif min-h-screen">
+        <SoundscapeProvider>{children}</SoundscapeProvider>
+      </body>
     </html>
   );
 }
