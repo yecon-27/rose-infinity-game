@@ -8,6 +8,7 @@ import {
   isTrustBreachMessage,
   normalizeChoices,
   normalizeLetterMode,
+  normalizeLetterRecipient,
 } from "@/lib/letter";
 
 const REFLECTION_LENSES = [
@@ -80,6 +81,51 @@ async function reviseUngroundedReflection(
   return cleanOutput(revised);
 }
 
+async function reviseUngroundedReply(
+  message: string,
+  choices: ReturnType<typeof normalizeChoices>,
+  draft: string
+): Promise<string> {
+  const revised = await chat(
+    [
+      {
+        role: "system",
+        content: `你是《玫瑰无限》的回信事实编辑。把原稿改成关系中另一方写给“你”的第一人称回信。
+
+硬性规则：
+- 唯一事实来源是用户下一条消息里的 JSON；原稿不是事实来源。
+- 全文保持伴侣的第一人称“我”，直接回应“你”。不能改成咨询师、旁观者或编辑口吻。
+- 删除没有依据的共同回忆、动作、地点、时间、消息、对话、身体感受与过去动机。
+- 可以写此刻读到原话后的迟疑、难过、歉意或不知道怎么回答；这些是当下回应，不要伪装成过去发生的事实。
+- 不说“这封回信不能”“它只能”“这里不替谁”“作为虚构回应”等免责声明。
+- 涉及欺骗、记录或信任破裂时，不擅自认罪、否认或补写真相；可以回应“你已经无法相信我”以及它对关系造成的后果。
+- 3 至 5 个自然段，220 至 420 个汉字。只输出正文。`,
+      },
+      {
+        role: "user",
+        content: JSON.stringify(
+          {
+            事实来源: {
+              玩家原话: message,
+              选择文字: choices.map((choice) => choice.text),
+            },
+            原稿: draft,
+          },
+          null,
+          2
+        ),
+      },
+    ],
+    {
+      temperature: 0.22,
+      maxTokens: 680,
+      thinking: "disabled",
+    }
+  );
+
+  return cleanOutput(revised);
+}
+
 export async function POST(req: NextRequest) {
   try {
     const body: unknown = await req.json();
@@ -88,6 +134,9 @@ export async function POST(req: NextRequest) {
     const message = typeof rawMessage === "string" ? rawMessage.trim() : "";
     const journey = (payload as { journey?: unknown }).journey === true;
     const mode = normalizeLetterMode((payload as { mode?: unknown }).mode);
+    const recipient = normalizeLetterRecipient(
+      (payload as { recipient?: unknown }).recipient
+    );
     const choices = normalizeChoices(
       (payload as { choices?: unknown }).choices
     );
@@ -115,16 +164,6 @@ export async function POST(req: NextRequest) {
       ? buildJourneyFallback(mode, choices)
       : buildLetterFallback(mode, message, choices);
     const trustBreach = !journey && isTrustBreachMessage(message);
-
-    if (trustBreach) {
-      return NextResponse.json({
-        ok: true,
-        text: fallback,
-        source: "grounded",
-        choiceCount: choices.length,
-      });
-    }
-
     const reflectionLens =
       mode === "reflection"
         ? REFLECTION_LENSES[
@@ -139,7 +178,12 @@ export async function POST(req: NextRequest) {
         [
           {
             role: "system",
-            content: buildLetterSystemPrompt(mode, choices, journey),
+            content: buildLetterSystemPrompt(
+              mode,
+              choices,
+              journey,
+              recipient
+            ),
           },
           {
             role: "user",
@@ -184,6 +228,23 @@ export async function POST(req: NextRequest) {
           choices,
           text,
           reflectionParagraphs ?? 3
+        );
+        if (hasUsableLetterOutput(mode, message, revised, choices)) {
+          return NextResponse.json({
+            ok: true,
+            text: revised,
+            source: "generated",
+            choiceCount: choices.length,
+          });
+        }
+      } else if (
+        mode === "reply" &&
+        (trustBreach || !hasUsableLetterOutput(mode, message, text, choices))
+      ) {
+        const revised = await reviseUngroundedReply(
+          message,
+          choices,
+          text
         );
         if (hasUsableLetterOutput(mode, message, revised, choices)) {
           return NextResponse.json({

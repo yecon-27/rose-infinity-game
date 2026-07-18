@@ -1,10 +1,11 @@
-import type { LetterMode } from "@/lib/letter";
+import type { LetterMode, LetterRecipient } from "@/lib/letter";
 
 export const LETTER_ARCHIVE_KEY = "rose:letter-archive";
 
 export interface ArchivedLetter {
   id: string;
   mode: LetterMode;
+  recipient?: LetterRecipient;
   message: string;
   text: string;
   createdAt: string;
@@ -17,6 +18,9 @@ function isArchivedLetter(value: unknown): value is ArchivedLetter {
   return (
     typeof letter.id === "string" &&
     (letter.mode === "reply" || letter.mode === "reflection") &&
+    (letter.recipient === undefined ||
+      letter.recipient === "him" ||
+      letter.recipient === "her") &&
     typeof letter.message === "string" &&
     typeof letter.text === "string" &&
     typeof letter.createdAt === "string"
@@ -58,4 +62,15 @@ export function archiveLetter(
     // 信箱不可写时仍然让用户正常读完当次回信。
     return null;
   }
+}
+
+export function deleteArchivedLetter(id: string): ArchivedLetter[] {
+  if (typeof window === "undefined") return [];
+  const next = readLetterArchive().filter((letter) => letter.id !== id);
+  try {
+    window.localStorage.setItem(LETTER_ARCHIVE_KEY, JSON.stringify(next));
+  } catch {
+    return readLetterArchive();
+  }
+  return next;
 }

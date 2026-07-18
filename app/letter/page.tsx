@@ -7,7 +7,7 @@ import { useSoundscape } from "@/components/soundscape-provider";
 import { AUDIO } from "@/lib/audio";
 import { readChoiceLog, type ChoiceLogEntry } from "@/lib/choice-log";
 import { archiveLetter } from "@/lib/letter-archive";
-import type { LetterMode } from "@/lib/letter";
+import type { LetterMode, LetterRecipient } from "@/lib/letter";
 
 interface LetterResponse {
   ok: boolean;
@@ -27,16 +27,18 @@ async function requestLetter({
   message = "",
   choices,
   journey = false,
+  recipient = "him",
 }: {
   mode: LetterMode;
   message?: string;
   choices: ChoiceLogEntry[];
   journey?: boolean;
+  recipient?: LetterRecipient;
 }): Promise<LetterResponse> {
   const response = await fetch("/api/letter", {
     method: "POST",
     headers: { "Content-Type": "application/json" },
-    body: JSON.stringify({ mode, message, choices, journey }),
+    body: JSON.stringify({ mode, message, choices, journey, recipient }),
   });
   const data = (await response.json()) as LetterResponse;
   if (!response.ok || !data.ok || !data.text) {
@@ -181,6 +183,7 @@ export default function LetterPage() {
   const [experience, setExperience] =
     useState<LetterExperience>("journey");
   const [mode, setMode] = useState<LetterMode>("reply");
+  const [recipient, setRecipient] = useState<LetterRecipient>("him");
   const [message, setMessage] = useState("");
   const [result, setResult] = useState<LetterResponse | null>(null);
   const [loading, setLoading] = useState(false);
@@ -263,10 +266,16 @@ export default function LetterPage() {
     setSaveError("");
 
     try {
-      const data = await requestLetter({ mode, message: trimmed, choices });
+      const data = await requestLetter({
+        mode,
+        message: trimmed,
+        choices,
+        recipient,
+      });
       setResult(data);
       archiveLetter({
         mode,
+        recipient,
         message: trimmed,
         text: data.text ?? "",
         source: data.source,
@@ -489,6 +498,38 @@ export default function LetterPage() {
               aria-busy={loading}
               className="min-w-0 space-y-7"
             >
+              <fieldset className="min-w-0">
+                <legend className="mb-3 text-xs tracking-[0.2em] text-[#796568]">
+                  这封信写给谁
+                </legend>
+                <div className="grid grid-cols-2 gap-3">
+                  <button
+                    type="button"
+                    aria-pressed={recipient === "him"}
+                    onClick={() => setRecipient("him")}
+                    className={`border px-3 py-3 text-sm tracking-[0.12em] transition-colors focus-visible:outline focus-visible:outline-1 focus-visible:outline-offset-2 focus-visible:outline-[#76575d] ${
+                      recipient === "him"
+                        ? "border-[#76575d] bg-[#76575d] text-[#f5ecdf]"
+                        : "border-[#9d8580]/45 text-[#725f61] hover:border-[#76575d]"
+                    }`}
+                  >
+                    写给他
+                  </button>
+                  <button
+                    type="button"
+                    aria-pressed={recipient === "her"}
+                    onClick={() => setRecipient("her")}
+                    className={`border px-3 py-3 text-sm tracking-[0.12em] transition-colors focus-visible:outline focus-visible:outline-1 focus-visible:outline-offset-2 focus-visible:outline-[#76575d] ${
+                      recipient === "her"
+                        ? "border-[#76575d] bg-[#76575d] text-[#f5ecdf]"
+                        : "border-[#9d8580]/45 text-[#725f61] hover:border-[#76575d]"
+                    }`}
+                  >
+                    写给她
+                  </button>
+                </div>
+              </fieldset>
+
               <fieldset className="min-w-0">
                 <legend className="mb-3 text-xs tracking-[0.2em] text-[#796568]">
                   想收到什么

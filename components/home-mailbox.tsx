@@ -17,11 +17,14 @@ function formatLetterDate(value: string) {
 export function HomeMailbox({
   letters,
   onClose,
+  onDelete,
 }: {
   letters: ArchivedLetter[];
   onClose: () => void;
+  onDelete: (id: string) => void;
 }) {
   const [selectedId, setSelectedId] = useState(letters[0]?.id ?? "");
+  const [pendingDeleteId, setPendingDeleteId] = useState("");
   const selected =
     letters.find((letter) => letter.id === selectedId) ?? letters[0];
 
@@ -29,11 +32,12 @@ export function HomeMailbox({
     function onKeyDown(event: KeyboardEvent) {
       if (event.key !== "Escape") return;
       event.preventDefault();
-      onClose();
+      if (pendingDeleteId) setPendingDeleteId("");
+      else onClose();
     }
     window.addEventListener("keydown", onKeyDown);
     return () => window.removeEventListener("keydown", onKeyDown);
-  }, [onClose]);
+  }, [onClose, pendingDeleteId]);
 
   return (
     <div
@@ -96,7 +100,10 @@ export function HomeMailbox({
                   key={letter.id}
                   type="button"
                   aria-pressed={selected?.id === letter.id}
-                  onClick={() => setSelectedId(letter.id)}
+                  onClick={() => {
+                    setSelectedId(letter.id);
+                    setPendingDeleteId("");
+                  }}
                   className={`mb-2 block w-full border px-4 py-3 text-left transition-colors last:mb-0 ${
                     selected?.id === letter.id
                       ? "border-[#c4a882]/55 bg-[#c4a882]/10"
@@ -104,7 +111,7 @@ export function HomeMailbox({
                   }`}
                 >
                   <span className="block text-[9px] tracking-[0.18em] text-[#c4a882]/65">
-                    信 {String(letters.length - index).padStart(2, "0")} · {letter.mode === "reply" ? "回信" : "复盘"}
+                    信 {String(letters.length - index).padStart(2, "0")} · {letter.recipient === "her" ? "写给她" : letter.recipient === "him" ? "写给他" : "旧信"} · {letter.mode === "reply" ? "回信" : "复盘"}
                   </span>
                   <span className="mt-2 block truncate font-serif text-xs text-white/70">
                     {letter.message}
@@ -128,9 +135,40 @@ export function HomeMailbox({
                   <div className="mt-7 whitespace-pre-line font-serif text-sm leading-8 sm:text-base">
                     {selected.text}
                   </div>
-                  <p className="mt-8 border-t border-[#9d8580]/25 pt-5 text-center text-[8px] tracking-[0.2em] text-[#8b6f62]/65">
-                    {formatLetterDate(selected.createdAt)} · 玫瑰无限
-                  </p>
+                  <div className="mt-8 border-t border-[#9d8580]/25 pt-5 text-center">
+                    <p className="text-[8px] tracking-[0.2em] text-[#8b6f62]/65">
+                      {formatLetterDate(selected.createdAt)} · 玫瑰无限
+                    </p>
+                    {pendingDeleteId === selected.id ? (
+                      <div className="mt-5 flex justify-center gap-3">
+                        <button
+                          type="button"
+                          onClick={() => setPendingDeleteId("")}
+                          className="border border-[#9d8580]/35 px-4 py-2 text-[9px] tracking-[0.14em] text-[#756566] transition-colors hover:border-[#756566]"
+                        >
+                          取 消
+                        </button>
+                        <button
+                          type="button"
+                          onClick={() => {
+                            setPendingDeleteId("");
+                            onDelete(selected.id);
+                          }}
+                          className="border border-[#9b5559]/55 bg-[#9b5559]/10 px-4 py-2 text-[9px] tracking-[0.14em] text-[#8d4248] transition-colors hover:bg-[#9b5559] hover:text-[#fff8ed]"
+                        >
+                          确 认 删 除
+                        </button>
+                      </div>
+                    ) : (
+                      <button
+                        type="button"
+                        onClick={() => setPendingDeleteId(selected.id)}
+                        className="mt-5 text-[9px] tracking-[0.14em] text-[#8b6f62]/55 underline decoration-[#8b6f62]/25 underline-offset-4 transition-colors hover:text-[#8d4248]"
+                      >
+                        删除这封信
+                      </button>
+                    )}
+                  </div>
                 </>
               )}
             </article>

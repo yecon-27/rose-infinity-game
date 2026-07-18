@@ -8,6 +8,7 @@ import { useSoundscape } from "@/components/soundscape-provider";
 import { AUDIO } from "@/lib/audio";
 import { clearChoiceLog } from "@/lib/choice-log";
 import {
+  deleteArchivedLetter,
   readLetterArchive,
   type ArchivedLetter,
 } from "@/lib/letter-archive";
@@ -54,6 +55,10 @@ export default function Home() {
 
   const closeMailbox = useCallback(() => {
     setMailboxOpen(false);
+  }, []);
+
+  const deleteLetter = useCallback((id: string) => {
+    setArchivedLetters(deleteArchivedLetter(id));
   }, []);
 
   useEffect(() => {
@@ -293,7 +298,11 @@ export default function Home() {
       </p>
 
       {mailboxOpen && (
-        <HomeMailbox letters={archivedLetters} onClose={closeMailbox} />
+        <HomeMailbox
+          letters={archivedLetters}
+          onClose={closeMailbox}
+          onDelete={deleteLetter}
+        />
       )}
     </main>
   );

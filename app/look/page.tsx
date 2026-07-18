@@ -5,6 +5,7 @@ import {
   Suspense,
   useCallback,
   useEffect,
+  useRef,
   useState,
 } from "react";
 import Image from "next/image";
@@ -445,11 +446,13 @@ function LookInner() {
   const [momentIdx, setMomentIdx] = useState(0);
   const [revealed, setRevealed] = useState(false);
   const [reachDone, setReachDone] = useState(false);
+  const [reachActionKeyHeld, setReachActionKeyHeld] = useState(false);
   const [roseOn, setRoseOn] = useState(false);
   const [missCount, setMissCount] = useState(0);
   const [miss, setMiss] = useState<MissFeedback | null>(null);
   const [hintLevel, setHintLevel] = useState(0);
   const [showSkipOffer, setShowSkipOffer] = useState(false);
+  const reachChoiceRef = useRef<HTMLButtonElement | null>(null);
 
   useEffect(() => {
     const sources = Object.values(LOOKBACKS).flatMap((memory) => [
@@ -587,11 +590,40 @@ function LookInner() {
     }
   }, [look, momentIdx, phase, reachDone, revealed, router]);
 
+  const reachGesture: Gesture = look
+    ? REACHBACK_GESTURES[look.id] ?? "longpress"
+    : "longpress";
+
+  useEffect(() => {
+    if (phase !== "reachback" || reachDone) {
+      setReachActionKeyHeld(false);
+      return;
+    }
+    const frame = window.requestAnimationFrame(() => {
+      reachChoiceRef.current?.focus({ preventScroll: true });
+    });
+    return () => window.cancelAnimationFrame(frame);
+  }, [id, phase, reachDone]);
+
   useEffect(() => {
     function onKey(event: KeyboardEvent) {
       if (event.key === "ArrowLeft") {
         event.preventDefault();
+        setReachActionKeyHeld(false);
         goBack();
+      } else if (phase === "reachback" && !reachDone) {
+        const isGestureKey =
+          reachGesture === "swipe"
+            ? event.key === "ArrowRight"
+            : event.key === "Enter" || event.code === "Space";
+        if (
+          event.key === "ArrowRight" ||
+          event.key === "Enter" ||
+          event.code === "Space"
+        ) {
+          event.preventDefault();
+          if (isGestureKey && !event.repeat) setReachActionKeyHeld(true);
+        }
       } else if (
         event.key === "ArrowRight" ||
         event.key === "Enter" ||
@@ -601,9 +633,22 @@ function LookInner() {
         advance();
       }
     }
+    function onKeyUp(event: KeyboardEvent) {
+      if (
+        event.key === "ArrowRight" ||
+        event.key === "Enter" ||
+        event.code === "Space"
+      ) {
+        setReachActionKeyHeld(false);
+      }
+    }
     window.addEventListener("keydown", onKey);
-    return () => window.removeEventListener("keydown", onKey);
-  }, [advance, goBack]);
+    window.addEventListener("keyup", onKeyUp);
+    return () => {
+      window.removeEventListener("keydown", onKey);
+      window.removeEventListener("keyup", onKeyUp);
+    };
+  }, [advance, goBack, phase, reachDone, reachGesture]);
 
   if (!id || !look)
     return <MemoryMap invalidId={!!id && !look} playSfx={playSfx} />;
@@ -680,7 +725,6 @@ function LookInner() {
     else advance();
   }
 
-  const reachGesture = REACHBACK_GESTURES[look.id] ?? "longpress";
   const whoLabel = (who: "sean" | "vera") =>
     who === "sean" ? "Sean" : "Vera";
 
@@ -927,6 +971,8 @@ function LookInner() {
                     setReachDone(true);
                   }}
                   selected
+                  keyboardPressed={reachActionKeyHeld}
+                  buttonRef={reachChoiceRef}
                   hintVariant="bubble"
                   className="block w-full border border-amber-100/55 bg-black/10 px-6 py-4 text-sm leading-relaxed text-amber-50 transition-colors hover:border-amber-50/80 hover:bg-white/[0.06]"
                 >
