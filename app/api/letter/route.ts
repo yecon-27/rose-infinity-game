@@ -30,6 +30,55 @@ function cleanOutput(value: string): string {
     .trim();
 }
 
+async function reviseUngroundedReflection(
+  message: string,
+  choices: ReturnType<typeof normalizeChoices>,
+  draft: string,
+  paragraphCount: number
+): Promise<string> {
+  const revised = await chat(
+    [
+      {
+        role: "system",
+        content: `你是《玫瑰无限》的事实编辑。你的任务不是润色，而是删除一篇关系复盘里没有依据的内容，再重写成自然中文。
+
+硬性规则：
+- 唯一事实来源是用户下一条消息里的 JSON。“原稿”也不是事实，不能沿用其中擅自补写的细节。
+- 不新增动作、姿势、地点、时间、天气、物件、手机画面、消息、对话语气、身体感受、另一方反应或人物动机。
+- 不猜玩家为何没开口，不写“害怕被拒绝、怕成为负担、等对方先懂”等未提供原因。
+- 不使用“门、光、湖面、伸手、喉咙、深夜、草稿、聊天记录”等意象或场景，除非它们逐字出现在事实来源中。
+- 叙述者在关系之外，只称呼“你”；除引用玩家原话，不使用“我”。
+- 不写“你没有做错、你很勇敢、值得被理解、放下、向前走”等安慰套话，不给建议，不替另一方说话。
+- 当事实很少时，就停留在原句自身的词语和矛盾里；少写一点，也不要补出故事。
+- 事实检查只在心里完成，正文不要出现“事实来源、你没有说、你给出的、完整陈述、张力、矛盾、这说明”等校对或分析措辞，也不要逐段解释一个词的功能。
+- 语气像熟悉这段故事的人安静陪着读完一句话：朴素、温和，有停顿，但不替玩家总结人生。不强行在结尾写“你不需要……”或得出结论。
+- 写成 ${paragraphCount} 个长短不一的自然段，段落间空一行，220 至 380 个汉字。只输出正文。`,
+      },
+      {
+        role: "user",
+        content: JSON.stringify(
+          {
+            事实来源: {
+              玩家原话: message,
+              选择文字: choices.map((choice) => choice.text),
+            },
+            原稿: draft,
+          },
+          null,
+          2
+        ),
+      },
+    ],
+    {
+      temperature: 0.28,
+      maxTokens: 620,
+      thinking: "disabled",
+    }
+  );
+
+  return cleanOutput(revised);
+}
+
 export async function POST(req: NextRequest) {
   try {
     const body: unknown = await req.json();
@@ -112,8 +161,36 @@ export async function POST(req: NextRequest) {
       const text = cleanOutput(output);
       if (!text) throw new Error("DeepSeek 返回了空内容");
 
-      if (!hasUsableLetterOutput(mode, message, text)) {
+      if (
+        mode === "reflection" &&
+        !hasUsableLetterOutput(mode, message, text, choices)
+      ) {
+        const revised = await reviseUngroundedReflection(
+          message,
+          choices,
+          text,
+          reflectionParagraphs ?? 3
+        );
+        if (hasUsableLetterOutput(mode, message, revised, choices)) {
+          return NextResponse.json({
+            ok: true,
+            text: revised,
+            source: "generated",
+            choiceCount: choices.length,
+          });
+        }
+      } else if (!hasUsableLetterOutput(mode, message, text, choices)) {
         console.warn("[letter] 生成内容未通过事实边界检查，改用本地信笺");
+        return NextResponse.json({
+          ok: true,
+          text: fallback,
+          source: "fallback",
+          choiceCount: choices.length,
+        });
+      }
+
+      if (!hasUsableLetterOutput(mode, message, text, choices)) {
+        console.warn("[letter] 改写内容仍未通过事实边界检查，改用本地信笺");
         return NextResponse.json({
           ok: true,
           text: fallback,

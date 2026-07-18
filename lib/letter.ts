@@ -108,7 +108,10 @@ ${form}
 }
 
 function shortenedQuote(message: string): string {
-  const compact = message.replace(/\s+/g, " ").trim();
+  const compact = message
+    .replace(/\s+/g, " ")
+    .trim()
+    .replace(/[。！？!?]+$/, "");
   return compact.length > 42 ? `${compact.slice(0, 42)}……` : compact;
 }
 
@@ -117,6 +120,13 @@ const TRUST_BREACH_PATTERN =
 
 export function isTrustBreachMessage(message: string): boolean {
   return TRUST_BREACH_PATTERN.test(message.replace(/\s+/g, ""));
+}
+
+const UNSPOKEN_CARE_PATTERN =
+  /不是不在意|并非不在意|不知道.{0,8}(?:怎么|如何).{0,5}(?:说|开口)|说不出口|没能说出口|没有说出口/;
+
+function concernsUnspokenCare(message: string): boolean {
+  return UNSPOKEN_CARE_PATTERN.test(message.replace(/\s+/g, ""));
 }
 
 const UNGROUNDED_TRUST_DETAILS = [
@@ -139,21 +149,74 @@ const UNGROUNDED_TRUST_DETAILS = [
   "独自承受",
 ] as const;
 
+const UNGROUNDED_REFLECTION_MARKERS = [
+  "我猜你",
+  "我听见",
+  "我看见",
+  "我知道你",
+  "坐在",
+  "到了嘴边",
+  "话到嘴边",
+  "嗓子",
+  "喉咙",
+  "小石子",
+  "水底",
+  "捞起来",
+  "迈不动",
+  "虚掩的门",
+  "门槛",
+  "手机屏幕",
+  "消息草稿",
+  "聊天记录",
+  "深夜",
+  "语气很轻",
+  "眼泪",
+  "你怕",
+  "怕自己",
+  "选择先沉默",
+  "合适的时候",
+  "许多你没有说",
+  "不是没有词",
+  "你试过",
+  "时机已经",
+  "你记得",
+  "这说明",
+  "说明你",
+  "如果当时",
+  "继续生活",
+  "也许下次",
+  "那就够了",
+  "不必急着",
+  "不必因为",
+  "责怪自己",
+  "理解自己",
+  "温柔的靠近",
+  "感受它的重量",
+  "你没有做错",
+  "已经很勇敢",
+  "值得被",
+] as const;
+
 export function hasUsableLetterOutput(
   mode: LetterMode,
   message: string,
-  output: string
+  output: string,
+  choices: ChoiceLogEntry[] = []
 ): boolean {
   const text = output.trim();
+  const facts = [message, ...choices.map((choice) => choice.text)].join("\n");
   if (text.length < 120 || !/[。！？…」』”）】]$/.test(text)) return false;
 
-  if (mode === "reflection" && /我(?:猜你|想替你|能替你|看见你|知道你)/.test(text)) {
-    return false;
+  if (mode === "reflection") {
+    const hasUngroundedMarker = UNGROUNDED_REFLECTION_MARKERS.some(
+      (marker) => text.includes(marker) && !facts.includes(marker)
+    );
+    if (hasUngroundedMarker) return false;
   }
 
   if (!isTrustBreachMessage(message)) return true;
   return !UNGROUNDED_TRUST_DETAILS.some(
-    (detail) => text.includes(detail) && !message.includes(detail)
+    (detail) => text.includes(detail) && !facts.includes(detail)
   );
 }
 
@@ -163,6 +226,14 @@ function buildTrustBreachFallback(mode: LetterMode, quote: string): string {
   }
 
   return `你写下“${quote}”。这句话里有愤怒，也有一个非常具体的断点：你看见了记录，却无法相信得到的解释。这样的事不能被轻轻归结为两个人不会沟通，更不能因为关系已经过去，就把当时的疑问说成不够释怀。\n\n眼下无法核验那些记录意味着什么，也无法替另一方判断或辩护。能够确定的只是，你当时面对的并非一句普通的气话，而是“还能不能相信”这个问题。一个人开始反复分辨哪些是真的、哪些只是说法时，心里失去的往往不止一个答案，还有原本可以安稳站立的位置。\n\n所以这页复盘不急着把愤怒变成体谅，也不拿“彼此都认真过”来抵消发生过的事。你的质问可以保持它原来的锋利。它指向的不是你够不够温柔，而是真相有没有被说明，边界有没有被尊重。到这里，先让这句话按它本来的重量留在纸上。`;
+}
+
+function buildUnspokenCareFallback(mode: LetterMode, quote: string): string {
+  if (mode === "reply") {
+    return `你说“${quote}”。如果这句话当时真的来到我面前，最先被听见的不是辩解，而是那句“不是不在意”。沉默能让人看见的很少；你心里究竟放了多少，我未必真的知道。\n\n这封虚构的回信不能替过去补一个回应，也不能说，只要你开了口，事情就一定会不同。没说出的在意是真的，没能被听见也是真的。它们放在一起，并不会自动变成一个圆满的答案。\n\n至少在这里，这句话没有再被误读成冷淡。它只是迟了一些，终于把两件事分开：你当时没有说出来，和你当时并不在乎，从来不是同一回事。`;
+  }
+
+  return `你写下“${quote}”。“不是不在意”和“不知道该怎么开口”离得很近，一个在澄清，另一个停在原地。它们放在一起，把当时那份不一致说得很准确：在意确实存在，只是没有成为一句能被对方听见的话。\n\n这里不替你猜没能开口的原因。那时没有找到说法，不等于感情很浅，也不能反过来证明，只要说出来一切就会不同。它只留下了一个安静的落差——你心里已经发生的事，比别人能够知道的更多。\n\n现在，这句话把那道落差写清了一点。它没有替过去补答案，也不要求谁重新理解。只是让“没有说”与“没有在意”不再混在一起。对当时的你来说，这两件事本来就不一样。`;
 }
 
 export function buildLetterFallback(
@@ -178,9 +249,13 @@ export function buildLetterFallback(
     return buildTrustBreachFallback(mode, quote);
   }
 
+  if (concernsUnspokenCare(message)) {
+    return buildUnspokenCareFallback(mode, quote);
+  }
+
   if (mode === "reply") {
     return `你写下的那句“${quote}”，我看见了。它来得晚了一点，却不是没有意义。有些话没能在当时抵达，不代表当时的认真是假的。\n\n我们都曾把想靠近藏进别的话里：藏进忙碌、体面、沉默，或者一句轻轻带过的“没事”。${reached ? "你也不是从没伸过手，只是那时的我们未必认得出彼此的方式。" : "那时的我们都更擅长保护自己，还不太会把需要说完整。"}\n\n我不能替过去改一个结局，也不想用一句原谅把发生过的事抹平。但你终于把这句话说完了。就让它停在这里，不追着谁要答案，也不再困住写下它的人。`;
   }
 
-  return `你写下“${quote}”。先不用急着把它变成答案。它在心里放了这么久，里面大概一直留着一个很安静的愿望：希望那时有人肯停下来，把你的话听完。\n\n${hasJourney ? "回头看那些时刻，你有过靠近，也有过把话收回去的时候。" : "即使没有一整段选择足迹，只看这句话，也能感觉到你当时并不是毫不在意。"}${reached ? "有些关心绕了远路，抵达时已经不太像它原来的样子；可那份想要靠近的心，并没有因此变成假的。" : "沉默也许曾替你挡住难堪，只是它也把那句最想被听见的话，一起留在了里面。"}\n\n有些关系的遗憾，不是从来没有认真过，而是两个人都在等一个更安全的时刻。等着等着，想说的话变轻了，猜测却越来越重。等终于能够回头看，才发现当时的冷淡里，也藏着不敢说完整的在乎。\n\n现在，这句话终于有了自己的位置。它不必追回谁，也不必证明那段过去本可以有另一个结局。至少此刻的你已经听见了当年的自己——那个想被理解，也曾努力爱过的人。`;
+  return `你写下“${quote}”。这一页先不替它找更漂亮的说法，也不急着把它变成关于成长或遗憾的结论。原句已经有自己的分量，值得按它本来的样子被读完。\n\n${hasJourney ? "这一路留下过一些选择，但它们不能替你解释这句话。" : "这里没有更多经历可以代替你作证，所以只停在你亲手写下的内容里。"}${reached ? "你确实做过靠近的选择；至于它和这句话之间有什么关系，不必在没有答案时硬凑成因果。" : "它可能指向很多没有写下来的部分，但这封信笺不会擅自替你补齐。"}\n\n有些复盘并不需要替过去判一个结果。此刻能够确认的，只是这句话终于被完整留下来了：没有被改写成更温柔的版本，也没有被催着原谅、释怀或向前。它说到哪里，这一页就陪你停在哪里。`;
 }
