@@ -57,6 +57,10 @@ export type Moment =
       face?: string;
       /** 聊天演出（presentation:"phone"）里这条消息的时间戳，如 "02:03" */
       time?: string;
+      /** 手机聊天里的特殊消息外观；红包仍是一条消息，但不渲染成文字气泡。 */
+      variant?: "red-packet";
+      /** 红包金额只供剧情与无障碍说明使用，未领取的卡面不直接展示。 */
+      amount?: number;
     }
   /** 幕中切换背景（如从会场走到楼梯间）；瞬间生效，不占对话框 */
   | { kind: "bg"; src: string }
@@ -901,8 +905,15 @@ const COLD_FEVER: Scene = {
     {
       kind: "line",
       who: "sean",
-      text: "🧧 我想买你一个晚上。你就休息一下，别让自己那么忙。",
+      text: "给你发了一个红包",
       time: "02:31",
+      variant: "red-packet",
+      amount: 150,
+    },
+    {
+      kind: "line",
+      who: "sean",
+      text: "我想买你一个晚上。你就休息一下，别让自己那么忙。",
     },
     {
       kind: "narr",

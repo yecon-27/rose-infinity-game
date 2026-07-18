@@ -27,6 +27,8 @@ interface DisplayLine {
   face?: string;
   /** 聊天演出里这条消息的时间戳(如 "02:03") */
   time?: string;
+  variant?: "red-packet";
+  amount?: number;
 }
 
 type Mode = "flow" | "beat" | "done";
@@ -112,6 +114,31 @@ function chatText(t: string): string {
 /** 这行是不是一条真正发出去的消息(纯动作/旁白不进手机) */
 function isChatMsg(l: DisplayLine): boolean {
   return l.who !== "narr" && l.text.replace(/（[^）]*）/g, "").trim() !== "";
+}
+
+function RedPacketMessage({ amount }: { amount?: number }) {
+  return (
+    <div
+      role="img"
+      aria-label={`Sean 发来的红包${amount ? `，金额 ${amount} 元` : ""}`}
+      className="w-[11.5rem] overflow-hidden rounded-lg bg-[#f05a3c] text-left shadow-[0_5px_16px_rgba(0,0,0,0.2)]"
+    >
+      <div className="flex items-center gap-3 px-3 py-3.5">
+        <span className="flex h-10 w-10 shrink-0 items-center justify-center rounded-full border border-[#ffe7a7]/80 bg-[#e84b30] text-lg font-medium text-[#ffe7a7] shadow-inner">
+          ¥
+        </span>
+        <span className="min-w-0 text-white">
+          <span className="block text-sm leading-5">给你发了一个红包</span>
+          <span className="mt-0.5 block text-[10px] text-white/70">
+            领取红包
+          </span>
+        </span>
+      </div>
+      <div className="bg-[#fff8ee] px-3 py-1.5 text-[9px] tracking-[0.18em] text-[#9b8b7d]">
+        红包
+      </div>
+    </div>
+  );
 }
 
 /* Vera 默认表情由周目决定:一周目 composed,二周目(pov=sean)wistful */
@@ -331,7 +358,16 @@ function GameInner() {
       setBg(m.src);
       setIdx((i) => i + 1);
     } else if (m.kind === "line") {
-      setQueue([{ who: m.who, text: m.text, face: m.face, time: m.time }]);
+      setQueue([
+        {
+          who: m.who,
+          text: m.text,
+          face: m.face,
+          time: m.time,
+          variant: m.variant,
+          amount: m.amount,
+        },
+      ]);
       historyRef.current.push({ role: m.who, text: m.text });
       setIdx((i) => i + 1);
     } else if (m.kind === "face") {
@@ -778,15 +814,19 @@ function GameInner() {
                     <div
                       className={`flex ${mine ? "justify-end" : "justify-start"}`}
                     >
-                      <p
-                        className={`max-w-[82%] rounded-2xl px-3 py-2 text-sm leading-relaxed ${
-                          mine
-                            ? "rounded-br-sm bg-accent/25 text-white"
-                            : "rounded-bl-sm bg-white/10 text-white/90"
-                        }`}
-                      >
-                        {shown}
-                      </p>
+                      {l.variant === "red-packet" ? (
+                        <RedPacketMessage amount={l.amount} />
+                      ) : (
+                        <p
+                          className={`max-w-[82%] rounded-2xl px-3 py-2 text-sm leading-relaxed ${
+                            mine
+                              ? "rounded-br-sm bg-accent/25 text-white"
+                              : "rounded-bl-sm bg-white/10 text-white/90"
+                          }`}
+                        >
+                          {shown}
+                        </p>
+                      )}
                     </div>
                   </div>
                 );
