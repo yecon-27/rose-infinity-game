@@ -232,6 +232,7 @@ function GameInner() {
   const [phoneSequenceCompleted, setPhoneSequenceCompleted] = useState(false);
   const [mode, setMode] = useState<Mode>("flow");
   const [optIdx, setOptIdx] = useState(0);
+  const [enterHeld, setEnterHeld] = useState(false);
   const [loading, setLoading] = useState(false);
   const [entering, setEntering] = useState(true);
   const [bg, setBg] = useState(scene.bg);
@@ -276,6 +277,7 @@ function GameInner() {
     setPhoneSequenceCompleted(false);
     setMode("flow");
     setOptIdx(0);
+    setEnterHeld(false);
     setLoading(false);
     setEntering(true);
     setBg(scene.bg);
@@ -407,7 +409,7 @@ function GameInner() {
       }));
       traceTimerRef.current = setTimeout(
         () => setChoiceTrace((trace) => ({ ...trace, visible: false })),
-        1900
+        3200
       );
       historyRef.current.push({ role: playerRole, text: choice.say ?? choice.text });
 
@@ -504,16 +506,25 @@ function GameInner() {
           advance();
         } else if (e.key === "ArrowDown" || e.key === "ArrowRight") {
           e.preventDefault();
+          setEnterHeld(false);
           setOptIdx((i) => (i + 1) % n);
         } else if (e.key === "ArrowUp") {
           e.preventDefault();
+          setEnterHeld(false);
           setOptIdx((i) => (i - 1 + n) % n);
         } else if (e.key === "Enter") {
           e.preventDefault();
-          choose(beatMoment.choices[optIdx]);
+          if (e.repeat) return;
+          const choice = beatMoment.choices[optIdx];
+          if (choice.gesture) setEnterHeld(true);
+          else choose(choice);
         } else if (Number(e.key) >= 1 && Number(e.key) <= n) {
           e.preventDefault();
-          choose(beatMoment.choices[Number(e.key) - 1]);
+          const choiceIndex = Number(e.key) - 1;
+          const choice = beatMoment.choices[choiceIndex];
+          setOptIdx(choiceIndex);
+          setEnterHeld(false);
+          if (!choice.gesture) choose(choice);
         }
         return;
       }
@@ -525,8 +536,15 @@ function GameInner() {
         goBack();
       }
     }
+    function onKeyUp(e: KeyboardEvent) {
+      if (e.key === "Enter") setEnterHeld(false);
+    }
     window.addEventListener("keydown", onKey);
-    return () => window.removeEventListener("keydown", onKey);
+    window.addEventListener("keyup", onKeyUp);
+    return () => {
+      window.removeEventListener("keydown", onKey);
+      window.removeEventListener("keyup", onKeyUp);
+    };
   }, [beatMoment, optIdx, choose, advance, goBack, backIdx, entering, loading]);
 
   /* ────────────────────────── 渲染 ────────────────────────── */
@@ -789,6 +807,7 @@ function GameInner() {
                       onCommit={() => choose(c)}
                       disabled={loading}
                       selected={i === optIdx}
+                      keyboardPressed={enterHeld && i === optIdx}
                       className={`rounded px-2 py-1 text-left text-xs leading-snug transition-colors ${
                         i === optIdx
                           ? "bg-accent/30 text-white"
@@ -850,6 +869,7 @@ function GameInner() {
                   onCommit={() => choose(c)}
                   disabled={loading}
                   selected={i === optIdx}
+                  keyboardPressed={enterHeld && i === optIdx}
                   className={`block w-full text-left px-5 py-3 border text-sm leading-relaxed transition-colors ${
                     i === optIdx
                       ? "border-white bg-white/10 text-white"

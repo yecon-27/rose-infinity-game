@@ -368,16 +368,49 @@ body {
   transition: transform 80ms linear;
 }
 
-/* 选择不会显示分数，只在关键拍闪过一条悄悄改变形状的关系线。 */
+/* 选择不打分，但足迹会持续留在画面上；新选择发生时再明确亮起。 */
 .choice-trace {
+  width: 188px;
+  padding: 10px 12px 9px;
+  border: 1px solid rgba(255, 255, 255, 0.12);
+  border-radius: 12px;
+  background: rgba(4, 5, 8, 0.46);
+  box-shadow: 0 10px 28px rgba(0, 0, 0, 0.22);
+  backdrop-filter: blur(10px);
+  -webkit-backdrop-filter: blur(10px);
   opacity: 0;
-  transform: translate(-50%, -8px);
-  transition: opacity 500ms ease, transform 700ms ease;
+  transform: translateY(-8px) scale(0.97);
+  transition: opacity 500ms ease, transform 700ms ease, border-color 500ms ease,
+    background-color 500ms ease;
+}
+
+.choice-trace.has-traces {
+  opacity: 0.68;
+  transform: translateY(0) scale(1);
 }
 
 .choice-trace.is-visible {
   opacity: 1;
-  transform: translate(-50%, 0);
+  transform: translateY(0) scale(1.025);
+  border-color: rgba(224, 142, 146, 0.42);
+  background: rgba(28, 14, 20, 0.72);
+}
+
+.choice-trace__heading {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  color: rgba(255, 255, 255, 0.56);
+  font-size: 9px;
+  letter-spacing: 0.24em;
+}
+
+.choice-trace__heading strong {
+  color: rgba(238, 177, 175, 0.92);
+  font-family: Georgia, serif;
+  font-size: 13px;
+  font-weight: 400;
+  letter-spacing: 0.1em;
 }
 
 .choice-trace__line {
@@ -387,6 +420,18 @@ body {
 
 .choice-trace.is-visible .choice-trace__line {
   animation: traceSettle 900ms ease-out forwards;
+}
+
+.choice-trace__message {
+  margin-top: -2px;
+  text-align: center;
+  color: rgba(255, 255, 255, 0.48);
+  font-size: 8px;
+  letter-spacing: 0.18em;
+}
+
+.choice-trace.is-visible .choice-trace__message {
+  color: rgba(255, 220, 214, 0.86);
 }
 
 @keyframes traceSettle {

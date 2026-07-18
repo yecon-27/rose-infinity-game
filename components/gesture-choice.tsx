@@ -17,6 +17,12 @@ const HOLD_MS: Record<Exclude<Gesture, "swipe">, number> = {
   longpress: 1100,
 };
 
+const KEYBOARD_HOLD_MS: Record<Gesture, number> = {
+  hold: 720,
+  swipe: 900,
+  longpress: 1100,
+};
+
 const GESTURE_COPY: Record<Gesture, string> = {
   hold: "按住不放 · 让犹豫停一会儿",
   swipe: "向右滑动 · 把手伸过去",
@@ -28,6 +34,7 @@ export function GestureChoice({
   onCommit,
   disabled = false,
   selected = false,
+  keyboardPressed = false,
   className = "",
   children,
 }: {
@@ -35,23 +42,37 @@ export function GestureChoice({
   onCommit: () => void;
   disabled?: boolean;
   selected?: boolean;
+  /** 全局选项导航时，选中的按钮通过这个状态接收 Enter 的按住/松开。 */
+  keyboardPressed?: boolean;
   className?: string;
   children: ReactNode;
 }) {
   const [active, setActive] = useState(false);
   const [progress, setProgress] = useState(0);
   const [feedback, setFeedback] = useState("");
+  const [keyboardMode, setKeyboardMode] = useState(false);
   const descriptionId = useId();
   const startX = useRef(0);
   const timer = useRef<ReturnType<typeof setTimeout> | null>(null);
   const committed = useRef(false);
+  const keyboardStarted = useRef(false);
+  const onCommitRef = useRef(onCommit);
+
+  useEffect(() => {
+    onCommitRef.current = onCommit;
+  }, [onCommit]);
 
   function clearTimer() {
     if (timer.current) clearTimeout(timer.current);
     timer.current = null;
   }
 
-  useEffect(() => clearTimer, []);
+  useEffect(
+    () => () => {
+      clearTimer();
+    },
+    []
+  );
 
   function commit() {
     if (committed.current || disabled) return;
@@ -60,6 +81,45 @@ export function GestureChoice({
     setProgress(1);
     onCommit();
   }
+
+  function beginKeyboard() {
+    if (!gesture || disabled || keyboardStarted.current) return;
+    keyboardStarted.current = true;
+    committed.current = false;
+    setKeyboardMode(true);
+    setFeedback("");
+    setProgress(1);
+    setActive(true);
+    timer.current = setTimeout(() => {
+      if (committed.current) return;
+      committed.current = true;
+      clearTimer();
+      onCommitRef.current();
+    }, KEYBOARD_HOLD_MS[gesture]);
+  }
+
+  function endKeyboard() {
+    if (!keyboardStarted.current) return;
+    keyboardStarted.current = false;
+    clearTimer();
+    if (!committed.current) {
+      setFeedback("按住 Enter，等它走完。");
+      setProgress(0);
+    }
+    setKeyboardMode(false);
+    setActive(false);
+  }
+
+  useEffect(() => {
+    if (!gesture || disabled || !selected) {
+      endKeyboard();
+      return;
+    }
+    if (keyboardPressed) beginKeyboard();
+    else endKeyboard();
+    // begin/end 只依赖此处列出的原始状态；提交回调通过 ref 读取最新值。
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [disabled, gesture, keyboardPressed, selected]);
 
   function begin(event: ReactPointerEvent<HTMLButtonElement>) {
     if (!gesture || disabled) return;
@@ -103,7 +163,9 @@ export function GestureChoice({
   const style = {
     "--gesture-progress": progress,
     "--gesture-duration":
-      gesture === "swipe"
+      keyboardMode && gesture
+        ? `${KEYBOARD_HOLD_MS[gesture]}ms`
+        : gesture === "swipe"
         ? "80ms"
         : `${gesture ? HOLD_MS[gesture] : 0}ms`,
     touchAction: gesture === "swipe" ? "none" : "manipulation",
@@ -142,7 +204,15 @@ export function GestureChoice({
         onKeyDown={(event) => {
           if (event.key === "Enter" || event.key === " ") {
             event.preventDefault();
-            commit();
+            event.stopPropagation();
+            if (!event.repeat) beginKeyboard();
+          }
+        }}
+        onKeyUp={(event) => {
+          if (event.key === "Enter" || event.key === " ") {
+            event.preventDefault();
+            event.stopPropagation();
+            endKeyboard();
           }
         }}
         className={`gesture-choice gesture-${gesture} relative overflow-hidden ${
@@ -162,7 +232,8 @@ export function GestureChoice({
         id={descriptionId}
         className="px-1 text-[9px] tracking-[0.18em] text-white/40"
       >
-        {feedback || GESTURE_COPY[gesture]}
+        <span className="block">{feedback || GESTURE_COPY[gesture]}</span>
+        <span className="mt-1 block text-white/30">键盘 · 按住 Enter</span>
       </p>
     </div>
   );
