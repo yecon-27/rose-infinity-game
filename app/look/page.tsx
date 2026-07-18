@@ -226,6 +226,10 @@ function MemoryMap({
 
   useEffect(() => setCompleted(readLookbackProgress()), []);
 
+  const completedCount = LOOKBACK_SEQUENCE.filter((id) =>
+    completed.includes(id)
+  ).length;
+  const letterUnlocked = completedCount >= 3;
   const allDone = LOOKBACK_SEQUENCE.every((id) => completed.includes(id));
   const defaultMemoryId =
     LOOKBACK_SEQUENCE.find((id) => !completed.includes(id)) ??
@@ -254,7 +258,7 @@ function MemoryMap({
           </h1>
           <p className="mx-auto mt-5 max-w-lg text-sm leading-loose text-white/55">
             六段记忆散在这里。你可以先走进任何一段，
-            <strong className="font-semibold text-amber-300">找出</strong>
+            <strong className="font-semibold text-accent">找出</strong>
             当年没看见的那次伸手。
           </p>
           {invalidId && (
@@ -264,7 +268,7 @@ function MemoryMap({
           )}
         </header>
 
-        <div className="grid grid-cols-[88px_minmax(0,1fr)] gap-3 sm:grid-cols-[150px_minmax(0,1fr)] sm:gap-5">
+        <div className="grid grid-cols-[88px_minmax(0,1fr)] gap-3 sm:grid-cols-[150px_minmax(0,1fr)_150px] sm:gap-5">
           <aside className="flex">
             <button
               type="button"
@@ -355,6 +359,59 @@ function MemoryMap({
               );
             })}
           </section>
+
+          <aside className="col-span-2 flex sm:col-span-1">
+            <button
+              type="button"
+              disabled={!letterUnlocked}
+              onClick={() => {
+                if (!letterUnlocked) return;
+                playSfx(AUDIO.sfx.roseReveal, LOOKBACK_SFX_VOLUME);
+                router.push("/letter");
+              }}
+              className={`group relative flex w-full flex-col items-start justify-center overflow-hidden border px-5 py-5 text-left transition-all duration-500 focus-visible:outline focus-visible:outline-1 focus-visible:outline-offset-4 focus-visible:outline-accent sm:px-5 ${
+                letterUnlocked
+                  ? "border-accent/55 bg-accent/[0.07] shadow-[0_0_30px_rgba(196,168,130,.08)] hover:border-accent/85 hover:bg-accent/[0.12]"
+                  : "cursor-not-allowed border-white/10 bg-white/[0.015]"
+              }`}
+            >
+              <span
+                className={`text-[9px] tracking-[0.22em] ${
+                  letterUnlocked ? "text-accent/65" : "text-white/25"
+                }`}
+              >
+                玫 瑰 出 口
+              </span>
+              <span
+                className={`mt-2 block font-serif text-sm leading-loose tracking-[0.12em] sm:text-base ${
+                  letterUnlocked ? "text-accent" : "text-white/30"
+                }`}
+              >
+                看玫瑰信笺
+              </span>
+              <span
+                className={`mt-3 block text-[9px] leading-relaxed tracking-[0.1em] ${
+                  letterUnlocked ? "text-white/45" : "text-white/25"
+                }`}
+              >
+                {letterUnlocked
+                  ? allDone
+                    ? "六段回看已经完成"
+                    : "可以带着目前看见的，提前离开"
+                  : `完成 3 段回看后开启 · ${completedCount} / 3`}
+              </span>
+              <span
+                className={`mt-5 text-lg transition-transform ${
+                  letterUnlocked
+                    ? "text-accent/70 group-hover:translate-x-1"
+                    : "text-white/15"
+                }`}
+                aria-hidden="true"
+              >
+                {letterUnlocked ? "→" : "◇"}
+              </span>
+            </button>
+          </aside>
         </div>
 
         <footer className="mt-10 text-center sm:mt-14">
@@ -397,6 +454,7 @@ function LookInner() {
   const [missCount, setMissCount] = useState(0);
   const [miss, setMiss] = useState<MissFeedback | null>(null);
   const [hintLevel, setHintLevel] = useState(0);
+  const [showSkipOffer, setShowSkipOffer] = useState(false);
 
   useEffect(() => {
     const sources = Object.values(LOOKBACKS).flatMap((memory) => [
@@ -426,22 +484,16 @@ function LookInner() {
     setMissCount(0);
     setMiss(null);
     setHintLevel(0);
+    setShowSkipOffer(false);
   }, [id]);
 
   useEffect(() => {
     if (phase !== "moments" || revealed) return;
-    const directionTimer = window.setTimeout(
-      () => setHintLevel((level) => Math.max(level, 1)),
-      3500
-    );
     const areaTimer = window.setTimeout(
       () => setHintLevel((level) => Math.max(level, 2)),
       8000
     );
-    return () => {
-      window.clearTimeout(directionTimer);
-      window.clearTimeout(areaTimer);
-    };
+    return () => window.clearTimeout(areaTimer);
   }, [momentIdx, phase, revealed]);
 
   useEffect(() => {
@@ -465,6 +517,7 @@ function LookInner() {
       setMissCount(0);
       setMiss(null);
       setHintLevel(0);
+      setShowSkipOffer(false);
       return;
     }
     if (phase === "moments") {
@@ -484,6 +537,7 @@ function LookInner() {
         setMissCount(0);
         setMiss(null);
         setHintLevel(0);
+        setShowSkipOffer(false);
         return;
       }
       setPhase(look.reachback ? "reachback" : "outro");
@@ -507,12 +561,14 @@ function LookInner() {
         setRevealed(false);
         setMissCount(0);
         setHintLevel(0);
+        setShowSkipOffer(false);
       }
       else if (momentIdx > 0) {
         setMomentIdx((index) => index - 1);
         setRevealed(true);
       } else setPhase("intro");
       setMiss(null);
+      setShowSkipOffer(false);
       return;
     }
     if (phase === "reachback") {
@@ -574,6 +630,16 @@ function LookInner() {
     !look.hidePortraits &&
     (phase === "moments" || (phase === "reachback" && !reachDone));
 
+  function revealMoment(vibrate = false) {
+    playSfx(AUDIO.sfx.roseReveal, LOOKBACK_SFX_VOLUME);
+    setRevealed(true);
+    setMiss(null);
+    setShowSkipOffer(false);
+    if (vibrate && typeof navigator.vibrate === "function") {
+      navigator.vibrate(45);
+    }
+  }
+
   function searchScene(event: ReactMouseEvent<HTMLElement>) {
     if (phase !== "moments" || revealed || !target) return;
     const x = (event.clientX / window.innerWidth) * 100;
@@ -582,20 +648,32 @@ function LookInner() {
     const dx = x - spot.x;
     const dy = y - spot.y;
 
-    if (Math.sqrt(dx * dx + dy * dy) <= spot.r) {
-      playSfx(AUDIO.sfx.roseReveal, LOOKBACK_SFX_VOLUME);
-      setRevealed(true);
-      setMiss(null);
-      if (typeof navigator.vibrate === "function") navigator.vibrate(45);
+    const distance = Math.sqrt(dx * dx + dy * dy);
+
+    if (distance <= spot.r) {
+      revealMoment(true);
       return;
     }
 
-    setMissCount((count) => count + 1);
-    setHintLevel((level) => Math.min(2, level + 1));
+    const nextMissCount = missCount + 1;
+    const proximity = distance / spot.r;
+    const proximityText =
+      proximity < 1.8
+        ? "很近了。就在你点的位置附近，再细看一点。"
+        : proximity < 3
+        ? "方向接近了。沿着这一侧再找找。"
+        : `还离得有点远。${describeSpot(spot)}`;
+
+    setMissCount(nextMissCount);
+    if (nextMissCount >= 3) setHintLevel(2);
+    if (nextMissCount === 5) setShowSkipOffer(true);
     setMiss({
       x,
       y,
-      text: target.misses[missCount % target.misses.length],
+      text:
+        nextMissCount >= 3
+          ? `${proximityText} 大致范围已经亮起。`
+          : proximityText,
       key: Date.now(),
     });
     playSfx(AUDIO.sfx.softTap, 0.09);
@@ -699,6 +777,44 @@ function LookInner() {
         </div>
       )}
 
+      {showSkipOffer && phase === "moments" && !revealed && (
+        <div
+          className="pointer-events-auto fixed inset-0 z-30 flex items-center justify-center bg-black/60 px-6 backdrop-blur-[2px] fade-in"
+          onClick={(event) => event.stopPropagation()}
+          role="dialog"
+          aria-modal="true"
+          aria-labelledby="skip-search-title"
+        >
+          <div className="w-full max-w-sm border border-white/15 bg-[#171416]/95 px-6 py-7 text-center shadow-2xl">
+            <p
+              id="skip-search-title"
+              className="text-sm tracking-[0.16em] text-white/90"
+            >
+              已经找了五次
+            </p>
+            <p className="mt-3 text-[11px] leading-loose tracking-[0.08em] text-white/50">
+              不用卡在这里。你可以跳过这次寻找，直接看清这一刻；也可以沿着亮起的范围继续找。
+            </p>
+            <div className="mt-6 flex flex-col gap-3 sm:flex-row sm:justify-center">
+              <button
+                type="button"
+                onClick={() => revealMoment(false)}
+                className="border border-accent/60 bg-accent/10 px-5 py-3 text-[10px] tracking-[0.16em] text-accent"
+              >
+                跳过寻找 · 直接看清
+              </button>
+              <button
+                type="button"
+                onClick={() => setShowSkipOffer(false)}
+                className="border border-white/15 px-5 py-3 text-[10px] tracking-[0.16em] text-white/50"
+              >
+                沿着亮光再找找
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
       <div className="relative z-10 min-h-screen px-6 text-center pointer-events-none">
         {phase === "intro" && (
           <div className="mx-auto flex min-h-screen max-w-md flex-col items-center justify-center space-y-4 text-base leading-loose tracking-wide text-white/85 fade-in-slow">
@@ -730,11 +846,12 @@ function LookInner() {
                 <p className="mt-3 border-l border-accent/45 pl-3 text-[11px] leading-relaxed tracking-[0.12em] text-accent/90 sm:text-xs">
                   {target?.clue ?? "在画面里，找出当年没看见的那一刻。"}
                 </p>
-                {hintLevel >= 1 && target && (
+                {target && (
                   <p
                     className="mt-2 text-[10px] tracking-[0.16em] text-amber-100/80 fade-in"
                     aria-live="polite"
                   >
+                    <span className="mr-2 text-white/35">大致方位 ·</span>
                     <span className="sm:hidden">{describeSpot(target.mobile)}</span>
                     <span className="hidden sm:inline">
                       {describeSpot(target.desktop)}
@@ -744,32 +861,41 @@ function LookInner() {
                 )}
                 <div className="mt-3 flex items-center justify-between gap-4">
                   <p className="text-[8px] tracking-[0.16em] text-white/30">
-                    触摸或点击画面中的物件
+                    {missCount > 0
+                      ? `已尝试 ${Math.min(missCount, 5)} / 5 次`
+                      : "触摸或点击画面中的物件"}
                   </p>
-                  <button
-                    type="button"
-                    disabled={hintLevel >= 2}
-                    onClick={(event) => {
-                      event.stopPropagation();
-                      playSfx(AUDIO.sfx.softTap, 0.09);
-                      setHintLevel((level) => Math.min(2, level + 1));
-                    }}
-                    className="pointer-events-auto shrink-0 border border-amber-100/25 bg-amber-100/[0.04] px-3 py-2 text-[9px] tracking-[0.14em] text-amber-100/70 transition-colors hover:border-amber-100/50 hover:text-amber-100 disabled:cursor-default disabled:border-white/10 disabled:text-white/25"
-                  >
-                    {hintLevel === 0
-                      ? "给我一点提示"
-                      : hintLevel === 1
-                      ? "再明确一点"
-                      : "大致范围已亮起"}
-                  </button>
+                  {target ? (
+                    <button
+                      type="button"
+                      disabled={hintLevel >= 2}
+                      onClick={(event) => {
+                        event.stopPropagation();
+                        playSfx(AUDIO.sfx.softTap, 0.09);
+                        setHintLevel(2);
+                      }}
+                      className="pointer-events-auto shrink-0 border border-amber-100/25 bg-amber-100/[0.04] px-3 py-2 text-[9px] tracking-[0.14em] text-amber-100/70 transition-colors hover:border-amber-100/50 hover:text-amber-100 disabled:cursor-default disabled:border-white/10 disabled:text-white/25"
+                    >
+                      {hintLevel >= 2 ? "大致范围已亮起" : "亮出大致范围"}
+                    </button>
+                  ) : (
+                    <button
+                      type="button"
+                      onClick={(event) => {
+                        event.stopPropagation();
+                        revealMoment(false);
+                      }}
+                      className="pointer-events-auto shrink-0 border border-accent/40 px-3 py-2 text-[9px] tracking-[0.12em] text-accent/80"
+                    >
+                      直接看清这一刻
+                    </button>
+                  )}
                 </div>
                 <button
                   type="button"
                   onClick={(event) => {
                     event.stopPropagation();
-                    playSfx(AUDIO.sfx.roseReveal, LOOKBACK_SFX_VOLUME);
-                    setRevealed(true);
-                    setMiss(null);
+                    revealMoment(false);
                   }}
                   className="pointer-events-auto sr-only focus:not-sr-only focus:mt-3 focus:inline-block focus:border focus:border-white/40 focus:px-3 focus:py-2 focus:text-white/70"
                 >
