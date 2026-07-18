@@ -59,6 +59,8 @@ export async function POST(req: NextRequest) {
             Math.floor(Math.random() * REFLECTION_LENSES.length)
           ]
         : undefined;
+    const reflectionParagraphs =
+      mode === "reflection" ? 3 + Math.floor(Math.random() * 3) : undefined;
 
     try {
       const output = await chat(
@@ -81,6 +83,10 @@ export async function POST(req: NextRequest) {
               2
             )}\n</事实>\n${
               reflectionLens ? `本次写作入口：${reflectionLens}\n` : ""
+            }${
+              reflectionParagraphs
+                ? `本次节奏：自然写成 ${reflectionParagraphs} 段，段落长短不要均衡。\n`
+                : ""
             }请只输出信笺正文，不要补写 JSON 中没有发生的事。`,
           },
         ],
