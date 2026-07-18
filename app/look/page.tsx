@@ -202,6 +202,9 @@ function MemoryMap({
   useEffect(() => setCompleted(readLookbackProgress()), []);
 
   const allDone = LOOKBACK_SEQUENCE.every((id) => completed.includes(id));
+  const defaultMemoryId =
+    LOOKBACK_SEQUENCE.find((id) => !completed.includes(id)) ??
+    LOOKBACK_SEQUENCE[0];
 
   return (
     <main className="relative min-h-screen overflow-x-hidden bg-[#171416] px-5 py-16 text-white sm:px-8">
@@ -225,7 +228,22 @@ function MemoryMap({
             这次，顺序由你
           </h1>
           <p className="mx-auto mt-5 max-w-lg text-sm leading-loose text-white/55">
-            六段记忆散在这里。你可以先走进任何一段，找出当年没看见的那次伸手。
+            六段记忆散在这里。你可以先走进任何一段，
+            <strong className="font-semibold text-amber-300">找出</strong>
+            当年没看见的那次伸手。
+          </p>
+          <button
+            type="button"
+            onClick={() => {
+              playSfx(AUDIO.sfx.softTap, 0.18);
+              router.push(`/look?id=${defaultMemoryId}`);
+            }}
+            className="mt-6 border border-amber-200/45 bg-amber-100/[0.04] px-5 py-2.5 text-[10px] font-medium tracking-[0.28em] text-amber-200/90 transition-colors hover:border-amber-200/75 hover:bg-amber-100/[0.09] focus-visible:outline focus-visible:outline-1 focus-visible:outline-offset-4 focus-visible:outline-amber-200"
+          >
+            按 默 认 顺 序
+          </button>
+          <p className="mt-2 text-[9px] tracking-[0.18em] text-white/28">
+            {allDone ? "从第一段重新走过" : "从最早还没看清的一段开始"}
           </p>
           {invalidId && (
             <p className="mt-3 text-xs text-accent/70">
@@ -271,13 +289,13 @@ function MemoryMap({
                   src={memory.moments[0].bg}
                   alt=""
                   fill
-                  className={`object-cover transition duration-700 group-hover:scale-[1.03] ${
+                  className={`object-cover transition duration-700 group-hover:scale-[1.03] group-hover:blur-0 group-hover:brightness-100 group-hover:saturate-100 group-focus-visible:blur-0 group-focus-visible:brightness-100 group-focus-visible:saturate-100 ${
                     seen
                       ? "saturate-75 brightness-75"
                       : "saturate-[.35] brightness-50 blur-[1px]"
                   }`}
                 />
-                <div className="absolute inset-0 bg-gradient-to-t from-black/90 via-black/25 to-black/15" />
+                <div className="absolute inset-0 bg-gradient-to-t from-black/90 via-black/25 to-black/15 opacity-100 transition-opacity duration-700 group-hover:opacity-60 group-focus-visible:opacity-60" />
                 <span className="absolute left-3 top-3 text-[9px] tracking-[0.24em] text-white/35">
                   记忆 {String(index + 1).padStart(2, "0")}
                 </span>
