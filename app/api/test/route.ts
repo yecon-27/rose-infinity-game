@@ -1,5 +1,5 @@
 import { NextResponse } from "next/server";
-import { chat } from "@/lib/hunyuan";
+import { chat, getDeepSeekModel } from "@/lib/deepseek";
 
 export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
@@ -20,7 +20,7 @@ export async function GET() {
     return NextResponse.json({
       ok: true,
       reply,
-      model: process.env.HUNYUAN_MODEL,
+      model: getDeepSeekModel(),
     });
   } catch (err) {
     const message = err instanceof Error ? err.message : String(err);

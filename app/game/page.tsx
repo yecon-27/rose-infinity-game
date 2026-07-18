@@ -4,9 +4,11 @@ import { Suspense, useCallback, useEffect, useRef, useState } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
 import Image from "next/image";
 import { useSoundscape } from "@/components/soundscape-provider";
+import { ChoiceTrace } from "@/components/choice-trace";
+import { GestureChoice } from "@/components/gesture-choice";
 import { AUDIO, soundscapeForScene } from "@/lib/audio";
 import { preloadImageSources } from "@/lib/preload";
-import { appendChoiceLog } from "@/lib/choice-log";
+import { appendChoiceLog, readChoiceLog } from "@/lib/choice-log";
 import {
   STORY,
   getStoryScene,
@@ -234,31 +236,32 @@ function GameInner() {
     scene.veraFace ?? veraDefaultEmotion(scene.pov)
   );
   const [seanEmotion, setSeanEmotion] = useState(scene.seanFace ?? "warm");
+  const [choiceTrace, setChoiceTrace] = useState({
+    count: 0,
+    reach: false,
+    visible: false,
+  });
 
   const historyRef = useRef<Array<{ role: "vera" | "sean"; text: string }>>([]);
   /** 聊天窗口容器:内容超高时钉在最新一条(旧消息从顶部滑出隐藏) */
   const chatBoxRef = useRef<HTMLDivElement | null>(null);
-  /** 防止 Strict Mode 重跑 effect 时重复触发同一次手机轻震 */
-  const phoneVibrationPlayedRef = useRef(false);
+  /** 防止 Strict Mode 重跑 effect 时，同一条消息重复震动。 */
+  const lastVibratedMessageRef = useRef("");
+  const traceTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+
+  useEffect(() => {
+    setChoiceTrace((trace) => ({
+      ...trace,
+      count: readChoiceLog().length,
+    }));
+    return () => {
+      if (traceTimerRef.current) clearTimeout(traceTimerRef.current);
+    };
+  }, []);
 
   useEffect(() => {
     if (scene.id === "after_konbini") playSfx(AUDIO.sfx.konbiniDoor, 0.2);
   }, [playSfx, scene.id]);
-
-  useEffect(() => {
-    if (!phoneOn) {
-      phoneVibrationPlayedRef.current = false;
-      return;
-    }
-    if (phoneVibrationPlayedRef.current) return;
-    phoneVibrationPlayedRef.current = true;
-
-    // 轻震音负责桌面端反馈；Vibration API 在支持的移动浏览器上补充触觉。
-    playSfx(AUDIO.sfx.phoneVibrate, 0.2);
-    if (typeof navigator.vibrate === "function") {
-      navigator.vibrate([70, 40, 70]);
-    }
-  }, [phoneOn, playSfx]);
 
   /* 进入新场景:重置 */
   useEffect(() => {
@@ -275,6 +278,7 @@ function GameInner() {
     setBg(scene.bg);
     setVeraEmotion(scene.veraFace ?? veraDefaultEmotion(scene.pov));
     setSeanEmotion(scene.seanFace ?? "warm");
+    lastVibratedMessageRef.current = "";
     historyRef.current = [];
     // 2200ms:与 .memory-focus / .memory-title 动画时长一致,画面对焦完成、幕名隐去后再放行。
     const t = setTimeout(() => setEntering(false), 2200);
@@ -284,12 +288,28 @@ function GameInner() {
   const current = queue[0];
   const tw = useTypewriter(current?.text ?? "");
 
+  /* 手机里每一条真正出现的消息都给反馈；旁白、回退查看不触发。 */
+  useEffect(() => {
+    if (!phoneOn || backIdx > 0 || !current || !isChatMsg(current)) return;
+    const messageKey = `${scene.id}:${idx}:${current.who}:${
+      current.time ?? ""
+    }:${current.text}`;
+    if (lastVibratedMessageRef.current === messageKey) return;
+    lastVibratedMessageRef.current = messageKey;
+
+    playSfx(AUDIO.sfx.phoneVibrate, 0.34);
+    if (typeof navigator.vibrate === "function") {
+      navigator.vibrate([120, 55, 180]);
+    }
+  }, [backIdx, current, idx, phoneOn, playSfx, scene.id]);
+
   /* 表情随当前显示的台词切换 */
   useEffect(() => {
     if (!current?.face) return;
     if (current.who === "sean") setSeanEmotion(current.face);
-    else if (current.who === "vera") setVeraEmotion(current.face);
-  }, [current]);
+    else if (current.who === "vera" && !scene.lockVeraFace)
+      setVeraEmotion(current.face);
+  }, [current, scene.lockVeraFace]);
 
   /* 引擎:队列空且 flow 时,消化下一个 moment */
   useEffect(() => {
@@ -311,7 +331,7 @@ function GameInner() {
       setIdx((i) => i + 1);
     } else if (m.kind === "face") {
       if (m.who === "sean") setSeanEmotion(m.emotion);
-      else setVeraEmotion(m.emotion);
+      else if (!scene.lockVeraFace) setVeraEmotion(m.emotion);
       setIdx((i) => i + 1);
     } else if (m.kind === "phone") {
       setPhoneOn(m.on);
@@ -321,7 +341,16 @@ function GameInner() {
       setOptIdx(0);
       setMode("beat");
     }
-  }, [idx, queue.length, mode, entering, loading, playSfx, script]);
+  }, [
+    idx,
+    queue.length,
+    mode,
+    entering,
+    loading,
+    playSfx,
+    scene.lockVeraFace,
+    script,
+  ]);
 
   /* 推进对话框;回退查看中则先一步步走回当前 */
   const advance = useCallback(() => {
@@ -367,13 +396,26 @@ function GameInner() {
         text: choice.text,
         reach: !!choice.reach,
       });
+      if (traceTimerRef.current) clearTimeout(traceTimerRef.current);
+      setChoiceTrace((trace) => ({
+        count: trace.count + 1,
+        reach: !!choice.reach,
+        visible: true,
+      }));
+      traceTimerRef.current = setTimeout(
+        () => setChoiceTrace((trace) => ({ ...trace, visible: false })),
+        1900
+      );
       historyRef.current.push({ role: playerRole, text: choice.say ?? choice.text });
 
       // 先显示玩家这一句（say 为说出口的纯净台词，缺省回退到选项文案）
       const playerLine: DisplayLine = {
         who: playerRole,
         text: choice.say ?? choice.text,
-        face: choice.face,
+        face:
+          scene.lockVeraFace && playerRole === "vera"
+            ? undefined
+            : choice.face,
       };
 
       const afterLines: DisplayLine[] = (choice.after ?? []).map((a) => ({
@@ -525,6 +567,11 @@ function GameInner() {
       className="relative min-h-screen overflow-hidden bg-black"
       onClick={advance}
     >
+      <ChoiceTrace
+        count={choiceTrace.count}
+        reach={choiceTrace.reach}
+        visible={choiceTrace.visible}
+      />
       {/* 背景：单图全屏，或左右分屏（两地感，如幕5） */}
       <div className={`fixed inset-0 z-0 ${entering ? "memory-focus" : ""}`}>
         {scene.bgSplit ? (
@@ -671,21 +718,26 @@ function GameInner() {
               >
                 <div className="flex flex-wrap gap-1.5 pb-2">
                   {beatMoment.choices.map((c, i) => (
-                    <button
+                    <GestureChoice
                       key={i}
-                      type="button"
-                      onMouseEnter={() => setOptIdx(i)}
-                      onClick={() => choose(c)}
+                      gesture={c.gesture}
+                      onCommit={() => choose(c)}
                       disabled={loading}
+                      selected={i === optIdx}
                       className={`rounded px-2 py-1 text-left text-xs leading-snug transition-colors ${
                         i === optIdx
                           ? "bg-accent/30 text-white"
                           : "bg-white/10 text-white/70 hover:bg-white/20"
                       }`}
                     >
-                      <span className="mr-1 text-white/35">{i + 1}</span>
-                      {chatText(c.text)}
-                    </button>
+                      <span
+                        onPointerEnter={() => setOptIdx(i)}
+                        className="block"
+                      >
+                        <span className="mr-1 text-white/35">{i + 1}</span>
+                        {chatText(c.text)}
+                      </span>
+                    </GestureChoice>
                   ))}
                 </div>
                 <div className="flex items-center gap-1 rounded-full bg-white/10 px-3 py-2">
@@ -693,14 +745,20 @@ function GameInner() {
                     {chatText(beatMoment.choices[optIdx]?.text ?? "")}
                   </span>
                   <span className="soft-pulse text-white/60">丨</span>
-                  <button
-                    type="button"
-                    onClick={() => choose(beatMoment.choices[optIdx])}
-                    disabled={loading}
-                    className="ml-1 rounded-full bg-accent/40 px-2.5 py-1 text-[11px] tracking-widest text-white transition-colors hover:bg-accent/60"
-                  >
-                    发送
-                  </button>
+                  {beatMoment.choices[optIdx]?.gesture ? (
+                    <span className="ml-1 whitespace-nowrap text-[9px] tracking-wider text-accent/70">
+                      在上方完成动作
+                    </span>
+                  ) : (
+                    <button
+                      type="button"
+                      onClick={() => choose(beatMoment.choices[optIdx])}
+                      disabled={loading}
+                      className="ml-1 rounded-full bg-accent/40 px-2.5 py-1 text-[11px] tracking-widest text-white transition-colors hover:bg-accent/60"
+                    >
+                      发送
+                    </button>
+                  )}
                 </div>
               </div>
             )}
@@ -721,20 +779,25 @@ function GameInner() {
                 {beatMoment.prompt}
               </p>
               {beatMoment.choices.map((c, i) => (
-                <button
+                <GestureChoice
                   key={i}
-                  type="button"
-                  onMouseEnter={() => setOptIdx(i)}
-                  onClick={() => choose(c)}
+                  gesture={c.gesture}
+                  onCommit={() => choose(c)}
                   disabled={loading}
+                  selected={i === optIdx}
                   className={`block w-full text-left px-5 py-3 border text-sm leading-relaxed transition-colors ${
                     i === optIdx
                       ? "border-white bg-white/10 text-white"
                       : "border-white/25 text-white/75 hover:border-white/60"
                   }`}
                 >
-                  {c.text}
-                </button>
+                  <span
+                    onPointerEnter={() => setOptIdx(i)}
+                    className="block"
+                  >
+                    {c.text}
+                  </span>
+                </GestureChoice>
               ))}
             </div>
           ) : phoneMode && beatMoment && !reviewLine ? (

@@ -3,7 +3,6 @@
 import { Suspense, useEffect, useState } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
 import Image from "next/image";
-import { LOOKBACK_SEQUENCE } from "@/lib/story";
 import { useSoundscape } from "@/components/soundscape-provider";
 import { AUDIO } from "@/lib/audio";
 
@@ -13,7 +12,7 @@ const SEEN_ACTIONS = [
 ];
 
 const FIRST_ENDING_ACTIONS = [
-  { label: "回 看 记 忆", to: `/look?id=${LOOKBACK_SEQUENCE[0]}` },
+  { label: "打 开 记 忆 地 图", to: "/look" },
   { label: "返 回 首 页", to: "/" },
 ];
 

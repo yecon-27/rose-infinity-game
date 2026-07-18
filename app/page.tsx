@@ -6,6 +6,7 @@ import { useRouter } from "next/navigation";
 import { useSoundscape } from "@/components/soundscape-provider";
 import { AUDIO } from "@/lib/audio";
 import { clearChoiceLog } from "@/lib/choice-log";
+import { clearLookbackProgress } from "@/lib/lookback-progress";
 
 const HOME_SOUND = { bgm: AUDIO.bgm.rosebud, bgmVolume: 0.16 };
 
@@ -23,6 +24,7 @@ export default function Home() {
     unlock();
     playSfx(AUDIO.sfx.softTap, 0.22);
     clearChoiceLog();
+    clearLookbackProgress();
     leavingRef.current = true;
     setLeaving(true);
     setTimeout(() => router.push("/prologue"), 800);

@@ -1,5 +1,5 @@
 import { NextRequest, NextResponse } from "next/server";
-import { chat } from "@/lib/hunyuan";
+import { chat } from "@/lib/deepseek";
 import {
   buildSeanSystemPrompt,
   buildVeraSystemPrompt,

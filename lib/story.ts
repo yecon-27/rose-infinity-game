@@ -17,6 +17,11 @@ export type Speaker = "vera" | "sean" | "narr";
 export interface Choice {
   text: string;
   /**
+   * 关键情绪拍不用普通点击确认：让动作本身承担一点叙事重量。
+   * hold = 按住、欲言又止；swipe = 向对方伸手；longpress = 把话真的说出口。
+   */
+  gesture?: "hold" | "swipe" | "longpress";
+  /**
    * 这句（或这一拍）是不是"伸手"——她/他在靠近、在给对方一个机会。
    * 第一遍未必看得出；"看见"机制用它标记玩家当年错过/接住的瞬间。
    */
@@ -83,6 +88,8 @@ export interface Scene {
   /** 进场时的初始表情（emotion key)，默认 warm */
   veraFace?: string;
   seanFace?: string;
+  /** 锁住 Vera 的初始表情；这一幕中的台词、动作与选择都不能再切脸。 */
+  lockVeraFace?: boolean;
   /**
    * 立绘套装后缀（按幕换装）：解析为 {who}-{emotion}-{faceSet}.webp，
    * 套装内缺该表情时回退 warm，再回退无后缀基础图。
@@ -179,6 +186,7 @@ export const HACKATHON_NIGHT: Scene = {
         },
         {
           text: "（握住他敲键盘的那只手）",
+          gesture: "swipe",
           reach: true,
           reply: [
             {
@@ -236,6 +244,7 @@ export const HACKATHON_NIGHT: Scene = {
       choices: [
         {
           text: "“今天你这个队长，撑得很好。……可我说了三次我饿，你一次都没抬头。我不是怪你，我知道你难。所以饭我都摆好了，先吃。”",
+          gesture: "longpress",
           reach: true,
           direction:
             "她先肯定他、再用事实（不是指责）说出自己的委屈。这是成功修复的范本。",
@@ -484,6 +493,7 @@ const WARM_NVC: Scene = {
   phase: "warm",
   bg: "/images/scenes/campus-bench.webp",
   veraFace: "warm",
+  lockVeraFace: true,
   seanFace: "thinking",
   faceSet: "bench",
   onDone: "/game?scene=burst_phone",
@@ -905,6 +915,7 @@ const COLD_FEVER: Scene = {
       choices: [
         {
           text: "（点开，又退出）我不是为了钱……",
+          gesture: "hold",
           reach: true,
           face: "composed",
           reply: [
@@ -985,6 +996,7 @@ const COLD_FEVER: Scene = {
         },
         {
           text: "（解下围裙，起身）我现在过去。",
+          gesture: "swipe",
           reach: true,
           face: "warm",
           reply: [
@@ -1063,6 +1075,7 @@ const COLD_FEVER: Scene = {
         },
         {
           text: "（软下来）我六点下班，坐头班车去看你。",
+          gesture: "longpress",
           reach: true,
           face: "warm",
           reply: [
@@ -1214,6 +1227,7 @@ const END_BREAKUP: Scene = {
         },
         {
           text: "我们谈谈吧。好好谈一次。",
+          gesture: "longpress",
           reach: true,
           face: "composed",
           reply: [
@@ -1266,6 +1280,7 @@ const END_BREAKUP: Scene = {
       choices: [
         {
           text: "我不想就这么结束。",
+          gesture: "hold",
           reach: true,
           face: "crying",
           say: "……我也不想就这么结束。",
@@ -1376,6 +1391,7 @@ const END_BREAKUP: Scene = {
         },
         {
           text: "（抱他一下，很快松开）",
+          gesture: "swipe",
           reach: true,
           face: "crying",
           reply: [
@@ -1842,7 +1858,7 @@ export const LOOKBACKS: Record<string, Lookback> = {
   end_breakup: BREAKUP_LOOKBACK,
 };
 
-/** 回看的顺序：按记忆的时间顺序，一段看完接下一段 */
+/** 记忆地图的展示顺序；玩家可以从任意一段开始，不再强制按此推进。 */
 export const LOOKBACK_SEQUENCE: string[] = [
   "warm_hackathon",
   "warm_shopping",
@@ -1854,11 +1870,4 @@ export const LOOKBACK_SEQUENCE: string[] = [
 
 export function getLookback(id: string): Lookback | undefined {
   return LOOKBACKS[id];
-}
-
-/** 当前回看之后的下一段记忆；最后一段返回 undefined（回看全部完成） */
-export function getNextLookbackId(id: string): string | undefined {
-  const i = LOOKBACK_SEQUENCE.indexOf(id);
-  if (i === -1 || i >= LOOKBACK_SEQUENCE.length - 1) return undefined;
-  return LOOKBACK_SEQUENCE[i + 1];
 }

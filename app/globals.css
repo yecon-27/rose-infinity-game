@@ -232,3 +232,92 @@ body {
 .scrollbar-none::-webkit-scrollbar {
   display: none;
 }
+
+/* 关键选择的物理动词：按住时颜色缓慢浸入；滑动时跟着手指向前。 */
+.gesture-choice__wash {
+  position: absolute;
+  inset: 0;
+  transform: scaleX(var(--gesture-progress, 0));
+  transform-origin: left center;
+  background: linear-gradient(
+    90deg,
+    rgba(176, 108, 112, 0.08),
+    rgba(214, 151, 151, 0.24)
+  );
+  transition: transform var(--gesture-duration, 100ms) linear;
+}
+
+.gesture-choice.is-active:not(.gesture-swipe) .gesture-choice__wash {
+  transform: scaleX(1);
+}
+
+.gesture-choice__content {
+  transition: transform 80ms linear;
+}
+
+/* 选择不会显示分数，只在关键拍闪过一条悄悄改变形状的关系线。 */
+.choice-trace {
+  opacity: 0;
+  transform: translate(-50%, -8px);
+  transition: opacity 500ms ease, transform 700ms ease;
+}
+
+.choice-trace.is-visible {
+  opacity: 1;
+  transform: translate(-50%, 0);
+}
+
+.choice-trace__line {
+  stroke-dasharray: 160;
+  stroke-dashoffset: 160;
+}
+
+.choice-trace.is-visible .choice-trace__line {
+  animation: traceSettle 900ms ease-out forwards;
+}
+
+@keyframes traceSettle {
+  to {
+    stroke-dashoffset: 0;
+  }
+}
+
+@keyframes memoryMiss {
+  0% {
+    transform: translate(-50%, -50%) scale(0.75);
+    opacity: 0.7;
+  }
+  100% {
+    transform: translate(-50%, -50%) scale(1.8);
+    opacity: 0;
+  }
+}
+
+.memory-miss-ring {
+  animation: memoryMiss 700ms ease-out forwards;
+}
+
+@keyframes memoryFound {
+  0% {
+    box-shadow: inset 0 0 0 100vmax rgba(0, 0, 0, 0.28);
+  }
+  100% {
+    box-shadow: inset 0 0 0 100vmax rgba(0, 0, 0, 0);
+  }
+}
+
+.memory-found {
+  animation: memoryFound 1.2s ease-out forwards;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .gesture-choice__wash,
+  .gesture-choice__content,
+  .choice-trace,
+  .choice-trace__line,
+  .memory-miss-ring,
+  .memory-found {
+    animation-duration: 1ms !important;
+    transition-duration: 1ms !important;
+  }
+}

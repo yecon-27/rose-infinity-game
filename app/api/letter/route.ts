@@ -1,11 +1,19 @@
 import { NextRequest, NextResponse } from "next/server";
-import { chat } from "@/lib/hunyuan";
+import { chat } from "@/lib/deepseek";
 import {
   buildLetterFallback,
   buildLetterSystemPrompt,
   normalizeChoices,
   normalizeLetterMode,
 } from "@/lib/letter";
+
+const REFLECTION_LENSES = [
+  "从玩家原话里最轻、最容易被忽略的几个字开始，不要复述整句话。",
+  "从一次很小的选择开始，让它的分量在后文才慢慢显出来。",
+  "从两次表达之间的反差开始，但不要逐条对照或解释。",
+  "先写那种当时很难说清的感觉，到中段再让玩家原话自然出现。",
+  "从一句没有得到结论的话开始，结尾也保留一点没有说尽的空间。",
+] as const;
 
 export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
@@ -45,6 +53,12 @@ export async function POST(req: NextRequest) {
       (payload as { choices?: unknown }).choices
     );
     const fallback = buildLetterFallback(mode, message, choices);
+    const reflectionLens =
+      mode === "reflection"
+        ? REFLECTION_LENSES[
+            Math.floor(Math.random() * REFLECTION_LENSES.length)
+          ]
+        : undefined;
 
     try {
       const output = await chat(
@@ -55,13 +69,29 @@ export async function POST(req: NextRequest) {
           },
           {
             role: "user",
-            content: `玩家当年想说却没说完的话：\n<玩家引文>\n${message}\n</玩家引文>`,
+            content: `下面的 JSON 是这次回声唯一可以使用的事实来源。键名只是说明，不是正文格式。\n<事实>\n${JSON.stringify(
+              {
+                玩家原话: message,
+                选择文字: choices.map((choice) => ({
+                  文字: choice.text,
+                  曾试着伸手: choice.reach,
+                })),
+              },
+              null,
+              2
+            )}\n</事实>\n${
+              reflectionLens ? `本次写作入口：${reflectionLens}\n` : ""
+            }请只输出信笺正文，不要补写 JSON 中没有发生的事。`,
           },
         ],
-        { temperature: 0.72, maxTokens: 720 }
+        {
+          temperature: mode === "reflection" ? 0.68 : 0.72,
+          maxTokens: mode === "reflection" ? 640 : 720,
+          thinking: "disabled",
+        }
       );
       const text = cleanOutput(output);
-      if (!text) throw new Error("混元返回了空内容");
+      if (!text) throw new Error("DeepSeek 返回了空内容");
 
       return NextResponse.json({
         ok: true,
