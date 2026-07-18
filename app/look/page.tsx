@@ -236,7 +236,7 @@ function MemoryMap({
     LOOKBACK_SEQUENCE[0];
 
   return (
-    <main className="relative min-h-screen overflow-x-hidden bg-[#171416] px-5 py-16 text-white sm:px-8">
+    <main className="relative min-h-screen overflow-x-hidden bg-[#171416] px-5 py-16 text-white sm:px-3 sm:py-20">
       <div className="fixed inset-0 opacity-25">
         <Image
           src="/images/motifs/rose-bud.webp"
@@ -248,7 +248,7 @@ function MemoryMap({
         <div className="absolute inset-0 bg-[#171416]/70" />
       </div>
 
-      <div className="relative z-10 mx-auto max-w-5xl">
+      <div className="relative z-10 mx-auto max-w-6xl">
         <header className="mb-10 text-center sm:mb-14">
           <p className="mb-3 text-[10px] tracking-[0.45em] text-accent/65">
             第 二 遍 · 记 忆 地 图
@@ -268,7 +268,7 @@ function MemoryMap({
           )}
         </header>
 
-        <div className="grid grid-cols-[88px_minmax(0,1fr)] gap-3 sm:grid-cols-[150px_minmax(0,1fr)_150px] sm:gap-5">
+        <div className="mt-5 grid grid-cols-[92px_minmax(0,1fr)] gap-3 sm:grid-cols-[155px_minmax(0,1fr)_155px] sm:gap-4 lg:grid-cols-[160px_minmax(0,1fr)_160px]">
           <aside className="flex">
             <button
               type="button"
@@ -276,7 +276,7 @@ function MemoryMap({
                 playSfx(AUDIO.sfx.softTap, 0.18);
                 router.push(`/look?id=${defaultMemoryId}`);
               }}
-              className="group flex w-full flex-col items-start justify-center border border-amber-200/35 bg-amber-100/[0.035] px-3 py-4 text-left transition-colors hover:border-amber-200/70 hover:bg-amber-100/[0.08] focus-visible:outline focus-visible:outline-1 focus-visible:outline-offset-4 focus-visible:outline-amber-200 sm:px-5"
+              className="group flex w-full flex-col items-start justify-center border border-amber-200/35 bg-amber-100/[0.035] px-3 py-5 text-left transition-colors hover:border-amber-200/70 hover:bg-amber-100/[0.08] focus-visible:outline focus-visible:outline-1 focus-visible:outline-offset-4 focus-visible:outline-amber-200 sm:px-5 sm:py-6"
             >
               <span>
                 <span className="block text-[9px] tracking-[0.22em] text-white/35">
@@ -295,7 +295,7 @@ function MemoryMap({
             </button>
           </aside>
 
-          <section className="relative grid grid-cols-2 gap-3 sm:grid-cols-3 sm:gap-5">
+          <section className="relative grid grid-cols-2 gap-3 sm:grid-cols-3 sm:gap-4">
             <svg
               className="pointer-events-none absolute inset-0 hidden h-full w-full opacity-25 sm:block"
               viewBox="0 0 900 520"
@@ -369,7 +369,7 @@ function MemoryMap({
                 playSfx(AUDIO.sfx.roseReveal, LOOKBACK_SFX_VOLUME);
                 router.push("/letter");
               }}
-              className={`group relative flex w-full flex-col items-start justify-center overflow-hidden border px-5 py-5 text-left transition-all duration-500 focus-visible:outline focus-visible:outline-1 focus-visible:outline-offset-4 focus-visible:outline-accent sm:px-5 ${
+              className={`group relative flex w-full flex-col items-start justify-center overflow-hidden border px-5 py-6 text-left transition-all duration-500 focus-visible:outline focus-visible:outline-1 focus-visible:outline-offset-4 focus-visible:outline-accent sm:px-5 sm:py-7 ${
                 letterUnlocked
                   ? "border-accent/55 bg-accent/[0.07] shadow-[0_0_30px_rgba(196,168,130,.08)] hover:border-accent/85 hover:bg-accent/[0.12]"
                   : "cursor-not-allowed border-white/10 bg-white/[0.015]"
@@ -414,7 +414,7 @@ function MemoryMap({
           </aside>
         </div>
 
-        <footer className="mt-10 text-center sm:mt-14">
+        <footer className="mt-12 text-center sm:mt-16">
           {allDone ? (
             <button
               type="button"
@@ -920,11 +920,11 @@ function LookInner() {
 
         {phase === "reachback" && look.reachback && (
           <div className="mx-auto flex min-h-screen max-w-lg flex-col items-center justify-center space-y-8">
-            <p className="text-sm leading-loose text-white/70">
+            <p className="text-sm leading-loose text-white/85 [text-shadow:0_2px_14px_rgba(0,0,0,.9)]">
               {look.reachback.prompt}
             </p>
             {!reachDone ? (
-              <div className="pointer-events-auto w-full">
+              <div className="pointer-events-auto w-full rounded-sm border border-white/20 bg-white/[0.10] p-3 shadow-[0_14px_48px_rgba(0,0,0,0.32),inset_0_1px_0_rgba(255,255,255,0.10)] backdrop-blur-md">
                 <GestureChoice
                   gesture={reachGesture}
                   onCommit={() => {
@@ -932,7 +932,7 @@ function LookInner() {
                     setReachDone(true);
                   }}
                   selected
-                  className="block w-full border border-accent/60 px-6 py-4 text-sm leading-relaxed text-accent/90 transition-colors"
+                  className="block w-full border border-amber-100/55 bg-black/10 px-6 py-4 text-sm leading-relaxed text-amber-50 transition-colors hover:border-amber-50/80 hover:bg-white/[0.06]"
                 >
                   {look.reachback.choice}
                 </GestureChoice>
