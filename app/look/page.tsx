@@ -264,7 +264,7 @@ function MemoryMap({
           )}
         </header>
 
-        <div className="grid gap-3 sm:grid-cols-[150px_minmax(0,1fr)] sm:gap-5">
+        <div className="grid grid-cols-[88px_minmax(0,1fr)] gap-3 sm:grid-cols-[150px_minmax(0,1fr)] sm:gap-5">
           <aside className="flex">
             <button
               type="button"
@@ -272,16 +272,16 @@ function MemoryMap({
                 playSfx(AUDIO.sfx.softTap, 0.18);
                 router.push(`/look?id=${defaultMemoryId}`);
               }}
-              className="group flex w-full items-center justify-between border border-amber-200/35 bg-amber-100/[0.035] px-5 py-4 text-left transition-colors hover:border-amber-200/70 hover:bg-amber-100/[0.08] focus-visible:outline focus-visible:outline-1 focus-visible:outline-offset-4 focus-visible:outline-amber-200 sm:flex-col sm:items-start sm:justify-center sm:px-5"
+              className="group flex w-full flex-col items-start justify-center border border-amber-200/35 bg-amber-100/[0.035] px-3 py-4 text-left transition-colors hover:border-amber-200/70 hover:bg-amber-100/[0.08] focus-visible:outline focus-visible:outline-1 focus-visible:outline-offset-4 focus-visible:outline-amber-200 sm:px-5"
             >
               <span>
                 <span className="block text-[9px] tracking-[0.22em] text-white/35">
                   默 认 路 线
                 </span>
-                <span className="mt-2 block text-xs font-medium leading-loose tracking-[0.18em] text-amber-100/90">
+                <span className="mt-2 block text-[10px] font-medium leading-loose tracking-[0.04em] text-amber-100/90 sm:text-xs sm:tracking-[0.18em]">
                   按默认顺序
                 </span>
-                <span className="mt-2 block text-[9px] leading-relaxed tracking-[0.12em] text-white/30">
+                <span className="mt-2 hidden text-[9px] leading-relaxed tracking-[0.12em] text-white/30 sm:block">
                   {allDone ? "从第一幕重新走过" : "从最早未完成的一幕继续"}
                 </span>
               </span>
