@@ -385,14 +385,16 @@ body {
   -webkit-backdrop-filter: blur(10px) saturate(0.72);
 }
 
-/* 当前手势的操作提示悬浮在按钮右侧，不再挤开同级选项。 */
+/* 普通选项的气泡在窄屏进入文档流，绝不覆盖选项正文。 */
 .gesture-choice-callout {
-  position: absolute;
-  right: 14px;
-  top: 50%;
+  position: relative;
+  right: auto;
+  top: auto;
   z-index: 20;
-  max-width: min(220px, 48%);
-  transform: translateY(-50%);
+  width: max-content;
+  max-width: calc(100% - 16px);
+  margin: 8px 0 2px auto;
+  transform: none;
   border-radius: 11px;
   padding: 7px 10px 6px;
   pointer-events: none;
@@ -402,13 +404,15 @@ body {
 .gesture-choice-callout::before {
   content: "";
   position: absolute;
-  left: -6px;
-  top: 50%;
+  right: 22px;
+  left: auto;
+  top: -6px;
   width: 11px;
   height: 11px;
-  transform: translateY(-50%) rotate(45deg);
-  border-bottom: 1px solid var(--gesture-callout-border);
+  transform: rotate(45deg);
+  border: 0;
   border-left: 1px solid var(--gesture-callout-border);
+  border-top: 1px solid var(--gesture-callout-border);
   background: var(--gesture-callout-bg);
 }
 
@@ -426,6 +430,29 @@ body {
   font-size: 8px;
   line-height: 1.4;
   letter-spacing: 0.08em;
+}
+
+/* 宽屏有足够侧边空间时，气泡移到选项框外，尾巴指回当前选项。 */
+@media (min-width: 1024px) {
+  .gesture-choice-callout {
+    position: absolute;
+    top: 50%;
+    right: auto;
+    left: calc(100% + 14px);
+    max-width: 220px;
+    margin: 0;
+    transform: translateY(-50%);
+  }
+
+  .gesture-choice-callout::before {
+    top: 50%;
+    right: auto;
+    left: -6px;
+    transform: translateY(-50%) rotate(45deg);
+    border: 0;
+    border-bottom: 1px solid var(--gesture-callout-border);
+    border-left: 1px solid var(--gesture-callout-border);
+  }
 }
 
 /* 手机演出里的操作说明离开候选区，用气泡对准当前选项。 */
