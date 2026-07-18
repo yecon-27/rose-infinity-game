@@ -147,7 +147,7 @@ function Portrait({
   }, [src]);
   return (
     <div
-      className={`portrait-breathe portrait-breathe--${side} absolute bottom-0 ${
+      className={`absolute bottom-0 ${
         side === "left" ? "left-2" : "right-2"
       } h-[62vh] w-[30vw] max-w-[340px] min-w-[160px] transition-[opacity,filter] duration-700`}
       style={{

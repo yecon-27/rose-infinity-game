@@ -98,7 +98,8 @@ body {
   position: absolute;
   inset: 0;
   transform-origin: var(--shot-origin-x, 50%) 54%;
-  transition: transform 1.2s cubic-bezier(0.22, 1, 0.36, 1);
+  /* 情绪拍结束后不要弹回原位；让镜头几乎察觉不到地慢慢退开。 */
+  transition: transform 4.8s cubic-bezier(0.4, 0, 0.2, 1);
   will-change: transform;
 }
 
@@ -185,27 +186,6 @@ body {
   background: rgba(0, 3, 8, 0.34);
   backdrop-filter: blur(2.4px) brightness(0.58) saturate(0.55);
   -webkit-backdrop-filter: blur(2.4px) brightness(0.58) saturate(0.55);
-}
-
-/* 立绘生命感：底部锚定，只做 1.5% 纵向呼吸，不发生位移。 */
-@keyframes portraitBreath {
-  0%,
-  100% {
-    transform: scaleY(1);
-  }
-  50% {
-    transform: scaleY(1.015);
-  }
-}
-
-.portrait-breathe {
-  transform-origin: center bottom;
-  animation: portraitBreath 4s ease-in-out infinite;
-  will-change: transform;
-}
-
-.portrait-breathe--right {
-  animation-delay: -2s;
 }
 
 /* 章节卡:黑场 → 幕名浮现 → 淡出 */
@@ -447,7 +427,6 @@ body {
   .camera-shot--push,
   .camera-shot--pull,
   .environment-drift,
-  .portrait-breathe,
   .gesture-choice__wash,
   .gesture-choice__content,
   .choice-trace,
@@ -460,8 +439,7 @@ body {
 
   .camera-shot--push,
   .camera-shot--pull,
-  .environment-drift,
-  .portrait-breathe {
+  .environment-drift {
     transform: none !important;
   }
 }
