@@ -78,19 +78,18 @@
 
 ![玫瑰信笺正在根据这一局的选择生成](./docs/readme-screenshots/letter-generating.png)
 
-### 4. 带走属于这一局的个人信笺
-
-生成完成后，信笺可以装裱成一张完整的信纸图片。它记录的是这一局独有的故事，而不是一份固定结局。
-
-<p align="center">
-  <img src="./docs/readme-screenshots/letter-output.png" alt="根据这一局选择生成的个人玫瑰信笺" width="420">
-</p>
-
-### 5. 继续完成六段，让玫瑰完整盛放
+### 4. 继续完成六段，让玫瑰完整盛放
 
 信笺不是终点。玩家仍可以回到记忆地图完成余下回看；当六段记忆都被重新看见，结局里的玫瑰才会完整盛放。
 
 ![完成六段回看后的玫瑰盛放结局](./docs/ppt-screenshots/5.png)
+
+### ★ 彩蛋：写下你自己的故事
+
+完成结局并回到主页后，玩家可以进入独立的个人故事写作页。这里不会复述这一局的选择足迹，而是让玩家写下自己的经历，再把它装裱成一张可以保存的个人信笺。
+<p align="center">
+  <img src="./docs/readme-screenshots/letter-output.png" alt="根据这一局选择生成的个人玫瑰信笺" width="420">
+</p>
 
 ## 操作方式
 
