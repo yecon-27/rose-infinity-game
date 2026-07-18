@@ -1,6 +1,13 @@
 "use client";
 
-import { Suspense, useCallback, useEffect, useRef, useState } from "react";
+import {
+  Suspense,
+  useCallback,
+  useEffect,
+  useLayoutEffect,
+  useRef,
+  useState,
+} from "react";
 import { useRouter, useSearchParams } from "next/navigation";
 import Image from "next/image";
 import { useSoundscape } from "@/components/soundscape-provider";
@@ -259,7 +266,8 @@ function GameInner() {
   const [phoneSequenceCompleted, setPhoneSequenceCompleted] = useState(false);
   const [mode, setMode] = useState<Mode>("flow");
   const [optIdx, setOptIdx] = useState(0);
-  const [enterHeld, setEnterHeld] = useState(false);
+  const [actionKeyHeld, setActionKeyHeld] = useState(false);
+  const [phoneHintLeft, setPhoneHintLeft] = useState<number | null>(null);
   const [loading, setLoading] = useState(false);
   const [entering, setEntering] = useState(true);
   const [bg, setBg] = useState(scene.bg);
@@ -276,6 +284,8 @@ function GameInner() {
   const historyRef = useRef<Array<{ role: "vera" | "sean"; text: string }>>([]);
   /** 聊天窗口容器:内容超高时钉在最新一条(旧消息从顶部滑出隐藏) */
   const chatBoxRef = useRef<HTMLDivElement | null>(null);
+  const phoneRef = useRef<HTMLDivElement | null>(null);
+  const phoneChoiceRefs = useRef<Array<HTMLButtonElement | null>>([]);
   /** 防止 Strict Mode 重跑 effect 时，同一条消息重复震动。 */
   const lastVibratedMessageRef = useRef("");
   const traceTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
@@ -304,7 +314,8 @@ function GameInner() {
     setPhoneSequenceCompleted(false);
     setMode("flow");
     setOptIdx(0);
-    setEnterHeld(false);
+    setActionKeyHeld(false);
+    setPhoneHintLeft(null);
     setLoading(false);
     setEntering(true);
     setBg(scene.bg);
@@ -320,9 +331,16 @@ function GameInner() {
   const current = queue[0];
   const tw = useTypewriter(current?.text ?? "");
 
-  /* 手机里每一条真正出现的消息都给反馈；旁白、回退查看不触发。 */
+  /* 只有收到 Sean 的新消息才震动；Vera 自己发出的消息、旁白、回退查看不触发。 */
   useEffect(() => {
-    if (!phoneOn || backIdx > 0 || !current || !isChatMsg(current)) return;
+    if (
+      !phoneOn ||
+      backIdx > 0 ||
+      !current ||
+      current.who !== "sean" ||
+      !isChatMsg(current)
+    )
+      return;
     const messageKey = `${scene.id}:${idx}:${current.who}:${
       current.time ?? ""
     }:${current.text}`;
@@ -527,6 +545,28 @@ function GameInner() {
     mode === "beat" && script[idx]?.kind === "beat"
       ? (script[idx] as Extract<Moment, { kind: "beat" }>)
       : null;
+  const selectedPhoneGesture = beatMoment?.choices[optIdx]?.gesture;
+
+  /* 手机外提示气泡水平对准当前选项中心；窗口变化时重新测量。 */
+  useLayoutEffect(() => {
+    if (!phoneOn || !selectedPhoneGesture) {
+      setPhoneHintLeft(null);
+      return;
+    }
+
+    function updateHintAnchor() {
+      const phone = phoneRef.current;
+      const choice = phoneChoiceRefs.current[optIdx];
+      if (!phone || !choice) return;
+      const phoneRect = phone.getBoundingClientRect();
+      const choiceRect = choice.getBoundingClientRect();
+      setPhoneHintLeft(choiceRect.left + choiceRect.width / 2 - phoneRect.left);
+    }
+
+    updateHintAnchor();
+    window.addEventListener("resize", updateHintAnchor);
+    return () => window.removeEventListener("resize", updateHintAnchor);
+  }, [optIdx, phoneOn, selectedPhoneGesture]);
 
   useEffect(() => {
     function onKey(e: KeyboardEvent) {
@@ -542,24 +582,24 @@ function GameInner() {
           advance();
         } else if (e.key === "ArrowDown" || e.key === "ArrowRight") {
           e.preventDefault();
-          setEnterHeld(false);
+          setActionKeyHeld(false);
           setOptIdx((i) => (i + 1) % n);
         } else if (e.key === "ArrowUp") {
           e.preventDefault();
-          setEnterHeld(false);
+          setActionKeyHeld(false);
           setOptIdx((i) => (i - 1 + n) % n);
-        } else if (e.key === "Enter") {
+        } else if (e.key === "Enter" || e.code === "Space") {
           e.preventDefault();
           if (e.repeat) return;
           const choice = beatMoment.choices[optIdx];
-          if (choice.gesture) setEnterHeld(true);
+          if (choice.gesture) setActionKeyHeld(true);
           else choose(choice);
         } else if (Number(e.key) >= 1 && Number(e.key) <= n) {
           e.preventDefault();
           const choiceIndex = Number(e.key) - 1;
           const choice = beatMoment.choices[choiceIndex];
           setOptIdx(choiceIndex);
-          setEnterHeld(false);
+          setActionKeyHeld(false);
           if (!choice.gesture) choose(choice);
         }
         return;
@@ -573,7 +613,7 @@ function GameInner() {
       }
     }
     function onKeyUp(e: KeyboardEvent) {
-      if (e.key === "Enter") setEnterHeld(false);
+      if (e.key === "Enter" || e.code === "Space") setActionKeyHeld(false);
     }
     window.addEventListener("keydown", onKey);
     window.addEventListener("keyup", onKeyUp);
@@ -768,7 +808,10 @@ function GameInner() {
        * 第一条消息进来("手机震了一下")才浮起,旁白不进手机。 */}
       {phoneMode && (chatWindow.length > 0 || !!beatMoment) && (
         <div className="fixed bottom-[12.5rem] left-1/2 z-20 -translate-x-1/2">
-          <div className="phone-rise flex h-[min(620px,66vh)] aspect-[10/19] flex-col overflow-hidden rounded-[2.2rem] border-2 border-white/20 bg-black/85 shadow-2xl backdrop-blur-md">
+          <div
+            ref={phoneRef}
+            className="phone-rise flex h-[min(620px,66vh)] aspect-[10/19] flex-col overflow-hidden rounded-[2.2rem] border-2 border-white/20 bg-black/85 shadow-2xl backdrop-blur-md"
+          >
             {/* 状态栏 + 刘海 */}
             <div className="relative flex items-center justify-between px-5 pb-1 pt-2.5 text-[9px] text-white/45">
               <span>{chatClock}</span>
@@ -847,7 +890,16 @@ function GameInner() {
                       onCommit={() => choose(c)}
                       disabled={loading}
                       selected={i === optIdx}
-                      keyboardPressed={enterHeld && i === optIdx}
+                      keyboardPressed={actionKeyHeld && i === optIdx}
+                      showHint={false}
+                      buttonRef={(node) => {
+                        phoneChoiceRefs.current[i] = node;
+                      }}
+                      ariaDescribedBy={
+                        i === optIdx && c.gesture
+                          ? "phone-gesture-hint"
+                          : undefined
+                      }
                       className={`rounded px-2 py-1 text-left text-xs leading-snug transition-colors ${
                         i === optIdx
                           ? "bg-accent/30 text-white"
@@ -887,6 +939,24 @@ function GameInner() {
               </div>
             )}
           </div>
+          {selectedPhoneGesture && phoneHintLeft !== null && (
+            <div
+              id="phone-gesture-hint"
+              role="status"
+              className="phone-gesture-callout"
+              style={{ left: phoneHintLeft }}
+            >
+              <p>
+                <span>选项 {optIdx + 1}</span>
+                {selectedPhoneGesture === "swipe"
+                  ? "向右滑动"
+                  : selectedPhoneGesture === "longpress"
+                  ? "长按"
+                  : "按住不放"}
+              </p>
+              <small>键盘 · 按住 Enter 或空格</small>
+            </div>
+          )}
         </div>
       )}
 
@@ -909,7 +979,7 @@ function GameInner() {
                   onCommit={() => choose(c)}
                   disabled={loading}
                   selected={i === optIdx}
-                  keyboardPressed={enterHeld && i === optIdx}
+                  keyboardPressed={actionKeyHeld && i === optIdx}
                   className={`block w-full text-left px-5 py-3 border text-sm leading-relaxed transition-colors ${
                     i === optIdx
                       ? "border-white bg-white/10 text-white"

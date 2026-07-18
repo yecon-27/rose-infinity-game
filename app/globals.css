@@ -368,6 +368,60 @@ body {
   transition: transform 80ms linear;
 }
 
+/* 手机演出里的操作说明离开候选区，用气泡对准当前选项。 */
+.phone-gesture-callout {
+  position: absolute;
+  top: calc(100% + 12px);
+  width: max-content;
+  max-width: min(240px, 76vw);
+  transform: translateX(-50%);
+  border: 1px solid rgba(214, 180, 157, 0.48);
+  border-radius: 12px;
+  background: rgba(242, 232, 217, 0.96);
+  box-shadow: 0 10px 28px rgba(0, 0, 0, 0.3);
+  padding: 8px 12px 7px;
+  color: rgba(43, 34, 31, 0.9);
+  pointer-events: none;
+  text-align: left;
+  backdrop-filter: blur(8px);
+  -webkit-backdrop-filter: blur(8px);
+}
+
+.phone-gesture-callout::before {
+  content: "";
+  position: absolute;
+  left: 50%;
+  top: -6px;
+  width: 11px;
+  height: 11px;
+  transform: translateX(-50%) rotate(45deg);
+  border-left: 1px solid rgba(214, 180, 157, 0.48);
+  border-top: 1px solid rgba(214, 180, 157, 0.48);
+  background: rgba(242, 232, 217, 0.96);
+}
+
+.phone-gesture-callout p {
+  display: flex;
+  align-items: baseline;
+  gap: 8px;
+  font-size: 11px;
+  letter-spacing: 0.12em;
+}
+
+.phone-gesture-callout p span {
+  color: rgba(165, 91, 102, 0.92);
+  font-size: 9px;
+  letter-spacing: 0.16em;
+}
+
+.phone-gesture-callout small {
+  display: block;
+  margin-top: 3px;
+  color: rgba(78, 64, 58, 0.62);
+  font-size: 9px;
+  letter-spacing: 0.1em;
+}
+
 /* 选择不打分，但足迹会持续留在画面上；新选择发生时再明确亮起。 */
 .choice-trace {
   width: 188px;

@@ -4,6 +4,7 @@ import {
   CSSProperties,
   PointerEvent as ReactPointerEvent,
   ReactNode,
+  Ref,
   useEffect,
   useId,
   useRef,
@@ -14,19 +15,19 @@ type Gesture = "hold" | "swipe" | "longpress";
 
 const HOLD_MS: Record<Exclude<Gesture, "swipe">, number> = {
   hold: 720,
-  longpress: 1100,
+  longpress: 1600,
 };
 
 const KEYBOARD_HOLD_MS: Record<Gesture, number> = {
   hold: 720,
   swipe: 900,
-  longpress: 1100,
+  longpress: 1600,
 };
 
 const GESTURE_COPY: Record<Gesture, string> = {
   hold: "按住不放 · 让犹豫停一会儿",
   swipe: "向右滑动 · 把手伸过去",
-  longpress: "长按 · 这次真的说出口",
+  longpress: "长按 · 把话说完",
 };
 
 export function GestureChoice({
@@ -35,6 +36,9 @@ export function GestureChoice({
   disabled = false,
   selected = false,
   keyboardPressed = false,
+  showHint = true,
+  buttonRef,
+  ariaDescribedBy,
   className = "",
   children,
 }: {
@@ -44,6 +48,10 @@ export function GestureChoice({
   selected?: boolean;
   /** 全局选项导航时，选中的按钮通过这个状态接收 Enter 的按住/松开。 */
   keyboardPressed?: boolean;
+  /** 手机演出会把说明移到手机外的指向气泡。 */
+  showHint?: boolean;
+  buttonRef?: Ref<HTMLButtonElement>;
+  ariaDescribedBy?: string;
   className?: string;
   children: ReactNode;
 }) {
@@ -103,7 +111,7 @@ export function GestureChoice({
     keyboardStarted.current = false;
     clearTimer();
     if (!committed.current) {
-      setFeedback("按住 Enter，等它走完。");
+      setFeedback("按住 Enter 或空格，等它走完。");
       setProgress(0);
     }
     setKeyboardMode(false);
@@ -174,6 +182,7 @@ export function GestureChoice({
   if (!gesture) {
     return (
       <button
+        ref={buttonRef}
         type="button"
         disabled={disabled}
         onClick={(event) => {
@@ -190,9 +199,10 @@ export function GestureChoice({
   return (
     <div className="space-y-1.5">
       <button
+        ref={buttonRef}
         type="button"
         disabled={disabled}
-        aria-describedby={descriptionId}
+        aria-describedby={showHint ? descriptionId : ariaDescribedBy}
         onPointerDown={begin}
         onPointerMove={move}
         onPointerUp={end}
@@ -228,13 +238,17 @@ export function GestureChoice({
           {children}
         </span>
       </button>
-      <p
-        id={descriptionId}
-        className="px-1 text-[9px] tracking-[0.18em] text-white/40"
-      >
-        <span className="block">{feedback || GESTURE_COPY[gesture]}</span>
-        <span className="mt-1 block text-white/30">键盘 · 按住 Enter</span>
-      </p>
+      {showHint && (
+        <p
+          id={descriptionId}
+          className="px-1 text-[9px] tracking-[0.18em] text-white/40"
+        >
+          <span className="block">{feedback || GESTURE_COPY[gesture]}</span>
+          <span className="mt-1 block text-white/30">
+            键盘 · 按住 Enter 或空格
+          </span>
+        </p>
+      )}
     </div>
   );
 }
