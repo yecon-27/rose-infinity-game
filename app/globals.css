@@ -437,26 +437,6 @@ body {
   -webkit-backdrop-filter: blur(8px);
 }
 
-@media (min-width: 720px) {
-  .phone-gesture-callout {
-    top: var(--phone-hint-top, 50%);
-    right: calc(100% + 16px);
-    left: auto;
-    max-width: 220px;
-    transform: translateY(-50%);
-  }
-
-  .phone-gesture-callout::before {
-    right: -6px;
-    left: auto;
-    top: 50%;
-    transform: translateY(-50%) rotate(45deg);
-    border: 0;
-    border-right: 1px solid rgba(214, 180, 157, 0.48);
-    border-top: 1px solid rgba(214, 180, 157, 0.48);
-  }
-}
-
 .phone-gesture-callout::before {
   content: "";
   position: absolute;
@@ -490,6 +470,26 @@ body {
   color: rgba(78, 64, 58, 0.62);
   font-size: 9px;
   letter-spacing: 0.1em;
+}
+
+@media (min-width: 720px) {
+  .phone-gesture-callout {
+    top: var(--phone-hint-top, 50%);
+    right: calc(100% + 16px);
+    left: auto;
+    max-width: 220px;
+    transform: translateY(-50%);
+  }
+
+  .phone-gesture-callout::before {
+    right: -6px;
+    left: auto;
+    top: 50%;
+    transform: translateY(-50%) rotate(45deg);
+    border: 0;
+    border-right: 1px solid rgba(214, 180, 157, 0.48);
+    border-top: 1px solid rgba(214, 180, 157, 0.48);
+  }
 }
 
 /* 选择不打分，但足迹会持续留在画面上；新选择发生时再明确亮起。 */
