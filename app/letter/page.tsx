@@ -1,6 +1,6 @@
 "use client";
 
-import { FormEvent, useEffect, useState } from "react";
+import { FormEvent, useEffect, useRef, useState } from "react";
 import Image from "next/image";
 import { useRouter } from "next/navigation";
 import { useSoundscape } from "@/components/soundscape-provider";
@@ -16,7 +16,33 @@ interface LetterResponse {
   error?: string;
 }
 
+type LetterExperience = "journey" | "personal";
+type JourneyResults = Partial<Record<LetterMode, LetterResponse>>;
+
 const LETTER_SOUND = { bgm: AUDIO.bgm.bloom, bgmVolume: 0.13 };
+
+async function requestLetter({
+  mode,
+  message = "",
+  choices,
+  journey = false,
+}: {
+  mode: LetterMode;
+  message?: string;
+  choices: ChoiceLogEntry[];
+  journey?: boolean;
+}): Promise<LetterResponse> {
+  const response = await fetch("/api/letter", {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify({ mode, message, choices, journey }),
+  });
+  const data = (await response.json()) as LetterResponse;
+  if (!response.ok || !data.ok || !data.text) {
+    throw new Error(data.error || "信笺暂时没有写成，请稍后再试。");
+  }
+  return data;
+}
 
 function loadCanvasImage(src: string): Promise<HTMLImageElement> {
   return new Promise((resolve, reject) => {
@@ -151,6 +177,8 @@ export default function LetterPage() {
   const router = useRouter();
   const { playSfx, unlock } = useSoundscape(LETTER_SOUND);
   const [choices, setChoices] = useState<ChoiceLogEntry[]>([]);
+  const [experience, setExperience] =
+    useState<LetterExperience>("journey");
   const [mode, setMode] = useState<LetterMode>("reply");
   const [message, setMessage] = useState("");
   const [result, setResult] = useState<LetterResponse | null>(null);
@@ -159,10 +187,52 @@ export default function LetterPage() {
   const [copied, setCopied] = useState(false);
   const [saving, setSaving] = useState(false);
   const [saveError, setSaveError] = useState("");
+  const [journeyResults, setJourneyResults] = useState<JourneyResults>({});
+  const [journeyLoading, setJourneyLoading] = useState(false);
+  const [journeyError, setJourneyError] = useState("");
+  const journeyStartedRef = useRef(false);
 
   useEffect(() => {
-    setChoices(readChoiceLog());
+    const savedChoices = readChoiceLog();
+    setChoices(savedChoices);
+    if (savedChoices.length === 0) {
+      setExperience("personal");
+      return;
+    }
+    if (journeyStartedRef.current) return;
+    journeyStartedRef.current = true;
+    void generateJourney(savedChoices);
+    // 首次进入只读取一次本局足迹；开发环境 Strict Mode 用 ref 防止重复扣费。
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
+
+  async function generateJourney(inputChoices = choices) {
+    if (inputChoices.length === 0 || journeyLoading) return;
+    setJourneyLoading(true);
+    setJourneyError("");
+    setJourneyResults({});
+    setMode("reply");
+    try {
+      const [reply, reflection] = await Promise.all([
+        requestLetter({ mode: "reply", choices: inputChoices, journey: true }),
+        requestLetter({
+          mode: "reflection",
+          choices: inputChoices,
+          journey: true,
+        }),
+      ]);
+      setJourneyResults({ reply, reflection });
+      playSfx(AUDIO.sfx.roseReveal, 0.32);
+    } catch (generateError) {
+      setJourneyError(
+        generateError instanceof Error
+          ? generateError.message
+          : "这一局的信笺暂时没有写成，请稍后再试。"
+      );
+    } finally {
+      setJourneyLoading(false);
+    }
+  }
 
   async function submit(event: FormEvent<HTMLFormElement>) {
     event.preventDefault();
@@ -178,15 +248,7 @@ export default function LetterPage() {
     setSaveError("");
 
     try {
-      const response = await fetch("/api/letter", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ mode, message: trimmed, choices }),
-      });
-      const data = (await response.json()) as LetterResponse;
-      if (!response.ok || !data.ok || !data.text) {
-        throw new Error(data.error || "信笺暂时没有写成，请稍后再试。");
-      }
+      const data = await requestLetter({ mode, message: trimmed, choices });
       setResult(data);
       playSfx(AUDIO.sfx.roseReveal, 0.32);
     } catch (submitError) {
@@ -201,16 +263,18 @@ export default function LetterPage() {
   }
 
   async function copyLetter() {
-    if (!result?.text || saving) return;
+    const activeResult =
+      experience === "journey" ? journeyResults[mode] : result;
+    if (!activeResult?.text || saving) return;
     setSaving(true);
     setSaveError("");
     try {
       try {
-        await navigator.clipboard.writeText(result.text);
+        await navigator.clipboard.writeText(activeResult.text);
       } catch {
         // 图片仍可生成；部分移动浏览器不开放剪贴板权限。
       }
-      await downloadLetterPng(result.text, mode);
+      await downloadLetterPng(activeResult.text, mode);
       setCopied(true);
       playSfx(AUDIO.sfx.softTap, 0.18);
     } catch (saveLetterError) {

@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from "next/server";
 import { chat } from "@/lib/deepseek";
 import {
   buildLetterFallback,
+  buildJourneyFallback,
   buildLetterSystemPrompt,
   hasUsableLetterOutput,
   isTrustBreachMessage,
@@ -85,8 +86,19 @@ export async function POST(req: NextRequest) {
     const payload = body && typeof body === "object" ? body : {};
     const rawMessage = (payload as { message?: unknown }).message;
     const message = typeof rawMessage === "string" ? rawMessage.trim() : "";
+    const journey = (payload as { journey?: unknown }).journey === true;
+    const mode = normalizeLetterMode((payload as { mode?: unknown }).mode);
+    const choices = normalizeChoices(
+      (payload as { choices?: unknown }).choices
+    );
 
-    if (!message) {
+    if (journey && choices.length === 0) {
+      return NextResponse.json(
+        { ok: false, error: "这一局还没有留下可以回望的选择。" },
+        { status: 400 }
+      );
+    }
+    if (!journey && !message) {
       return NextResponse.json(
         { ok: false, error: "请先写下一句当年想说的话。" },
         { status: 400 }
@@ -99,12 +111,10 @@ export async function POST(req: NextRequest) {
       );
     }
 
-    const mode = normalizeLetterMode((payload as { mode?: unknown }).mode);
-    const choices = normalizeChoices(
-      (payload as { choices?: unknown }).choices
-    );
-    const fallback = buildLetterFallback(mode, message, choices);
-    const trustBreach = isTrustBreachMessage(message);
+    const fallback = journey
+      ? buildJourneyFallback(mode, choices)
+      : buildLetterFallback(mode, message, choices);
+    const trustBreach = !journey && isTrustBreachMessage(message);
 
     if (trustBreach) {
       return NextResponse.json({
@@ -129,13 +139,13 @@ export async function POST(req: NextRequest) {
         [
           {
             role: "system",
-            content: buildLetterSystemPrompt(mode, choices),
+            content: buildLetterSystemPrompt(mode, choices, journey),
           },
           {
             role: "user",
             content: `下面的 JSON 是这次回声唯一可以使用的事实来源。键名只是说明，不是正文格式。\n<事实>\n${JSON.stringify(
               {
-                玩家原话: message,
+                ...(journey ? {} : { 玩家原话: message }),
                 选择文字: choices.map((choice) => ({
                   文字: choice.text,
                   曾试着伸手: choice.reach,
@@ -149,7 +159,11 @@ export async function POST(req: NextRequest) {
               reflectionParagraphs
                 ? `本次节奏：自然写成 ${reflectionParagraphs} 段，段落长短不要均衡。\n`
                 : ""
-            }请只输出信笺正文，不要补写 JSON 中没有发生的事。`,
+            }${
+              journey
+                ? "这是通关后的自动信笺，请自然回应这一局，不要假装玩家刚输入了一句话。"
+                : "请自然回应玩家原话。"
+            }只输出信笺正文，不要补写 JSON 中没有发生的事。`,
           },
         ],
         {
