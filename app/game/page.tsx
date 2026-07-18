@@ -147,10 +147,13 @@ function Portrait({
   }, [src]);
   return (
     <div
-      className={`absolute bottom-0 ${
+      className={`portrait-breathe portrait-breathe--${side} absolute bottom-0 ${
         side === "left" ? "left-2" : "right-2"
-      } h-[62vh] w-[30vw] max-w-[340px] min-w-[160px] transition-opacity duration-500`}
-      style={{ opacity: active ? 1 : 0.4 }}
+      } h-[62vh] w-[30vw] max-w-[340px] min-w-[160px] transition-[opacity,filter] duration-700`}
+      style={{
+        opacity: active ? 1 : 0.48,
+        filter: active ? "none" : "blur(1px) saturate(0.68)",
+      }}
     >
       {layers.map((l, i) => {
         const top = i === layers.length - 1;
@@ -561,6 +564,32 @@ function GameInner() {
   const showPortraits =
     !phoneMode && scene.portraits !== "none" && !hideBeforeSunnyPhoneChat;
   const showSean = showPortraits && scene.portraits !== "vera";
+  /**
+   * 剧本里的 beat 就是明确的情绪拍：暖场向对方推近，冷场从对方拉远。
+   * 普通台词不反复运镜，只让背景保持极慢的环境视差。
+   */
+  const shotFocus: "vera" | "sean" | undefined = beatMoment
+    ? npcRole
+    : speaker === "vera" || speaker === "sean"
+    ? speaker
+    : undefined;
+  const focusSide: "left" | "right" | undefined = shotFocus
+    ? shotFocus === "vera"
+      ? scene.pov === "vera"
+        ? "right"
+        : "left"
+      : scene.pov === "vera"
+      ? "left"
+      : "right"
+    : undefined;
+  const shotOrigin =
+    focusSide === "left" ? "28%" : focusSide === "right" ? "72%" : "50%";
+  const shotClass =
+    beatMoment && !reviewLine && !phoneMode
+      ? scene.phase === "strained"
+        ? "camera-shot--pull"
+        : "camera-shot--push"
+      : "";
 
   return (
     <main
@@ -572,64 +601,100 @@ function GameInner() {
         reach={choiceTrace.reach}
         visible={choiceTrace.visible}
       />
-      {/* 背景：单图全屏，或左右分屏（两地感，如幕5） */}
-      <div className={`fixed inset-0 z-0 ${entering ? "memory-focus" : ""}`}>
-        {scene.bgSplit ? (
-          <div className="absolute inset-0 flex">
-            <div className="relative h-full w-1/2">
-              <Image
-                src={scene.bgSplit[0]}
-                alt=""
-                fill
-                priority
-                className="object-cover fade-in-slow"
-              />
+      {/* 镜头层：情绪拍推/拉整幅画面；背景在里面做更慢的环境视差。 */}
+      <div
+        className={`fixed inset-0 z-0 overflow-hidden ${
+          entering ? "memory-focus" : ""
+        }`}
+      >
+        <div
+          className={`camera-stage ${shotClass}`}
+          style={{ "--shot-origin-x": shotOrigin } as React.CSSProperties}
+        >
+          {/* 背景多留出一圈出血，拉镜时不会露出黑边。 */}
+          <div className="camera-backdrop">
+            <div
+              className={`environment-drift absolute inset-0 ${
+                scene.phase === "strained" ? "environment-drift--strained" : ""
+              }`}
+            >
+              {scene.bgSplit ? (
+                <div className="absolute inset-0 flex">
+                  <div className="relative h-full w-1/2">
+                    <Image
+                      src={scene.bgSplit[0]}
+                      alt=""
+                      fill
+                      priority
+                      className="object-cover fade-in-slow"
+                    />
+                  </div>
+                  <div className="h-full w-[3px] bg-black/90 shadow-[0_0_18px_rgba(0,0,0,0.9)]" />
+                  <div className="relative h-full flex-1">
+                    <Image
+                      src={scene.bgSplit[1]}
+                      alt=""
+                      fill
+                      priority
+                      className="object-cover fade-in-slow"
+                    />
+                  </div>
+                </div>
+              ) : (
+                <Image
+                  key={bg}
+                  src={bg}
+                  alt=""
+                  fill
+                  priority
+                  className="object-cover fade-in-slow"
+                />
+              )}
             </div>
-            <div className="h-full w-[3px] bg-black/90 shadow-[0_0_18px_rgba(0,0,0,0.9)]" />
-            <div className="relative h-full flex-1">
-              <Image
-                src={scene.bgSplit[1]}
-                alt=""
-                fill
-                priority
-                className="object-cover fade-in-slow"
-              />
-            </div>
+            <div className="absolute inset-0 bg-gradient-to-b from-black/35 via-black/35 to-black/80" />
+            <div
+              aria-hidden="true"
+              className={`cinematic-vignette ${
+                scene.phase === "strained" ? "cinematic-vignette--strained" : ""
+              }`}
+            />
           </div>
-        ) : (
-          <Image
-            key={bg}
-            src={bg}
-            alt=""
-            fill
-            priority
-            className="object-cover fade-in-slow"
-          />
-        )}
-        <div className="absolute inset-0 bg-gradient-to-b from-black/40 via-black/40 to-black/80" />
-      </div>
 
-      {/* 立绘:Vera + Sean,表情交叉淡入,高亮当前说话者
-       * 一周目(pov=vera)交换站位:Sean 在左、Vera 在右;二周目恢复默认。
-       * portraits/presentation 可整幕隐藏(人物已画进背景,或聊天演出)。 */}
-      {showPortraits && (
-        <div className="absolute inset-0 z-10 pointer-events-none">
-          <Portrait
-            src={veraPortrait}
-            alt="Vera"
-            active={speaker === "vera"}
-            side={scene.pov === "vera" ? "right" : "left"}
-          />
-          {showSean && (
-            <Portrait
-              src={seanPortrait}
-              alt="Sean"
-              active={speaker === "sean"}
-              side={scene.pov === "vera" ? "left" : "right"}
+          {/* 立绘:Vera + Sean,表情交叉淡入,高亮当前说话者
+           * 一周目(pov=vera)交换站位:Sean 在左、Vera 在右;二周目恢复默认。
+           * portraits/presentation 可整幕隐藏(人物已画进背景,或聊天演出)。 */}
+          {showPortraits && (
+            <div className="absolute inset-0 z-10 pointer-events-none">
+              <Portrait
+                src={veraPortrait}
+                alt="Vera"
+                active={shotFocus === "vera"}
+                side={scene.pov === "vera" ? "right" : "left"}
+              />
+              {showSean && (
+                <Portrait
+                  src={seanPortrait}
+                  alt="Sean"
+                  active={shotFocus === "sean"}
+                  side={scene.pov === "vera" ? "left" : "right"}
+                />
+              )}
+            </div>
+          )}
+
+          {/* 不说话的一侧轻微失焦、压暗；中心用渐变收口，避免硬切半屏。 */}
+          {showPortraits && focusSide && (
+            <div
+              aria-hidden="true"
+              className={`scene-side-muted scene-side-muted--${
+                focusSide === "left" ? "right" : "left"
+              } ${
+                scene.phase === "strained" ? "scene-side-muted--strained" : ""
+              }`}
             />
           )}
         </div>
-      )}
+      </div>
 
       {/* 进场:记忆对焦时,幕名浮在正在清晰的画面上,再隐去(不经过纯黑) */}
       {entering && (

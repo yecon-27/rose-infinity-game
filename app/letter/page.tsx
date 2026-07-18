@@ -11,7 +11,7 @@ import type { LetterMode } from "@/lib/letter";
 interface LetterResponse {
   ok: boolean;
   text?: string;
-  source?: "generated" | "fallback";
+  source?: "generated" | "fallback" | "grounded";
   choiceCount?: number;
   error?: string;
 }
@@ -375,7 +375,12 @@ export default function LetterPage() {
               </div>
               {result.source === "fallback" && (
                 <p className="mt-6 text-[10px] leading-5 text-[#907d79]">
-                  这一次没连上远处的回声，先替你留下一封本地信笺。
+                  DeepSeek 这次没有返回可用正文，已替你留下一封本地信笺。
+                </p>
+              )}
+              {result.source === "grounded" && (
+                <p className="mt-6 text-[10px] leading-5 text-[#907d79]">
+                  这句话涉及无法由信笺核验的现实事实，因此只依据你的原话回应，没有替任何一方补写解释。
                 </p>
               )}
               {saveError && (

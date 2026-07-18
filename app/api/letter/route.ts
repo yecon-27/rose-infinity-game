@@ -3,6 +3,8 @@ import { chat } from "@/lib/deepseek";
 import {
   buildLetterFallback,
   buildLetterSystemPrompt,
+  hasUsableLetterOutput,
+  isTrustBreachMessage,
   normalizeChoices,
   normalizeLetterMode,
 } from "@/lib/letter";
@@ -53,6 +55,17 @@ export async function POST(req: NextRequest) {
       (payload as { choices?: unknown }).choices
     );
     const fallback = buildLetterFallback(mode, message, choices);
+    const trustBreach = isTrustBreachMessage(message);
+
+    if (trustBreach) {
+      return NextResponse.json({
+        ok: true,
+        text: fallback,
+        source: "grounded",
+        choiceCount: choices.length,
+      });
+    }
+
     const reflectionLens =
       mode === "reflection"
         ? REFLECTION_LENSES[
@@ -98,6 +111,16 @@ export async function POST(req: NextRequest) {
       );
       const text = cleanOutput(output);
       if (!text) throw new Error("DeepSeek 返回了空内容");
+
+      if (!hasUsableLetterOutput(mode, message, text)) {
+        console.warn("[letter] 生成内容未通过事实边界检查，改用本地信笺");
+        return NextResponse.json({
+          ok: true,
+          text: fallback,
+          source: "fallback",
+          choiceCount: choices.length,
+        });
+      }
 
       return NextResponse.json({
         ok: true,

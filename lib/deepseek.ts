@@ -8,6 +8,7 @@
 const DEFAULT_BASE_URL = "https://api.deepseek.com";
 const DEFAULT_MODEL = "deepseek-v4-flash";
 const DEFAULT_TIMEOUT_MS = 30_000;
+const DEFAULT_RETRIES = 1;
 
 export interface ChatMessage {
   role: "system" | "user" | "assistant";
@@ -20,6 +21,16 @@ interface DeepSeekResponse {
       content?: string | null;
     };
   }>;
+}
+
+class DeepSeekRequestError extends Error {
+  constructor(
+    message: string,
+    readonly retryable: boolean
+  ) {
+    super(message);
+    this.name = "DeepSeekRequestError";
+  }
 }
 
 function getConfig() {
@@ -51,55 +62,81 @@ export async function chat(
     maxTokens?: number;
     timeoutMs?: number;
     thinking?: "enabled" | "disabled";
+    retries?: number;
   } = {}
 ): Promise<string> {
   const { apiKey, baseUrl, model } = getConfig();
-  const controller = new AbortController();
-  const timeout = setTimeout(
-    () => controller.abort(),
-    options.timeoutMs ?? DEFAULT_TIMEOUT_MS
-  );
+  const retries = Math.max(0, Math.min(2, options.retries ?? DEFAULT_RETRIES));
+  let lastError: unknown;
 
-  try {
-    const response = await fetch(`${baseUrl}/chat/completions`, {
-      method: "POST",
-      headers: {
-        "Content-Type": "application/json",
-        Authorization: `Bearer ${apiKey}`,
-      },
-      body: JSON.stringify({
-        model,
-        messages,
-        // Most short narrative calls use non-thinking mode. Reflection can opt
-        // into thinking so the model checks tone and factual boundaries first.
-        thinking: { type: options.thinking ?? "disabled" },
-        temperature: options.temperature ?? 0.8,
-        max_tokens: options.maxTokens ?? 500,
-        stream: false,
-      }),
-      cache: "no-store",
-      signal: controller.signal,
-    });
+  for (let attempt = 0; attempt <= retries; attempt += 1) {
+    const controller = new AbortController();
+    const timeout = setTimeout(
+      () => controller.abort(),
+      options.timeoutMs ?? DEFAULT_TIMEOUT_MS
+    );
 
-    if (!response.ok) {
-      const detail = (await response.text()).replace(/\s+/g, " ").slice(0, 300);
-      throw new Error(
-        `DeepSeek API 调用失败 (${response.status})${
-          detail ? `：${detail}` : ""
-        }`
-      );
+    try {
+      const response = await fetch(`${baseUrl}/chat/completions`, {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+          Authorization: `Bearer ${apiKey}`,
+        },
+        body: JSON.stringify({
+          model,
+          messages,
+          // Most short narrative calls use non-thinking mode. Reflection can opt
+          // into thinking so the model checks tone and factual boundaries first.
+          thinking: { type: options.thinking ?? "disabled" },
+          temperature: options.temperature ?? 0.8,
+          max_tokens: options.maxTokens ?? 500,
+          stream: false,
+        }),
+        cache: "no-store",
+        signal: controller.signal,
+      });
+
+      if (!response.ok) {
+        const detail = (await response.text())
+          .replace(/\s+/g, " ")
+          .slice(0, 300);
+        throw new DeepSeekRequestError(
+          `DeepSeek API 调用失败 (${response.status})${
+            detail ? `：${detail}` : ""
+          }`,
+          response.status === 408 ||
+            response.status === 409 ||
+            response.status === 429 ||
+            response.status >= 500
+        );
+      }
+
+      const data = (await response.json()) as DeepSeekResponse;
+      const content = data.choices?.[0]?.message?.content?.trim();
+      if (!content) {
+        throw new DeepSeekRequestError("DeepSeek 返回了空内容", true);
+      }
+      return content;
+    } catch (error) {
+      const normalizedError =
+        error instanceof Error && error.name === "AbortError"
+          ? new DeepSeekRequestError("DeepSeek API 请求超时", true)
+          : error;
+      lastError = normalizedError;
+      const retryable =
+        normalizedError instanceof DeepSeekRequestError
+          ? normalizedError.retryable
+          : normalizedError instanceof TypeError;
+
+      if (!retryable || attempt === retries) throw normalizedError;
+      await new Promise((resolve) => setTimeout(resolve, 350 * (attempt + 1)));
+    } finally {
+      clearTimeout(timeout);
     }
-
-    const data = (await response.json()) as DeepSeekResponse;
-    const content = data.choices?.[0]?.message?.content?.trim();
-    if (!content) throw new Error("DeepSeek 返回了空内容");
-    return content;
-  } catch (error) {
-    if (error instanceof Error && error.name === "AbortError") {
-      throw new Error("DeepSeek API 请求超时");
-    }
-    throw error;
-  } finally {
-    clearTimeout(timeout);
   }
+
+  throw lastError instanceof Error
+    ? lastError
+    : new Error("DeepSeek API 调用失败");
 }

@@ -75,6 +75,139 @@ body {
   animation: kenBurns 45s ease-in-out infinite alternate;
 }
 
+/* 游戏镜头：只在剧本 beat（明确情绪拍）上运镜，UI 始终留在镜头外。 */
+@keyframes cameraPush {
+  from {
+    transform: scale(1);
+  }
+  to {
+    transform: scale(1.06);
+  }
+}
+
+@keyframes cameraPull {
+  from {
+    transform: scale(1);
+  }
+  to {
+    transform: scale(0.95);
+  }
+}
+
+.camera-stage {
+  position: absolute;
+  inset: 0;
+  transform-origin: var(--shot-origin-x, 50%) 54%;
+  transition: transform 1.2s cubic-bezier(0.22, 1, 0.36, 1);
+  will-change: transform;
+}
+
+.camera-shot--push {
+  animation: cameraPush 5.5s cubic-bezier(0.33, 0, 0.2, 1) both;
+}
+
+.camera-shot--pull {
+  animation: cameraPull 5.5s cubic-bezier(0.33, 0, 0.2, 1) both;
+}
+
+/* 比视口多铺一圈，保证 cameraPull 缩小时背景仍有出血。 */
+.camera-backdrop {
+  position: absolute;
+  inset: -3vh -3vw;
+}
+
+/* 环境层自己缓慢漂移，人物不平移。 */
+@keyframes environmentDrift {
+  from {
+    transform: translate3d(-0.45%, 0.25%, 0) scale(1.015);
+  }
+  to {
+    transform: translate3d(0.45%, -0.25%, 0) scale(1.035);
+  }
+}
+
+.environment-drift {
+  animation: environmentDrift 18s ease-in-out infinite alternate;
+  will-change: transform;
+}
+
+.environment-drift--strained {
+  animation-duration: 24s;
+  filter: saturate(0.78) brightness(0.88);
+}
+
+.cinematic-vignette {
+  position: absolute;
+  inset: 0;
+  pointer-events: none;
+  background: radial-gradient(
+    ellipse at var(--shot-origin-x, 50%) 48%,
+    transparent 24%,
+    rgba(0, 0, 0, 0.08) 56%,
+    rgba(0, 0, 0, 0.58) 100%
+  );
+}
+
+.cinematic-vignette--strained {
+  background: radial-gradient(
+    ellipse at var(--shot-origin-x, 50%) 48%,
+    transparent 17%,
+    rgba(0, 0, 0, 0.2) 50%,
+    rgba(0, 0, 0, 0.76) 100%
+  );
+}
+
+/* 非焦点侧越靠外越暗、越虚，中心保持柔和过渡。 */
+.scene-side-muted {
+  position: absolute;
+  inset-block: 0;
+  z-index: 15;
+  width: 58%;
+  pointer-events: none;
+  background: rgba(2, 4, 7, 0.2);
+  backdrop-filter: blur(1.8px) brightness(0.72) saturate(0.72);
+  -webkit-backdrop-filter: blur(1.8px) brightness(0.72) saturate(0.72);
+}
+
+.scene-side-muted--left {
+  left: 0;
+  -webkit-mask-image: linear-gradient(to right, #000 45%, transparent 100%);
+  mask-image: linear-gradient(to right, #000 45%, transparent 100%);
+}
+
+.scene-side-muted--right {
+  right: 0;
+  -webkit-mask-image: linear-gradient(to left, #000 45%, transparent 100%);
+  mask-image: linear-gradient(to left, #000 45%, transparent 100%);
+}
+
+.scene-side-muted--strained {
+  background: rgba(0, 3, 8, 0.34);
+  backdrop-filter: blur(2.4px) brightness(0.58) saturate(0.55);
+  -webkit-backdrop-filter: blur(2.4px) brightness(0.58) saturate(0.55);
+}
+
+/* 立绘生命感：底部锚定，只做 1.5% 纵向呼吸，不发生位移。 */
+@keyframes portraitBreath {
+  0%,
+  100% {
+    transform: scaleY(1);
+  }
+  50% {
+    transform: scaleY(1.015);
+  }
+}
+
+.portrait-breathe {
+  transform-origin: center bottom;
+  animation: portraitBreath 4s ease-in-out infinite;
+  will-change: transform;
+}
+
+.portrait-breathe--right {
+  animation-delay: -2s;
+}
+
 /* 章节卡:黑场 → 幕名浮现 → 淡出 */
 @keyframes chapterCard {
   0% {
@@ -311,6 +444,10 @@ body {
 }
 
 @media (prefers-reduced-motion: reduce) {
+  .camera-shot--push,
+  .camera-shot--pull,
+  .environment-drift,
+  .portrait-breathe,
   .gesture-choice__wash,
   .gesture-choice__content,
   .choice-trace,
@@ -319,5 +456,12 @@ body {
   .memory-found {
     animation-duration: 1ms !important;
     transition-duration: 1ms !important;
+  }
+
+  .camera-shot--push,
+  .camera-shot--pull,
+  .environment-drift,
+  .portrait-breathe {
+    transform: none !important;
   }
 }

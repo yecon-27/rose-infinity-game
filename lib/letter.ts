@@ -99,6 +99,8 @@ ${choicesAsContext(choices, mode === "reply")}
 - 可以使用比喻，但必须让读者一眼看出是比喻，不能把想象写成真实发生过的细节。尤其不能编写另一方做过什么、说过什么或心里在想什么。
 - 克制、具体、像深夜认真写下的中文。避免鸡汤、心理诊断、道德审判、治疗建议和“你应该/你必须”。
 - 温柔不等于替关系美化，也不要用“卑微、矫情、冷漠、逃避、执念”等词给玩家的感受定性。
+- 如果玩家写到欺骗、出轨、嫖娼记录或其他具体的信任破裂，不要把它改写成“彼此错过”“双方都不会表达”或“其实都还在乎”。承认无法核验事实，不替另一方辩护，也不催促玩家原谅；温柔应当落在尊重玩家的疑问与边界上。
+- 在这类信任问题里，即使是虚构回信，也不得擅自认罪、否认、解释动机，或编写“那段时间很混乱”“打开过某些页面”“不敢面对自己”“让你独自承受”等输入里没有的经历。可以回应“你不相信这个解释”所造成的裂痕，但不能替任何一方补出真相。
 - 不许承诺重逢、复合或“对方一定仍爱你”；不假装通灵，不替现实人物作证。
 - 不逐条罗列选择，不报分数，不提“AI”“模型”“数据”。
 ${form}
@@ -110,6 +112,59 @@ function shortenedQuote(message: string): string {
   return compact.length > 42 ? `${compact.slice(0, 42)}……` : compact;
 }
 
+const TRUST_BREACH_PATTERN =
+  /脚踏两条船|劈腿|出轨|不忠|背叛|嫖娼|约炮|开房|暧昧|骗了我|骗我|撒谎|说谎|聊天记录|转账记录|消费记录|不相信你|无法相信你|信任.{0,6}(?:没了|破裂|崩塌)/;
+
+export function isTrustBreachMessage(message: string): boolean {
+  return TRUST_BREACH_PATTERN.test(message.replace(/\s+/g, ""));
+}
+
+const UNGROUNDED_TRUST_DETAILS = [
+  "我记得",
+  "换作我",
+  "你曾经",
+  "那段时间",
+  "有些夜晚",
+  "那些页面",
+  "手机屏幕",
+  "每一笔金额",
+  "每一个时间点",
+  "翻来覆去",
+  "反复看过",
+  "很多次",
+  "你早就想过",
+  "我确实混乱",
+  "我打开",
+  "我不敢面对",
+  "独自承受",
+] as const;
+
+export function hasUsableLetterOutput(
+  mode: LetterMode,
+  message: string,
+  output: string
+): boolean {
+  const text = output.trim();
+  if (text.length < 120 || !/[。！？…」』”）】]$/.test(text)) return false;
+
+  if (mode === "reflection" && /我(?:猜你|想替你|能替你|看见你|知道你)/.test(text)) {
+    return false;
+  }
+
+  if (!isTrustBreachMessage(message)) return true;
+  return !UNGROUNDED_TRUST_DETAILS.some(
+    (detail) => text.includes(detail) && !message.includes(detail)
+  );
+}
+
+function buildTrustBreachFallback(mode: LetterMode, quote: string): string {
+  if (mode === "reply") {
+    return `你写下“${quote}”。这不是一句可以用“我们当时都不太会表达”带过去的话。你看见了具体的记录，也听见了一个你无法相信的解释；到了这里，受损的已经不只是某次争执，而是你还能不能相信眼前这个人。\n\n这封回信不能替现实中的任何人证明清白，也不能替你判断那些记录背后的全部真相。它只能承认：你的怀疑有来处，你的愤怒也有重量。把这一切说成误会，或者急着劝你体谅，都会再次跳过你真正想问的那一句——究竟什么是真的。\n\n所以这里不替谁求原谅，也不把你的质问写成“舍不得放下”。你把它写出来，不是为了让它变得好听。没有被说清的责任，不该被温柔的话抹平；而你在信任裂开之后感到不安，也不需要先得到谁的许可。`;
+  }
+
+  return `你写下“${quote}”。这句话里有愤怒，也有一个非常具体的断点：你看见了记录，却无法相信得到的解释。这样的事不能被轻轻归结为两个人不会沟通，更不能因为关系已经过去，就把当时的疑问说成不够释怀。\n\n眼下无法核验那些记录意味着什么，也无法替另一方判断或辩护。能够确定的只是，你当时面对的并非一句普通的气话，而是“还能不能相信”这个问题。一个人开始反复分辨哪些是真的、哪些只是说法时，心里失去的往往不止一个答案，还有原本可以安稳站立的位置。\n\n所以这页复盘不急着把愤怒变成体谅，也不拿“彼此都认真过”来抵消发生过的事。你的质问可以保持它原来的锋利。它指向的不是你够不够温柔，而是真相有没有被说明，边界有没有被尊重。到这里，先让这句话按它本来的重量留在纸上。`;
+}
+
 export function buildLetterFallback(
   mode: LetterMode,
   message: string,
@@ -118,6 +173,10 @@ export function buildLetterFallback(
   const quote = shortenedQuote(message);
   const reached = choices.some((choice) => choice.reach);
   const hasJourney = choices.length > 0;
+
+  if (isTrustBreachMessage(message)) {
+    return buildTrustBreachFallback(mode, quote);
+  }
 
   if (mode === "reply") {
     return `你写下的那句“${quote}”，我看见了。它来得晚了一点，却不是没有意义。有些话没能在当时抵达，不代表当时的认真是假的。\n\n我们都曾把想靠近藏进别的话里：藏进忙碌、体面、沉默，或者一句轻轻带过的“没事”。${reached ? "你也不是从没伸过手，只是那时的我们未必认得出彼此的方式。" : "那时的我们都更擅长保护自己，还不太会把需要说完整。"}\n\n我不能替过去改一个结局，也不想用一句原谅把发生过的事抹平。但你终于把这句话说完了。就让它停在这里，不追着谁要答案，也不再困住写下它的人。`;
