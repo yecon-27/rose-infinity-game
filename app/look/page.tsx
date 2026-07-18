@@ -367,7 +367,9 @@ function MemoryMap({
               onClick={() => {
                 if (!letterUnlocked) return;
                 playSfx(AUDIO.sfx.roseReveal, LOOKBACK_SFX_VOLUME);
-                router.push("/letter");
+                router.push(
+                  `/letter?from=look${allDone ? "&complete=1" : ""}`
+                );
               }}
               className={`group relative flex w-full flex-col items-start justify-center overflow-hidden border px-5 py-6 text-left transition-all duration-500 focus-visible:outline focus-visible:outline-1 focus-visible:outline-offset-4 focus-visible:outline-accent sm:px-5 sm:py-7 ${
                 letterUnlocked
@@ -396,7 +398,7 @@ function MemoryMap({
               >
                 {letterUnlocked
                   ? allDone
-                    ? "六段回看已经完成"
+                    ? "六段回看完成 · 去读最后的信"
                     : "可以带着目前看见的，提前离开"
                   : `完成 3 段回看后开启 · ${completedCount} / 3`}
               </span>
@@ -416,16 +418,9 @@ function MemoryMap({
 
         <footer className="mt-12 text-center sm:mt-16">
           {allDone ? (
-            <button
-              type="button"
-              onClick={() => {
-                playSfx(AUDIO.sfx.roseReveal, LOOKBACK_SFX_VOLUME);
-                router.push("/ending?seen=1");
-              }}
-              className="border border-accent/70 bg-accent/10 px-8 py-4 text-sm tracking-[0.35em] text-accent transition-colors hover:bg-accent/20"
-            >
-              让 玫 瑰 盛 放
-            </button>
+            <p className="text-[10px] tracking-[0.3em] text-accent/65">
+              最后一朵玫瑰，藏在信笺之后
+            </p>
           ) : (
             <p className="text-[10px] tracking-[0.3em] text-white/30">
               每看清一段，记忆会留下一点光

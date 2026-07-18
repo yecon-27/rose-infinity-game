@@ -3,9 +3,14 @@
 import { useCallback, useEffect, useRef, useState } from "react";
 import Image from "next/image";
 import { useRouter } from "next/navigation";
+import { HomeMailbox } from "@/components/home-mailbox";
 import { useSoundscape } from "@/components/soundscape-provider";
 import { AUDIO } from "@/lib/audio";
 import { clearChoiceLog } from "@/lib/choice-log";
+import {
+  readLetterArchive,
+  type ArchivedLetter,
+} from "@/lib/letter-archive";
 import { clearLookbackProgress } from "@/lib/lookback-progress";
 
 const HOME_SOUND = { bgm: AUDIO.bgm.rosebud, bgmVolume: 0.16 };
@@ -13,7 +18,9 @@ const HOME_SOUND = { bgm: AUDIO.bgm.rosebud, bgmVolume: 0.16 };
 export default function Home() {
   const router = useRouter();
   const [leaving, setLeaving] = useState(false);
-  const [selectedAction, setSelectedAction] = useState<0 | 1>(0);
+  const [selectedAction, setSelectedAction] = useState(0);
+  const [mailboxOpen, setMailboxOpen] = useState(false);
+  const [archivedLetters, setArchivedLetters] = useState<ArchivedLetter[]>([]);
   const leavingRef = useRef(false);
   const menuRefs = useRef<Array<HTMLButtonElement | null>>([]);
   const { playSfx, unlock } = useSoundscape(HOME_SOUND);
@@ -34,11 +41,28 @@ export default function Home() {
     if (leavingRef.current) return;
     unlock();
     playSfx(AUDIO.sfx.softTap, 0.18);
-    router.push("/letter");
+    router.push("/letter?mode=personal");
   }, [playSfx, router, unlock]);
+
+  const openMailbox = useCallback(() => {
+    if (leavingRef.current) return;
+    unlock();
+    playSfx(AUDIO.sfx.softTap, 0.18);
+    setArchivedLetters(readLetterArchive());
+    setMailboxOpen(true);
+  }, [playSfx, unlock]);
+
+  const closeMailbox = useCallback(() => {
+    setMailboxOpen(false);
+  }, []);
+
+  useEffect(() => {
+    setArchivedLetters(readLetterArchive());
+  }, []);
 
   useEffect(() => {
     function onKey(e: KeyboardEvent) {
+      if (mailboxOpen) return;
       if (
         e.target instanceof HTMLElement &&
         ["INPUT", "TEXTAREA"].includes(e.target.tagName)
@@ -48,7 +72,8 @@ export default function Home() {
 
       if (e.key === "ArrowUp" || e.key === "ArrowDown") {
         e.preventDefault();
-        const next = selectedAction === 0 ? 1 : 0;
+        const direction = e.key === "ArrowDown" ? 1 : -1;
+        const next = (selectedAction + direction + 3) % 3;
         setSelectedAction(next);
         menuRefs.current[next]?.focus({ preventScroll: true });
         return;
@@ -57,12 +82,13 @@ export default function Home() {
       if (e.key === "Enter" || e.code === "Space") {
         e.preventDefault();
         if (selectedAction === 0) start();
-        else openLetter();
+        else if (selectedAction === 1) openLetter();
+        else openMailbox();
       }
     }
     window.addEventListener("keydown", onKey);
     return () => window.removeEventListener("keydown", onKey);
-  }, [openLetter, selectedAction, start]);
+  }, [mailboxOpen, openLetter, openMailbox, selectedAction, start]);
 
   return (
     <main className="relative min-h-screen overflow-hidden bg-black flex flex-col items-center justify-center px-6 py-12">
@@ -98,12 +124,12 @@ export default function Home() {
       >
         <p
           className="fade-in-delayed text-xs tracking-[0.4em] text-white/70 uppercase"
-          style={{ animationDelay: "0.3s" }}
+          style={{ animationDelay: "0.1s", animationDuration: "0.65s" }}
         >
           回到那些以为还很长的日子里
         </p>
 
-        <div className="fade-in-slow space-y-3">
+        <div className="fade-in-slow space-y-3 [animation-duration:0.9s]">
           <h1 className="text-6xl font-serif tracking-[0.25em] text-white">
             玫瑰无限
           </h1>
@@ -111,15 +137,15 @@ export default function Home() {
         </div>
 
         <div className="space-y-3 leading-loose text-white/85 text-sm">
-          <p className="fade-in-delayed" style={{ animationDelay: "1.2s" }}>
+          <p className="fade-in-delayed" style={{ animationDelay: "0.45s" }}>
             你们连未来都想好了。
           </p>
-          <p className="fade-in-delayed" style={{ animationDelay: "2s" }}>
+          <p className="fade-in-delayed" style={{ animationDelay: "0.85s" }}>
             后来它就那么淡了。你说不清是哪一天。
           </p>
           <p
             className="fade-in-delayed text-white/65"
-            style={{ animationDelay: "2.8s" }}
+            style={{ animationDelay: "1.25s" }}
           >
             回去看看。这一次，慢一点。
           </p>
@@ -127,7 +153,7 @@ export default function Home() {
 
         <div
           className="fade-in-delayed pt-6 space-y-3"
-          style={{ animationDelay: "3.6s" }}
+          style={{ animationDelay: "1.65s" }}
         >
           <button
             ref={(node) => {
@@ -205,6 +231,54 @@ export default function Home() {
               Enter
             </span>
           </button>
+          <button
+            ref={(node) => {
+              menuRefs.current[2] = node;
+            }}
+            type="button"
+            onClick={openMailbox}
+            onFocus={() => setSelectedAction(2)}
+            onMouseEnter={() => setSelectedAction(2)}
+            aria-label="打开玫瑰信箱"
+            aria-pressed={selectedAction === 2}
+            className={`group relative flex h-12 w-full items-center justify-center border px-6 text-[#e6d7c1]/85 backdrop-blur-[1px] transition-all duration-500 focus-visible:outline focus-visible:outline-1 focus-visible:outline-offset-4 focus-visible:outline-[#c4a882]/80 ${
+              selectedAction === 2
+                ? "border-[#c4a882]/70 bg-[#6f5b42]/30 text-[#fff4e3]"
+                : "border-[#c4a882]/30 bg-[#584a38]/10 hover:border-[#c4a882]/55 hover:bg-[#6f5b42]/20"
+            }`}
+          >
+            <svg
+              aria-hidden="true"
+              viewBox="0 0 24 24"
+              fill="none"
+              className="absolute left-5 h-4 w-4 opacity-70 transition-opacity duration-500 group-hover:opacity-100"
+            >
+              <path
+                d="M5 10.5C5 6.9 7.9 4 11.5 4h1C16.1 4 19 6.9 19 10.5V19H5v-8.5Z"
+                stroke="currentColor"
+              />
+              <path d="M5 11h14M12 4v15M9 7h6" stroke="currentColor" />
+            </svg>
+            <span className="font-serif text-[11px] tracking-[0.32em]">
+              玫 瑰 信 箱
+            </span>
+            <span
+              aria-hidden="true"
+              className={`absolute right-5 text-[9px] tracking-widest transition-opacity duration-300 ${
+                selectedAction === 2
+                  ? "text-[#e6d7c1]/60 opacity-100"
+                  : archivedLetters.length > 0
+                  ? "text-[#e6d7c1]/40 opacity-70"
+                  : "opacity-0"
+              }`}
+            >
+              {selectedAction === 2
+                ? `${archivedLetters.length > 0 ? `${archivedLetters.length} 封 · ` : ""}Enter`
+                : archivedLetters.length > 0
+                ? `${archivedLetters.length} 封`
+                : ""}
+            </span>
+          </button>
           <p className="text-[10px] tracking-[0.08em] text-white/45">
             ↑↓ 选择 · Enter 确认　·　建议戴耳机 · 约 10 分钟
           </p>
@@ -217,6 +291,10 @@ export default function Home() {
       >
         腾讯云黑客松 2026 · 叙事游戏
       </p>
+
+      {mailboxOpen && (
+        <HomeMailbox letters={archivedLetters} onClose={closeMailbox} />
+      )}
     </main>
   );
 }

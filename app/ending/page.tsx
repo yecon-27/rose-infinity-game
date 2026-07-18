@@ -7,7 +7,7 @@ import { useSoundscape } from "@/components/soundscape-provider";
 import { AUDIO } from "@/lib/audio";
 
 const SEEN_ACTIONS = [
-  { label: "写 一 封 信", to: "/letter" },
+  { label: "回 看 信 笺", to: "/letter?from=look&complete=1" },
   { label: "玫 瑰 还 在", to: "/" },
 ];
 

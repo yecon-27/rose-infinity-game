@@ -6,6 +6,7 @@ import { useRouter } from "next/navigation";
 import { useSoundscape } from "@/components/soundscape-provider";
 import { AUDIO } from "@/lib/audio";
 import { readChoiceLog, type ChoiceLogEntry } from "@/lib/choice-log";
+import { archiveLetter } from "@/lib/letter-archive";
 import type { LetterMode } from "@/lib/letter";
 
 interface LetterResponse {
@@ -190,13 +191,27 @@ export default function LetterPage() {
   const [journeyResults, setJourneyResults] = useState<JourneyResults>({});
   const [journeyLoading, setJourneyLoading] = useState(false);
   const [journeyError, setJourneyError] = useState("");
+  const [fromLookback, setFromLookback] = useState(false);
+  const [bloomUnlocked, setBloomUnlocked] = useState(false);
   const journeyStartedRef = useRef(false);
 
   useEffect(() => {
+    const entryParams = new URLSearchParams(window.location.search);
+    const openedFromLookback = entryParams.get("from") === "look";
+    const openedForPersonalStory = entryParams.get("mode") === "personal";
+    setFromLookback(openedFromLookback);
+    setBloomUnlocked(
+      openedFromLookback && entryParams.get("complete") === "1"
+    );
+
     const savedChoices = readChoiceLog();
     setChoices(savedChoices);
-    if (savedChoices.length === 0) {
+    if (openedForPersonalStory) {
       setExperience("personal");
+      return;
+    }
+    if (savedChoices.length === 0) {
+      setJourneyError("这一局还没有留下可以写进信里的选择。");
       return;
     }
     if (journeyStartedRef.current) return;
@@ -250,6 +265,12 @@ export default function LetterPage() {
     try {
       const data = await requestLetter({ mode, message: trimmed, choices });
       setResult(data);
+      archiveLetter({
+        mode,
+        message: trimmed,
+        text: data.text ?? "",
+        source: data.source,
+      });
       playSfx(AUDIO.sfx.roseReveal, 0.32);
     } catch (submitError) {
       setError(
@@ -315,7 +336,9 @@ export default function LetterPage() {
 
       <button
         type="button"
-        onClick={() => router.back()}
+        onClick={() =>
+          fromLookback ? router.push("/look") : router.back()
+        }
         className="fixed left-5 top-5 z-30 px-3 py-2 text-[10px] tracking-[0.28em] text-white/45 transition-colors hover:text-white focus-visible:outline focus-visible:outline-1 focus-visible:outline-offset-4 focus-visible:outline-white/70"
       >
         ← 返回
@@ -355,45 +378,6 @@ export default function LetterPage() {
                 : "写下自己的故事或一句没说完的话，选择想收到的回应。"}
             </p>
             </header>
-
-            <div className="mb-8 grid grid-cols-2 gap-2 border-b border-[#9d8580]/20 pb-5">
-              <button
-                type="button"
-                disabled={choices.length === 0}
-                aria-pressed={experience === "journey"}
-                onClick={() => {
-                  setExperience("journey");
-                  setMode("reply");
-                  setCopied(false);
-                  setSaveError("");
-                }}
-                className={`px-3 py-2.5 text-xs tracking-[0.14em] transition-colors disabled:cursor-not-allowed disabled:opacity-35 ${
-                  experience === "journey"
-                    ? "bg-[#76575d] text-[#fff8ed]"
-                    : "border border-[#9d8580]/35 text-[#725f61]"
-                }`}
-              >
-                这一局的信
-              </button>
-              <button
-                type="button"
-                aria-pressed={experience === "personal"}
-                onClick={() => {
-                  setExperience("personal");
-                  setMode("reply");
-                  setResult(null);
-                  setCopied(false);
-                  setSaveError("");
-                }}
-                className={`px-3 py-2.5 text-xs tracking-[0.14em] transition-colors ${
-                  experience === "personal"
-                    ? "bg-[#76575d] text-[#fff8ed]"
-                    : "border border-[#9d8580]/35 text-[#725f61]"
-                }`}
-              >
-                聊我的故事
-              </button>
-            </div>
 
             {experience === "journey" ? (
               <div aria-live="polite">
@@ -469,23 +453,33 @@ export default function LetterPage() {
                         {saveError}
                       </p>
                     )}
-                    <div className="mt-9 grid grid-cols-2 gap-3 border-t border-[#9d8580]/25 pt-7">
-                      <button
-                        type="button"
-                        onClick={() => setExperience("personal")}
-                        className="border border-[#9d8580]/45 px-3 py-3 text-xs tracking-[0.12em] text-[#725f61]"
-                      >
-                        聊我的故事
-                      </button>
+                    <div className="mt-9 border-t border-[#9d8580]/25 pt-7">
                       <button
                         type="button"
                         onClick={copyLetter}
                         disabled={saving}
-                        className="border border-[#76575d] bg-[#76575d] px-3 py-3 text-xs tracking-[0.12em] text-[#fff8ed] disabled:opacity-60"
+                        className="w-full border border-[#76575d] bg-[#76575d] px-3 py-3 text-xs tracking-[0.12em] text-[#fff8ed] disabled:opacity-60"
                       >
                         {saving ? "正在装裱……" : copied ? "已保存为 PNG" : "保存这一页"}
                       </button>
                     </div>
+                    {bloomUnlocked && (
+                      <div className="mt-8 border-t border-[#9d8580]/25 pt-8 text-center">
+                        <p className="mb-5 text-[10px] tracking-[0.24em] text-[#8b6f62]">
+                          这一局，已经读到最后一页
+                        </p>
+                        <button
+                          type="button"
+                          onClick={() => {
+                            playSfx(AUDIO.sfx.roseReveal, 0.48);
+                            router.push("/ending?seen=1");
+                          }}
+                          className="w-full border border-[#76575d] bg-[#76575d]/10 px-6 py-4 text-sm tracking-[0.32em] text-[#76575d] transition-colors hover:bg-[#76575d] hover:text-[#fff8ed] focus-visible:outline focus-visible:outline-1 focus-visible:outline-offset-3 focus-visible:outline-[#76575d]"
+                        >
+                          让 玫 瑰 盛 放
+                        </button>
+                      </div>
+                    )}
                   </article>
                 ) : null}
               </div>

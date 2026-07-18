@@ -194,7 +194,7 @@ export function SoundscapeProvider({ children }: PropsWithChildren) {
         type="button"
         onClick={toggleMuted}
         aria-label={muted ? "开启音乐和音效" : "关闭音乐和音效"}
-        className="fixed left-5 top-5 z-[100] text-[10px] tracking-widest text-white/35 transition-colors hover:text-white/80 focus-visible:outline focus-visible:outline-1 focus-visible:outline-offset-4 focus-visible:outline-white/70"
+        className="fixed bottom-5 right-5 z-[100] rounded-full border border-white/10 bg-black/25 px-3 py-2 text-[9px] tracking-widest text-white/40 shadow-[0_8px_24px_rgba(0,0,0,.22)] backdrop-blur-sm transition-colors hover:border-white/25 hover:bg-black/40 hover:text-white/80 focus-visible:outline focus-visible:outline-1 focus-visible:outline-offset-4 focus-visible:outline-white/70"
       >
         {muted ? "音 · 关" : "音 · 开"}
       </button>
