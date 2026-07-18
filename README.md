@@ -60,13 +60,17 @@
 
 关键的一句话不只需要点击选项，还要完成按住、向右滑动或长按。玩家这一刻的犹豫与回应，会成为稍后生成信笺的依据。
 
-![带选择足迹和动作提示的外卖粥选择](./poster/trifold/first-pass-v1.png)
+![带选择足迹和动作提示的外卖粥选择](./docs/readme-screenshots/first-pass.png)
 
 ### 2. 第二遍：重新看见
 
 故事结束后，六段记忆重新打开。玩家可以自由选择顺序，也可以沿默认路线重走；完成任意三段后，右侧的玫瑰信笺出口便会亮起。
 
-![三段回看完成后的记忆地图](./poster/trifold/memory-map-v1.png)
+![三段回看完成后的记忆地图](./docs/readme-screenshots/memory-map.png)
+
+进入一段记忆后，画面会先说明“为什么要找”，再把动机转成可执行的物件、方位与范围线索。玩家不是盲点画面，而是在被忽略的细节里，一步步找回当时没有看见的那次伸手。
+
+![回看记忆时根据动机、物件与方位线索寻找细节](./docs/readme-screenshots/look-detail.png)
 
 ### 3. 让这一局的选择变成一封信
 
@@ -78,7 +82,9 @@
 
 生成完成后，信笺可以装裱成一张完整的信纸图片。它记录的是这一局独有的故事，而不是一份固定结局。
 
-![根据这一局选择生成的个人玫瑰信笺](./docs/readme-screenshots/letter-output.png)
+<p align="center">
+  <img src="./docs/readme-screenshots/letter-output.png" alt="根据这一局选择生成的个人玫瑰信笺" width="420">
+</p>
 
 ### 5. 继续完成六段，让玫瑰完整盛放
 
