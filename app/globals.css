@@ -368,6 +368,23 @@ body {
   transition: transform 180ms linear;
 }
 
+/* 手势导引统一使用场景里的烟黑玻璃与旧金描边，避免亮色纸片跳出画面。 */
+.gesture-choice-callout,
+.phone-gesture-callout {
+  --gesture-callout-bg: rgba(22, 20, 19, 0.9);
+  --gesture-callout-border: rgba(184, 153, 103, 0.42);
+  --gesture-callout-text: rgba(235, 229, 217, 0.88);
+  --gesture-callout-muted: rgba(205, 195, 178, 0.55);
+  --gesture-callout-accent: rgba(202, 171, 117, 0.82);
+  border: 1px solid var(--gesture-callout-border);
+  background: var(--gesture-callout-bg);
+  box-shadow: 0 10px 28px rgba(0, 0, 0, 0.38),
+    inset 0 1px 0 rgba(255, 255, 255, 0.035);
+  color: var(--gesture-callout-text);
+  backdrop-filter: blur(10px) saturate(0.72);
+  -webkit-backdrop-filter: blur(10px) saturate(0.72);
+}
+
 /* 当前手势的操作提示悬浮在按钮右侧，不再挤开同级选项。 */
 .gesture-choice-callout {
   position: absolute;
@@ -376,16 +393,10 @@ body {
   z-index: 20;
   max-width: min(220px, 48%);
   transform: translateY(-50%);
-  border: 1px solid rgba(236, 214, 192, 0.5);
   border-radius: 11px;
-  background: rgba(242, 232, 217, 0.95);
-  box-shadow: 0 8px 24px rgba(0, 0, 0, 0.32);
   padding: 7px 10px 6px;
-  color: rgba(55, 42, 38, 0.92);
   pointer-events: none;
   text-align: left;
-  backdrop-filter: blur(8px);
-  -webkit-backdrop-filter: blur(8px);
 }
 
 .gesture-choice-callout::before {
@@ -396,9 +407,9 @@ body {
   width: 11px;
   height: 11px;
   transform: translateY(-50%) rotate(45deg);
-  border-bottom: 1px solid rgba(236, 214, 192, 0.5);
-  border-left: 1px solid rgba(236, 214, 192, 0.5);
-  background: rgba(242, 232, 217, 0.95);
+  border-bottom: 1px solid var(--gesture-callout-border);
+  border-left: 1px solid var(--gesture-callout-border);
+  background: var(--gesture-callout-bg);
 }
 
 .gesture-choice-callout > span {
@@ -411,7 +422,7 @@ body {
 .gesture-choice-callout small {
   display: block;
   margin-top: 2px;
-  color: rgba(90, 69, 62, 0.58);
+  color: var(--gesture-callout-muted);
   font-size: 8px;
   line-height: 1.4;
   letter-spacing: 0.08em;
@@ -425,16 +436,10 @@ body {
   width: max-content;
   max-width: min(240px, 76vw);
   transform: translateX(-50%);
-  border: 1px solid rgba(214, 180, 157, 0.48);
   border-radius: 12px;
-  background: rgba(242, 232, 217, 0.96);
-  box-shadow: 0 10px 28px rgba(0, 0, 0, 0.3);
   padding: 8px 12px 7px;
-  color: rgba(43, 34, 31, 0.9);
   pointer-events: none;
   text-align: left;
-  backdrop-filter: blur(8px);
-  -webkit-backdrop-filter: blur(8px);
 }
 
 .phone-gesture-callout::before {
@@ -445,9 +450,9 @@ body {
   width: 11px;
   height: 11px;
   transform: translateX(-50%) rotate(45deg);
-  border-left: 1px solid rgba(214, 180, 157, 0.48);
-  border-top: 1px solid rgba(214, 180, 157, 0.48);
-  background: rgba(242, 232, 217, 0.96);
+  border-left: 1px solid var(--gesture-callout-border);
+  border-top: 1px solid var(--gesture-callout-border);
+  background: var(--gesture-callout-bg);
 }
 
 .phone-gesture-callout p {
@@ -459,7 +464,7 @@ body {
 }
 
 .phone-gesture-callout p span {
-  color: rgba(165, 91, 102, 0.92);
+  color: var(--gesture-callout-accent);
   font-size: 9px;
   letter-spacing: 0.16em;
 }
@@ -467,7 +472,7 @@ body {
 .phone-gesture-callout small {
   display: block;
   margin-top: 3px;
-  color: rgba(78, 64, 58, 0.62);
+  color: var(--gesture-callout-muted);
   font-size: 9px;
   letter-spacing: 0.1em;
 }
@@ -487,8 +492,8 @@ body {
     top: 50%;
     transform: translateY(-50%) rotate(45deg);
     border: 0;
-    border-right: 1px solid rgba(214, 180, 157, 0.48);
-    border-top: 1px solid rgba(214, 180, 157, 0.48);
+    border-right: 1px solid var(--gesture-callout-border);
+    border-top: 1px solid var(--gesture-callout-border);
   }
 }
 
