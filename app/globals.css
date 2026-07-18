@@ -365,13 +365,63 @@ body {
 }
 
 .gesture-choice__content {
-  transition: transform 80ms linear;
+  transition: transform 180ms linear;
+}
+
+/* 当前手势的操作提示悬浮在按钮右侧，不再挤开同级选项。 */
+.gesture-choice-callout {
+  position: absolute;
+  right: 14px;
+  top: 50%;
+  z-index: 20;
+  max-width: min(220px, 48%);
+  transform: translateY(-50%);
+  border: 1px solid rgba(236, 214, 192, 0.5);
+  border-radius: 11px;
+  background: rgba(242, 232, 217, 0.95);
+  box-shadow: 0 8px 24px rgba(0, 0, 0, 0.32);
+  padding: 7px 10px 6px;
+  color: rgba(55, 42, 38, 0.92);
+  pointer-events: none;
+  text-align: left;
+  backdrop-filter: blur(8px);
+  -webkit-backdrop-filter: blur(8px);
+}
+
+.gesture-choice-callout::before {
+  content: "";
+  position: absolute;
+  left: -6px;
+  top: 50%;
+  width: 11px;
+  height: 11px;
+  transform: translateY(-50%) rotate(45deg);
+  border-bottom: 1px solid rgba(236, 214, 192, 0.5);
+  border-left: 1px solid rgba(236, 214, 192, 0.5);
+  background: rgba(242, 232, 217, 0.95);
+}
+
+.gesture-choice-callout > span {
+  display: block;
+  font-size: 10px;
+  line-height: 1.45;
+  letter-spacing: 0.1em;
+}
+
+.gesture-choice-callout small {
+  display: block;
+  margin-top: 2px;
+  color: rgba(90, 69, 62, 0.58);
+  font-size: 8px;
+  line-height: 1.4;
+  letter-spacing: 0.08em;
 }
 
 /* 手机演出里的操作说明离开候选区，用气泡对准当前选项。 */
 .phone-gesture-callout {
   position: absolute;
   top: calc(100% + 12px);
+  left: 50%;
   width: max-content;
   max-width: min(240px, 76vw);
   transform: translateX(-50%);
@@ -385,6 +435,26 @@ body {
   text-align: left;
   backdrop-filter: blur(8px);
   -webkit-backdrop-filter: blur(8px);
+}
+
+@media (min-width: 720px) {
+  .phone-gesture-callout {
+    top: var(--phone-hint-top, 50%);
+    right: calc(100% + 16px);
+    left: auto;
+    max-width: 220px;
+    transform: translateY(-50%);
+  }
+
+  .phone-gesture-callout::before {
+    right: -6px;
+    left: auto;
+    top: 50%;
+    transform: translateY(-50%) rotate(45deg);
+    border: 0;
+    border-right: 1px solid rgba(214, 180, 157, 0.48);
+    border-top: 1px solid rgba(214, 180, 157, 0.48);
+  }
 }
 
 .phone-gesture-callout::before {

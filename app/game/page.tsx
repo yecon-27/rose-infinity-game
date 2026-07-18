@@ -267,7 +267,7 @@ function GameInner() {
   const [mode, setMode] = useState<Mode>("flow");
   const [optIdx, setOptIdx] = useState(0);
   const [actionKeyHeld, setActionKeyHeld] = useState(false);
-  const [phoneHintLeft, setPhoneHintLeft] = useState<number | null>(null);
+  const [phoneHintTop, setPhoneHintTop] = useState<number | null>(null);
   const [loading, setLoading] = useState(false);
   const [entering, setEntering] = useState(true);
   const [bg, setBg] = useState(scene.bg);
@@ -315,7 +315,7 @@ function GameInner() {
     setMode("flow");
     setOptIdx(0);
     setActionKeyHeld(false);
-    setPhoneHintLeft(null);
+    setPhoneHintTop(null);
     setLoading(false);
     setEntering(true);
     setBg(scene.bg);
@@ -547,10 +547,10 @@ function GameInner() {
       : null;
   const selectedPhoneGesture = beatMoment?.choices[optIdx]?.gesture;
 
-  /* 手机外提示气泡水平对准当前选项中心；窗口变化时重新测量。 */
+  /* 桌面端把提示放在手机左侧，并让尖角纵向对准当前选项。 */
   useLayoutEffect(() => {
     if (!phoneOn || !selectedPhoneGesture) {
-      setPhoneHintLeft(null);
+      setPhoneHintTop(null);
       return;
     }
 
@@ -560,7 +560,7 @@ function GameInner() {
       if (!phone || !choice) return;
       const phoneRect = phone.getBoundingClientRect();
       const choiceRect = choice.getBoundingClientRect();
-      setPhoneHintLeft(choiceRect.left + choiceRect.width / 2 - phoneRect.left);
+      setPhoneHintTop(choiceRect.top + choiceRect.height / 2 - phoneRect.top);
     }
 
     updateHintAnchor();
@@ -580,6 +580,12 @@ function GameInner() {
         } else if (e.key === "ArrowRight" && backIdx > 0) {
           e.preventDefault();
           advance();
+        } else if (
+          e.key === "ArrowRight" &&
+          beatMoment.choices[optIdx]?.gesture === "swipe"
+        ) {
+          e.preventDefault();
+          if (!e.repeat) setActionKeyHeld(true);
         } else if (e.key === "ArrowDown" || e.key === "ArrowRight") {
           e.preventDefault();
           setActionKeyHeld(false);
@@ -613,7 +619,12 @@ function GameInner() {
       }
     }
     function onKeyUp(e: KeyboardEvent) {
-      if (e.key === "Enter" || e.code === "Space") setActionKeyHeld(false);
+      if (
+        e.key === "Enter" ||
+        e.code === "Space" ||
+        e.key === "ArrowRight"
+      )
+        setActionKeyHeld(false);
     }
     window.addEventListener("keydown", onKey);
     window.addEventListener("keyup", onKeyUp);
@@ -939,12 +950,12 @@ function GameInner() {
               </div>
             )}
           </div>
-          {selectedPhoneGesture && phoneHintLeft !== null && (
+          {selectedPhoneGesture && phoneHintTop !== null && (
             <div
               id="phone-gesture-hint"
               role="status"
               className="phone-gesture-callout"
-              style={{ left: phoneHintLeft }}
+              style={{ "--phone-hint-top": `${phoneHintTop}px` } as React.CSSProperties}
             >
               <p>
                 <span>选项 {optIdx + 1}</span>
@@ -954,7 +965,11 @@ function GameInner() {
                   ? "长按"
                   : "按住不放"}
               </p>
-              <small>键盘 · 按住 Enter 或空格</small>
+              <small>
+                {selectedPhoneGesture === "swipe"
+                  ? "键盘 · 按住 →"
+                  : "键盘 · 按住 Enter 或空格"}
+              </small>
             </div>
           )}
         </div>
@@ -980,6 +995,8 @@ function GameInner() {
                   disabled={loading}
                   selected={i === optIdx}
                   keyboardPressed={actionKeyHeld && i === optIdx}
+                  showHint={i === optIdx && !!c.gesture}
+                  hintVariant="bubble"
                   className={`block w-full text-left px-5 py-3 border text-sm leading-relaxed transition-colors ${
                     i === optIdx
                       ? "border-white bg-white/10 text-white"

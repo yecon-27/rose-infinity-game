@@ -932,6 +932,7 @@ function LookInner() {
                     setReachDone(true);
                   }}
                   selected
+                  hintVariant="bubble"
                   className="block w-full border border-amber-100/55 bg-black/10 px-6 py-4 text-sm leading-relaxed text-amber-50 transition-colors hover:border-amber-50/80 hover:bg-white/[0.06]"
                 >
                   {look.reachback.choice}

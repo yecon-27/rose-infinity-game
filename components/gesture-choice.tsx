@@ -14,20 +14,26 @@ import {
 type Gesture = "hold" | "swipe" | "longpress";
 
 const HOLD_MS: Record<Exclude<Gesture, "swipe">, number> = {
-  hold: 720,
-  longpress: 1600,
+  hold: 1200,
+  longpress: 2400,
 };
 
 const KEYBOARD_HOLD_MS: Record<Gesture, number> = {
-  hold: 720,
-  swipe: 900,
-  longpress: 1600,
+  hold: 1200,
+  swipe: 1600,
+  longpress: 2400,
 };
 
 const GESTURE_COPY: Record<Gesture, string> = {
   hold: "按住不放 · 让犹豫停一会儿",
   swipe: "向右滑动 · 把手伸过去",
   longpress: "长按 · 把话说完",
+};
+
+const BUBBLE_COPY: Record<Gesture, string> = {
+  hold: "按住这里，等它慢慢走完",
+  swipe: "按住向右滑动",
+  longpress: "长按这里，把这句话说完",
 };
 
 export function GestureChoice({
@@ -37,6 +43,7 @@ export function GestureChoice({
   selected = false,
   keyboardPressed = false,
   showHint = true,
+  hintVariant = "inline",
   buttonRef,
   ariaDescribedBy,
   className = "",
@@ -50,6 +57,7 @@ export function GestureChoice({
   keyboardPressed?: boolean;
   /** 手机演出会把说明移到手机外的指向气泡。 */
   showHint?: boolean;
+  hintVariant?: "inline" | "bubble";
   buttonRef?: Ref<HTMLButtonElement>;
   ariaDescribedBy?: string;
   className?: string;
@@ -111,7 +119,11 @@ export function GestureChoice({
     keyboardStarted.current = false;
     clearTimer();
     if (!committed.current) {
-      setFeedback("按住 Enter 或空格，等它走完。");
+      setFeedback(
+        gesture === "swipe"
+          ? "按住 →，等它慢慢走完。"
+          : "按住 Enter 或空格，等它走完。"
+      );
       setProgress(0);
     }
     setKeyboardMode(false);
@@ -149,7 +161,7 @@ export function GestureChoice({
     if (gesture !== "swipe" || !active || disabled) return;
     event.preventDefault();
     const distance = Math.max(0, event.clientX - startX.current);
-    const next = Math.min(1, distance / 96);
+    const next = Math.min(1, distance / 176);
     setProgress(next);
     if (next >= 1) commit();
   }
@@ -174,7 +186,7 @@ export function GestureChoice({
       keyboardMode && gesture
         ? `${KEYBOARD_HOLD_MS[gesture]}ms`
         : gesture === "swipe"
-        ? "80ms"
+        ? "180ms"
         : `${gesture ? HOLD_MS[gesture] : 0}ms`,
     touchAction: gesture === "swipe" ? "none" : "manipulation",
   } as CSSProperties;
@@ -197,7 +209,7 @@ export function GestureChoice({
   }
 
   return (
-    <div className="space-y-1.5">
+    <div className="relative space-y-1.5">
       <button
         ref={buttonRef}
         type="button"
@@ -238,7 +250,21 @@ export function GestureChoice({
           {children}
         </span>
       </button>
-      {showHint && (
+      {showHint && hintVariant === "bubble" && (
+        <div
+          id={descriptionId}
+          role="status"
+          className="gesture-choice-callout"
+        >
+          <span>{feedback || BUBBLE_COPY[gesture]}</span>
+          <small>
+            {gesture === "swipe"
+              ? "键盘 · 按住 →"
+              : "键盘 · 按住 Enter 或空格"}
+          </small>
+        </div>
+      )}
+      {showHint && hintVariant === "inline" && (
         <p
           id={descriptionId}
           className="px-1 text-[9px] tracking-[0.18em] text-white/40"

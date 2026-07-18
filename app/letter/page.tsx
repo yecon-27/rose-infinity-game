@@ -296,6 +296,8 @@ export default function LetterPage() {
     setSaveError("");
   }
 
+  const activeJourneyResult = journeyResults[mode];
+
   return (
     <main className="relative min-h-screen overflow-hidden bg-[#382e31] px-5 py-10 text-[#f3ece4] sm:px-8">
       <div className="fixed inset-0 z-0">
@@ -319,6 +321,14 @@ export default function LetterPage() {
         ← 返回
       </button>
 
+      <button
+        type="button"
+        onClick={() => router.push("/")}
+        className="fixed right-5 top-5 z-30 px-3 py-2 text-[10px] tracking-[0.28em] text-white/55 transition-colors hover:text-white focus-visible:outline focus-visible:outline-1 focus-visible:outline-offset-4 focus-visible:outline-white/70"
+      >
+        返回主页 ⌂
+      </button>
+
       <div className="relative z-10 mx-auto flex min-h-[calc(100vh-5rem)] w-full min-w-0 max-w-2xl items-center justify-center">
         <section className="relative w-full min-w-0 overflow-hidden border border-[#dfc7a1]/35 bg-[#efe2cc] px-6 py-9 text-[#43373a] shadow-[0_24px_80px_rgba(12,8,10,0.38)] sm:px-12 sm:py-12">
           <Image
@@ -332,7 +342,7 @@ export default function LetterPage() {
           <div className="absolute inset-0 z-[1] bg-[#fffaf2]/10" />
 
           <div className="relative z-10">
-            <header className="mb-9 text-center">
+            <header className="mb-7 text-center">
             <p className="mb-3 text-[10px] tracking-[0.42em] text-[#8b6f62]">
               玫 瑰 彩 蛋
             </p>
@@ -340,11 +350,146 @@ export default function LetterPage() {
               玫瑰信笺
             </h1>
             <p className="mx-auto mt-5 max-w-md text-sm leading-7 text-[#6f6060]">
-              写下一句当年想说、却没能说完的话。信笺会沿着你这一局留下的选择，给你一封克制的回声。
+              {experience === "journey"
+                ? "沿着这一局留下的选择，先读完一封回信，也看见一页关系复盘。"
+                : "写下自己的故事或一句没说完的话，选择想收到的回应。"}
             </p>
             </header>
 
-            {!result ? (
+            <div className="mb-8 grid grid-cols-2 gap-2 border-b border-[#9d8580]/20 pb-5">
+              <button
+                type="button"
+                disabled={choices.length === 0}
+                aria-pressed={experience === "journey"}
+                onClick={() => {
+                  setExperience("journey");
+                  setMode("reply");
+                  setCopied(false);
+                  setSaveError("");
+                }}
+                className={`px-3 py-2.5 text-xs tracking-[0.14em] transition-colors disabled:cursor-not-allowed disabled:opacity-35 ${
+                  experience === "journey"
+                    ? "bg-[#76575d] text-[#fff8ed]"
+                    : "border border-[#9d8580]/35 text-[#725f61]"
+                }`}
+              >
+                这一局的信
+              </button>
+              <button
+                type="button"
+                aria-pressed={experience === "personal"}
+                onClick={() => {
+                  setExperience("personal");
+                  setMode("reply");
+                  setResult(null);
+                  setCopied(false);
+                  setSaveError("");
+                }}
+                className={`px-3 py-2.5 text-xs tracking-[0.14em] transition-colors ${
+                  experience === "personal"
+                    ? "bg-[#76575d] text-[#fff8ed]"
+                    : "border border-[#9d8580]/35 text-[#725f61]"
+                }`}
+              >
+                聊我的故事
+              </button>
+            </div>
+
+            {experience === "journey" ? (
+              <div aria-live="polite">
+                {journeyLoading ? (
+                  <div className="py-16 text-center">
+                    <p className="font-serif text-lg tracking-[0.18em] text-[#5f4d51]">
+                      正在沿着选择写信……
+                    </p>
+                    <p className="mt-4 text-[10px] leading-5 text-[#8a7877]">
+                      回信与复盘会同时生成，请稍等一会儿。
+                    </p>
+                  </div>
+                ) : journeyError ? (
+                  <div className="py-10 text-center">
+                    <p role="alert" className="text-sm leading-6 text-[#8f4148]">
+                      {journeyError}
+                    </p>
+                    <button
+                      type="button"
+                      onClick={() => void generateJourney()}
+                      className="mt-6 border border-[#76575d] px-5 py-3 text-xs tracking-[0.16em] text-[#76575d]"
+                    >
+                      再试一次
+                    </button>
+                  </div>
+                ) : activeJourneyResult?.text ? (
+                  <article className="fade-in">
+                    <div className="mb-7 grid grid-cols-2 gap-3">
+                      <button
+                        type="button"
+                        aria-pressed={mode === "reply"}
+                        onClick={() => {
+                          setMode("reply");
+                          setCopied(false);
+                        }}
+                        className={`border px-3 py-3 text-sm tracking-[0.12em] ${
+                          mode === "reply"
+                            ? "border-[#76575d] bg-[#76575d] text-[#f5ecdf]"
+                            : "border-[#9d8580]/45 text-[#725f61]"
+                        }`}
+                      >
+                        一封回信
+                      </button>
+                      <button
+                        type="button"
+                        aria-pressed={mode === "reflection"}
+                        onClick={() => {
+                          setMode("reflection");
+                          setCopied(false);
+                        }}
+                        className={`border px-3 py-3 text-sm tracking-[0.12em] ${
+                          mode === "reflection"
+                            ? "border-[#76575d] bg-[#76575d] text-[#f5ecdf]"
+                            : "border-[#9d8580]/45 text-[#725f61]"
+                        }`}
+                      >
+                        关系复盘
+                      </button>
+                    </div>
+                    <p className="mb-5 text-center text-[10px] tracking-[0.32em] text-[#8b6f62]">
+                      {mode === "reply" ? "从 故 事 另 一 侧" : "这 一 局 的 回 望"}
+                    </p>
+                    <div className="whitespace-pre-line font-serif text-base leading-8 text-[#4c3e40] sm:text-lg sm:leading-9">
+                      {activeJourneyResult.text}
+                    </div>
+                    {activeJourneyResult.source === "fallback" && (
+                      <p className="mt-6 text-[10px] leading-5 text-[#907d79]">
+                        DeepSeek 这次没有返回可用正文，当前显示本地信笺。
+                      </p>
+                    )}
+                    {saveError && (
+                      <p role="alert" className="mt-6 text-sm text-[#8f4148]">
+                        {saveError}
+                      </p>
+                    )}
+                    <div className="mt-9 grid grid-cols-2 gap-3 border-t border-[#9d8580]/25 pt-7">
+                      <button
+                        type="button"
+                        onClick={() => setExperience("personal")}
+                        className="border border-[#9d8580]/45 px-3 py-3 text-xs tracking-[0.12em] text-[#725f61]"
+                      >
+                        聊我的故事
+                      </button>
+                      <button
+                        type="button"
+                        onClick={copyLetter}
+                        disabled={saving}
+                        className="border border-[#76575d] bg-[#76575d] px-3 py-3 text-xs tracking-[0.12em] text-[#fff8ed] disabled:opacity-60"
+                      >
+                        {saving ? "正在装裱……" : copied ? "已保存为 PNG" : "保存这一页"}
+                      </button>
+                    </div>
+                  </article>
+                ) : null}
+              </div>
+            ) : !result ? (
             <form
               onSubmit={submit}
               aria-busy={loading}
