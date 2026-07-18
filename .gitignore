@@ -40,3 +40,6 @@ next-env.d.ts
 /docs/*.pdf
 /docs/codebuddy-log/
 /docs/writing/
+
+# local generated artifact kept on disk but out of version control
+/output/pdf/rose-infinity-trifold-v1.pdf
