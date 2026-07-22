@@ -9,10 +9,12 @@
  */
 
 import { useCallback, useEffect, useRef, useState } from "react";
+import Image from "next/image";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
-import { readChoiceLog } from "@/lib/choice-log";
+import { clearChoiceLog, readChoiceLog } from "@/lib/choice-log";
 import {
+  clearCreateSession,
   patchCreateSession,
   readCreateSession,
   startCreateSession,
@@ -55,7 +57,26 @@ export default function CreatePage() {
   const [buddyLoading, setBuddyLoading] = useState(false);
   const [reflection, setReflection] = useState<string | null>(null);
   const [reply, setReply] = useState("");
+  const [pendingReset, setPendingReset] = useState(false);
   const buddyKicked = useRef(false);
+
+  // 清掉这一局，回到空白输入，重新写一段
+  const restart = useCallback(() => {
+    clearCreateSession();
+    clearChoiceLog();
+    setStory("");
+    setOutline(null);
+    setThin(false);
+    setGame(null);
+    setGenStatus("idle");
+    setTurns([]);
+    setReflection(null);
+    setReply("");
+    setPendingReset(false);
+    buddyKicked.current = false;
+    setStep("input");
+    router.replace("/create");
+  }, [router]);
 
   // 从游戏重走回来（?step=buddy）或刷新时，恢复这一局
   useEffect(() => {
@@ -166,7 +187,20 @@ export default function CreatePage() {
 
   return (
     <main className="relative min-h-screen bg-black px-6 py-12 text-white/85">
-      <div className="mx-auto max-w-2xl space-y-8">
+      {/* 背景：深夜房间，重压暗保住小字号正文的可读性 */}
+      <div className="fixed inset-0 z-0">
+        <Image
+          src="/images/scenes/dorm-room-night.webp"
+          alt=""
+          fill
+          priority
+          className="object-cover"
+        />
+        <div className="absolute inset-0 bg-black/65" />
+        <div className="absolute inset-0 bg-gradient-to-b from-black/40 via-black/55 to-black/80" />
+      </div>
+
+      <div className="relative z-10 mx-auto max-w-2xl space-y-8">
         {step !== "buddy" && (
           <header className="space-y-3 text-center">
             <p className="text-[10px] uppercase tracking-[0.4em] text-white/45">
@@ -264,6 +298,44 @@ export default function CreatePage() {
                 </div>
               )}
             </section>
+
+            <div className="flex items-center justify-between border-t border-white/10 pt-6">
+              <Link
+                href="/"
+                className="text-[11px] tracking-[0.2em] text-white/40 transition-colors hover:text-white/70"
+              >
+                ← 回首页
+              </Link>
+              {pendingReset ? (
+                <div className="flex items-center gap-4 text-[11px] tracking-[0.12em]">
+                  <span className="text-white/45">
+                    这一局的显形和聊过的话都会清掉。
+                  </span>
+                  <button
+                    type="button"
+                    onClick={restart}
+                    className="text-[#f3cbd1]/85 transition-colors hover:text-[#ffe5e9]"
+                  >
+                    清掉重写
+                  </button>
+                  <button
+                    type="button"
+                    onClick={() => setPendingReset(false)}
+                    className="text-white/40 transition-colors hover:text-white/70"
+                  >
+                    先不
+                  </button>
+                </div>
+              ) : (
+                <button
+                  type="button"
+                  onClick={() => setPendingReset(true)}
+                  className="text-[11px] tracking-[0.2em] text-white/40 transition-colors hover:text-white/70"
+                >
+                  换一段重新写
+                </button>
+              )}
+            </div>
           </>
         )}
 
@@ -283,6 +355,7 @@ export default function CreatePage() {
               void advanceBuddy(base);
             }}
             onHome={() => router.push("/")}
+            onRestart={restart}
           />
         )}
       </div>
@@ -298,6 +371,7 @@ function BuddyPanel({
   onReplyChange,
   onSend,
   onHome,
+  onRestart,
 }: {
   turns: CounselTurn[];
   loading: boolean;
@@ -306,6 +380,7 @@ function BuddyPanel({
   onReplyChange: (v: string) => void;
   onSend: () => void;
   onHome: () => void;
+  onRestart: () => void;
 }) {
   return (
     <section className="space-y-6">
@@ -349,13 +424,20 @@ function BuddyPanel({
               {p}
             </p>
           ))}
-          <div className="pt-2 text-center">
+          <div className="flex flex-col items-center gap-3 pt-2 sm:flex-row sm:justify-center">
             <button
               type="button"
               onClick={onHome}
               className="h-11 border border-white/25 bg-white/[0.04] px-8 text-[12px] tracking-[0.28em] text-white/80 transition-all duration-500 hover:border-white/50"
             >
               回 首 页
+            </button>
+            <button
+              type="button"
+              onClick={onRestart}
+              className="h-11 border border-[#e5abb5]/40 bg-[#7b3f4b]/20 px-8 text-[12px] tracking-[0.28em] text-[#f3cbd1]/90 transition-all duration-500 hover:border-[#efbec6]/60 hover:bg-[#8e4b58]/30"
+            >
+              再 写 一 段
             </button>
           </div>
         </div>
