@@ -38,6 +38,13 @@ export default function Home() {
     setTimeout(() => router.push("/prologue"), 800);
   }, [playSfx, router, unlock]);
 
+  const openCreate = useCallback(() => {
+    if (leavingRef.current) return;
+    unlock();
+    playSfx(AUDIO.sfx.softTap, 0.18);
+    router.push("/create");
+  }, [playSfx, router, unlock]);
+
   const openLetter = useCallback(() => {
     if (leavingRef.current) return;
     unlock();
@@ -87,13 +94,13 @@ export default function Home() {
       if (e.key === "Enter" || e.code === "Space") {
         e.preventDefault();
         if (selectedAction === 0) start();
-        else if (selectedAction === 1) openLetter();
+        else if (selectedAction === 1) openCreate();
         else openMailbox();
       }
     }
     window.addEventListener("keydown", onKey);
     return () => window.removeEventListener("keydown", onKey);
-  }, [mailboxOpen, openLetter, openMailbox, selectedAction, start]);
+  }, [mailboxOpen, openCreate, openLetter, openMailbox, selectedAction, start]);
 
   return (
     <main className="relative min-h-screen overflow-hidden bg-black flex flex-col items-center justify-center px-6 py-12">
@@ -190,15 +197,15 @@ export default function Home() {
               menuRefs.current[1] = node;
             }}
             type="button"
-            onClick={openLetter}
+            onClick={openCreate}
             onFocus={() => setSelectedAction(1)}
             onMouseEnter={() => setSelectedAction(1)}
-            aria-label="打开玫瑰信笺彩蛋"
+            aria-label="写下你自己的故事，做成可以重走的记忆"
             aria-pressed={selectedAction === 1}
-            className={`group relative flex h-12 w-full items-center justify-center border px-6 text-[#f3cbd1]/85 backdrop-blur-[1px] transition-all duration-500 focus-visible:outline focus-visible:outline-1 focus-visible:outline-offset-4 focus-visible:outline-[#f3cbd1]/80 ${
+            className={`group relative flex h-12 w-full items-center justify-center border px-6 text-[#cdd8ea]/85 backdrop-blur-[1px] transition-all duration-500 focus-visible:outline focus-visible:outline-1 focus-visible:outline-offset-4 focus-visible:outline-[#cdd8ea]/80 ${
               selectedAction === 1
-                ? "border-[#efbec6]/75 bg-[#8e4b58]/35 text-[#ffe5e9]"
-                : "border-[#e5abb5]/35 bg-[#7b3f4b]/15 hover:border-[#efbec6]/60 hover:bg-[#8e4b58]/25"
+                ? "border-[#bccbe4]/70 bg-[#3e4d6b]/35 text-[#e9effa]"
+                : "border-[#a9bad6]/30 bg-[#33405c]/15 hover:border-[#bccbe4]/55 hover:bg-[#3e4d6b]/25"
             }`}
           >
             <svg
@@ -207,29 +214,25 @@ export default function Home() {
               fill="none"
               className="absolute left-5 h-4 w-4 opacity-70 transition-opacity duration-500 group-hover:opacity-100"
             >
-              <rect
-                x="3.5"
-                y="5.5"
-                width="17"
-                height="13"
-                rx="1"
+              <path
+                d="M16.8 3.9a2.05 2.05 0 0 1 2.9 2.9L7.6 18.9 3.5 20l1.1-4.1L16.8 3.9Z"
                 stroke="currentColor"
+                strokeLinejoin="round"
               />
               <path
-                d="m4.5 7 6.35 5.08a1.8 1.8 0 0 0 2.3 0L19.5 7"
+                d="m14.6 6.1 2.9 2.9"
                 stroke="currentColor"
                 strokeLinecap="round"
-                strokeLinejoin="round"
               />
             </svg>
             <span className="font-serif text-[11px] tracking-[0.32em]">
-              玫 瑰 信 笺
+              你 的 玫 瑰
             </span>
             <span
               aria-hidden="true"
               className={`absolute right-5 text-[9px] tracking-widest transition-opacity duration-300 ${
                 selectedAction === 1
-                  ? "text-[#f3cbd1]/60 opacity-100"
+                  ? "text-[#cdd8ea]/60 opacity-100"
                   : "opacity-0"
               }`}
             >
@@ -244,7 +247,7 @@ export default function Home() {
             onClick={openMailbox}
             onFocus={() => setSelectedAction(2)}
             onMouseEnter={() => setSelectedAction(2)}
-            aria-label="打开玫瑰信箱"
+            aria-label="打开玫瑰信箱，读旧信或写一封玫瑰信笺"
             aria-pressed={selectedAction === 2}
             className={`group relative flex h-12 w-full items-center justify-center border px-6 text-[#e6d7c1]/85 backdrop-blur-[1px] transition-all duration-500 focus-visible:outline focus-visible:outline-1 focus-visible:outline-offset-4 focus-visible:outline-[#c4a882]/80 ${
               selectedAction === 2
@@ -302,6 +305,7 @@ export default function Home() {
           letters={archivedLetters}
           onClose={closeMailbox}
           onDelete={deleteLetter}
+          onWrite={openLetter}
         />
       )}
     </main>

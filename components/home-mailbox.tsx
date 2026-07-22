@@ -18,10 +18,12 @@ export function HomeMailbox({
   letters,
   onClose,
   onDelete,
+  onWrite,
 }: {
   letters: ArchivedLetter[];
   onClose: () => void;
   onDelete: (id: string) => void;
+  onWrite: () => void;
 }) {
   const [selectedId, setSelectedId] = useState(letters[0]?.id ?? "");
   const [pendingDeleteId, setPendingDeleteId] = useState("");
@@ -84,10 +86,15 @@ export function HomeMailbox({
               第一封信还在路上
             </p>
             <p className="mt-3 text-[10px] leading-5 tracking-[0.08em] text-white/30">
-              从首页打开玫瑰信笺，写下自己的故事。
-              <br />
-              收到的回信会留在这里。
+              写下自己的故事，收到的回信会留在这里。
             </p>
+            <button
+              type="button"
+              onClick={onWrite}
+              className="mt-7 flex h-11 items-center justify-center border border-[#e5abb5]/40 bg-[#7b3f4b]/20 px-8 font-serif text-[11px] tracking-[0.32em] text-[#f3cbd1]/90 transition-all duration-500 hover:border-[#efbec6]/60 hover:bg-[#8e4b58]/30"
+            >
+              写 一 封 玫 瑰 信 笺
+            </button>
           </div>
         ) : (
           <>
@@ -95,6 +102,13 @@ export function HomeMailbox({
               aria-label="信件列表"
               className="max-h-44 overflow-y-auto border-b border-[#c4a882]/20 p-3 sm:max-h-[62vh] sm:border-b-0 sm:border-r"
             >
+              <button
+                type="button"
+                onClick={onWrite}
+                className="mb-2 block w-full border border-dashed border-[#e5abb5]/35 bg-[#7b3f4b]/10 px-4 py-3 text-center text-[10px] tracking-[0.24em] text-[#f3cbd1]/75 transition-colors hover:border-[#efbec6]/60 hover:bg-[#8e4b58]/20"
+              >
+                ＋ 写一封玫瑰信笺
+              </button>
               {letters.map((letter, index) => (
                 <button
                   key={letter.id}
