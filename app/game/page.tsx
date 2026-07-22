@@ -16,6 +16,7 @@ import { GestureChoice } from "@/components/gesture-choice";
 import { AUDIO, soundscapeForScene } from "@/lib/audio";
 import { preloadImageSources } from "@/lib/preload";
 import { appendChoiceLog, readChoiceLog } from "@/lib/choice-log";
+import { getSessionScene } from "@/lib/create-session";
 import {
   STORY,
   getStoryScene,
@@ -240,7 +241,9 @@ function GameInner() {
   const router = useRouter();
   const params = useSearchParams();
   const sceneId = params.get("scene") ?? STORY[0].id;
-  const scene: Scene = getStoryScene(sceneId) ?? STORY[0];
+  // 写死的 STORY 找不到时，回退到这一局生成的场景（getSessionScene 会改写 onDone 串场）。
+  const scene: Scene =
+    getStoryScene(sceneId) ?? getSessionScene(sceneId) ?? STORY[0];
   const script = scene.script;
   const { playSfx } = useSoundscape(soundscapeForScene(scene.id));
 
