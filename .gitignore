@@ -34,6 +34,7 @@ next-env.d.ts
 /scripts/
 /prd.md
 /MEMORY.md
+/pitch-script.md
 
 # working docs (keep images the README embeds: readme-banner.png, ppt-screenshots/)
 /docs/*.md
@@ -43,3 +44,8 @@ next-env.d.ts
 
 # local generated artifact kept on disk but out of version control
 /output/pdf/rose-infinity-trifold-v1.pdf
+
+
+# temp files
+tmp
+output
