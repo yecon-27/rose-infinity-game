@@ -17,6 +17,7 @@ import {
   readCreateSession,
   startCreateSession,
 } from "@/lib/create-session";
+import { withMappedBg } from "@/lib/scene-media";
 import type {
   CounselTurn,
   GeneratedGame,
@@ -150,7 +151,8 @@ export default function CreatePage() {
       });
       const data = await res.json();
       if (data?.scenes?.length && data.entrySceneId) {
-        const g = data as GeneratedGame;
+        // 画面托底：把兜底的 title_keyart 换成贴题的真实场景图
+        const g = withMappedBg(data as GeneratedGame);
         setGame(g);
         patchCreateSession({ game: g });
         setGenStatus("ready");
