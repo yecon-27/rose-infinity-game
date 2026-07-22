@@ -41,6 +41,22 @@ body {
   animation: fadeIn 0.6s ease-out forwards;
 }
 
+/* 关键选择完成后的下一句：比普通 fade-in 更慢、上移更明显，做出“落定→浮现”的过渡。 */
+.fade-in-soft {
+  animation: fadeInSoft 0.9s cubic-bezier(0.22, 1, 0.36, 1) forwards;
+}
+
+@keyframes fadeInSoft {
+  from {
+    opacity: 0;
+    transform: translateY(12px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
 /* 慢速淡入:标题页/序章的大字 */
 @keyframes fadeInSlow {
   from {

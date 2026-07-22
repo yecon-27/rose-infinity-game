@@ -198,13 +198,14 @@ const SEARCH_TARGETS: Record<string, TargetSpot[]> = {
   ],
 };
 
+// 回看的关键选择统一用 Enter/空格 长按完成，保持演出一致。
 const REACHBACK_GESTURES: Record<string, Gesture> = {
   warm_hackathon: "longpress",
-  warm_shopping: "swipe",
-  warm_nvc: "swipe",
-  burst_phone: "hold",
+  warm_shopping: "longpress",
+  warm_nvc: "longpress",
+  burst_phone: "longpress",
   cold_fever: "longpress",
-  end_breakup: "hold",
+  end_breakup: "longpress",
 };
 
 export default function LookPage() {
@@ -446,6 +447,7 @@ function LookInner() {
   const [momentIdx, setMomentIdx] = useState(0);
   const [revealed, setRevealed] = useState(false);
   const [reachDone, setReachDone] = useState(false);
+  const [reachSettled, setReachSettled] = useState(false);
   const [reachActionKeyHeld, setReachActionKeyHeld] = useState(false);
   const [roseOn, setRoseOn] = useState(false);
   const [missCount, setMissCount] = useState(0);
@@ -453,6 +455,14 @@ function LookInner() {
   const [hintLevel, setHintLevel] = useState(0);
   const [showSkipOffer, setShowSkipOffer] = useState(false);
   const reachChoiceRef = useRef<HTMLButtonElement | null>(null);
+  const reachTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
+
+  useEffect(
+    () => () => {
+      if (reachTimer.current) clearTimeout(reachTimer.current);
+    },
+    []
+  );
 
   useEffect(() => {
     const sources = Object.values(LOOKBACKS).flatMap((memory) => [
@@ -962,13 +972,18 @@ function LookInner() {
             <p className="text-sm leading-loose text-white/85 [text-shadow:0_2px_14px_rgba(0,0,0,.9)]">
               {look.reachback.prompt}
             </p>
-            {!reachDone ? (
+            {!reachDone && !reachSettled ? (
               <div className="pointer-events-auto w-full rounded-sm border border-white/20 bg-white/[0.10] p-3 shadow-[0_14px_48px_rgba(0,0,0,0.32),inset_0_1px_0_rgba(255,255,255,0.10)] backdrop-blur-md">
                 <GestureChoice
                   gesture={reachGesture}
                   onCommit={() => {
                     playSfx(AUDIO.sfx.roseReveal, LOOKBACK_SFX_VOLUME);
-                    setReachDone(true);
+                    // 先保持满格进度条一小段，给玩家“说完了”的落点，再缓缓交出下一句。
+                    setReachSettled(true);
+                    reachTimer.current = setTimeout(
+                      () => setReachDone(true),
+                      560
+                    );
                   }}
                   selected
                   keyboardPressed={reachActionKeyHeld}
@@ -979,8 +994,20 @@ function LookInner() {
                   {look.reachback.choice}
                 </GestureChoice>
               </div>
+            ) : !reachDone && reachSettled ? (
+              <div className="pointer-events-none w-full rounded-sm border border-white/20 bg-white/[0.10] p-3 shadow-[0_14px_48px_rgba(0,0,0,0.32),inset_0_1px_0_rgba(255,255,255,0.10)] backdrop-blur-md">
+                <GestureChoice
+                  gesture={reachGesture}
+                  onCommit={() => {}}
+                  locked
+                  hintVariant="bubble"
+                  className="block w-full border border-amber-100/55 bg-black/10 px-6 py-4 text-sm leading-relaxed text-amber-50"
+                >
+                  {look.reachback.choice}
+                </GestureChoice>
+              </div>
             ) : (
-              <div className="space-y-4 fade-in">
+              <div className="space-y-4 fade-in-soft">
                 {look.reachback.response.map((line) => (
                   <p key={line} className="text-base leading-loose text-white/95">
                     {line}

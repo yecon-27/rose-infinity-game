@@ -40,6 +40,7 @@ export function GestureChoice({
   gesture,
   onCommit,
   disabled = false,
+  locked = false,
   selected = false,
   keyboardPressed = false,
   showHint = true,
@@ -52,6 +53,8 @@ export function GestureChoice({
   gesture?: Gesture;
   onCommit: () => void;
   disabled?: boolean;
+  /** 已提交后锁定：保持进度条满格、不再响应任何输入，用于完成后到下一句的过渡。 */
+  locked?: boolean;
   selected?: boolean;
   /** 全局选项导航时，选中的按钮通过这个状态接收 Enter 的按住/松开。 */
   keyboardPressed?: boolean;
@@ -99,12 +102,13 @@ export function GestureChoice({
   }
 
   function beginKeyboard() {
-    if (!gesture || disabled || keyboardStarted.current) return;
+    if (locked || !gesture || disabled || keyboardStarted.current) return;
     keyboardStarted.current = true;
     committed.current = false;
     setKeyboardMode(true);
     setFeedback("");
-    setProgress(1);
+    // 从 0 开始，让进度条随 .is-active 的过渡匀速填满，而不是瞬间跳到满格。
+    setProgress(0);
     setActive(true);
     timer.current = setTimeout(() => {
       if (committed.current) return;
@@ -115,7 +119,7 @@ export function GestureChoice({
   }
 
   function endKeyboard() {
-    if (!keyboardStarted.current) return;
+    if (locked || !keyboardStarted.current) return;
     keyboardStarted.current = false;
     clearTimer();
     if (!committed.current) {
@@ -142,7 +146,7 @@ export function GestureChoice({
   }, [disabled, gesture, keyboardPressed, selected]);
 
   function begin(event: ReactPointerEvent<HTMLButtonElement>) {
-    if (!gesture || disabled) return;
+    if (locked || !gesture || disabled) return;
     event.preventDefault();
     event.stopPropagation();
     event.currentTarget.setPointerCapture(event.pointerId);
@@ -167,7 +171,7 @@ export function GestureChoice({
   }
 
   function end(event: ReactPointerEvent<HTMLButtonElement>) {
-    if (!gesture) return;
+    if (locked || !gesture) return;
     event.preventDefault();
     event.stopPropagation();
     clearTimer();
@@ -181,7 +185,7 @@ export function GestureChoice({
   }
 
   const style = {
-    "--gesture-progress": progress,
+    "--gesture-progress": locked ? 1 : progress,
     "--gesture-duration":
       keyboardMode && gesture
         ? `${KEYBOARD_HOLD_MS[gesture]}ms`
@@ -213,7 +217,7 @@ export function GestureChoice({
       <button
         ref={buttonRef}
         type="button"
-        disabled={disabled}
+        disabled={disabled || locked}
         aria-describedby={showHint ? descriptionId : ariaDescribedBy}
         onPointerDown={begin}
         onPointerMove={move}
@@ -238,8 +242,10 @@ export function GestureChoice({
           }
         }}
         className={`gesture-choice gesture-${gesture} relative overflow-hidden ${
-          active ? "is-active" : ""
-        } ${selected ? "is-selected" : ""} ${className}`}
+          active && !locked ? "is-active" : ""
+        } ${selected ? "is-selected" : ""} ${
+          locked ? "is-committed" : ""
+        } ${className}`}
         style={style}
       >
         <span className="gesture-choice__wash" aria-hidden="true" />
