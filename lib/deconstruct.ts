@@ -129,8 +129,49 @@ function normalizeStrList(v: unknown, maxItems: number, maxLen: number): string[
 }
 
 /**
+ * 补齐被截断输出缺的引号和右括号。扫描时跳过字符串内部的括号，
+ * 结尾若停在字符串中间先补引号，再按栈序把 } ] 关回去。
+ */
+function closeUnbalanced(text: string): string {
+  const stack: string[] = [];
+  let inString = false;
+  let escaped = false;
+  for (const ch of text) {
+    if (inString) {
+      if (escaped) escaped = false;
+      else if (ch === "\\") escaped = true;
+      else if (ch === '"') inString = false;
+      continue;
+    }
+    if (ch === '"') inString = true;
+    else if (ch === "{") stack.push("}");
+    else if (ch === "[") stack.push("]");
+    else if (ch === "}" || ch === "]") stack.pop();
+  }
+  let repaired = text;
+  if (inString) repaired += '"';
+  repaired = repaired.replace(/,\s*$/, "");
+  while (stack.length) repaired += stack.pop();
+  return repaired;
+}
+
+/** 宽松 JSON 解析：直接 parse → 去尾逗号 → 补截断括号，依次再试 */
+function parseJsonLoose(text: string): unknown {
+  const noTrailingComma = text.replace(/,\s*([}\]])/g, "$1");
+  const attempts = [text, noTrailingComma, closeUnbalanced(noTrailingComma)];
+  for (const attempt of attempts) {
+    try {
+      return JSON.parse(attempt);
+    } catch {
+      // 换下一种修法
+    }
+  }
+  return null;
+}
+
+/**
  * 把 LLM 原始输出解析成合法 StoryOutline。
- * 解析失败、或拆不出任何有分量的内容（无冲突且无原话），返回 null → 路由落 EMPTY_OUTLINE。
+ * 解析失败、或拆不出任何有分量的内容（无冲突且无原话），返回 null → 路由落本地切句兜底。
  */
 export function parseOutline(raw: string): StoryOutline | null {
   const cleaned = raw
@@ -138,15 +179,12 @@ export function parseOutline(raw: string): StoryOutline | null {
     .replace(/^```(?:json)?\s*/i, "")
     .replace(/\s*```$/, "");
   const start = cleaned.indexOf("{");
+  if (start < 0) return null;
   const end = cleaned.lastIndexOf("}");
-  if (start < 0 || end <= start) return null;
+  const candidate =
+    end > start ? cleaned.slice(start, end + 1) : cleaned.slice(start);
 
-  let parsed: unknown;
-  try {
-    parsed = JSON.parse(cleaned.slice(start, end + 1));
-  } catch {
-    return null;
-  }
+  const parsed = parseJsonLoose(candidate);
   if (!parsed || typeof parsed !== "object") return null;
   const o = parsed as Record<string, unknown>;
 
@@ -172,4 +210,25 @@ export function parseOutline(raw: string): StoryOutline | null {
     return null;
   }
   return isStoryOutline(outline) ? outline : null;
+}
+
+/**
+ * 本地规则兜底：模型拆不动时，把用户自述切成句子，留几句进 keyLines。
+ * 只做切分和挑选，不生成任何新内容，守住"不无中生有"的铁律。
+ */
+export function heuristicOutline(story: string): StoryOutline {
+  const keyLines = story
+    .split(/[。！？!?；;\n]+/)
+    .map((s) => s.trim())
+    .filter((s) => s.length >= 8)
+    .slice(0, 6)
+    .map((s) => s.slice(0, 200));
+  return {
+    people: [{ role: "self" }, { role: "other" }],
+    arc: [],
+    conflicts: [],
+    patterns: [],
+    breachType: "none",
+    keyLines,
+  };
 }

@@ -1,8 +1,8 @@
 import { NextRequest, NextResponse } from "next/server";
 import { chat } from "@/lib/deepseek";
-import { EMPTY_OUTLINE } from "@/lib/generated-story";
 import {
   buildDeconstructPrompt,
+  heuristicOutline,
   MAX_STORY_LENGTH,
   parseOutline,
 } from "@/lib/deconstruct";
@@ -15,8 +15,8 @@ export const dynamic = "force-dynamic";
  * body: { story: string }
  * → { ok: true, outline: StoryOutline, source: "llm" | "fallback" }
  *
- * 把用户自述拆成结构化 StoryOutline。LLM 失败或拆不出内容时返回 EMPTY_OUTLINE，
- * 让下游（情节生成 / 心理咨询）不至于开天窗。
+ * 把用户自述拆成结构化 StoryOutline。LLM 失败或拆不出内容时本地切句兜底，
+ * 至少把用户原话留进 keyLines，让下游（情节生成 / 心理咨询）不至于开天窗。
  */
 export async function POST(req: NextRequest) {
   try {
@@ -37,8 +37,9 @@ export async function POST(req: NextRequest) {
           { role: "system", content: buildDeconstructPrompt() },
           { role: "user", content: story.slice(0, MAX_STORY_LENGTH) },
         ],
-        // 拆解要稳、要贴原文，低温 + 开思考先自检事实边界
-        { temperature: 0.3, maxTokens: 1200, thinking: "enabled" }
+        // 拆解要稳、要贴原文：低温 + 关思考。思考文字会挤占 maxTokens，
+        // JSON 被截断就解析不出来，全落兜底
+        { temperature: 0.3, maxTokens: 1200, thinking: "disabled" }
       );
       const outline = parseOutline(out);
       if (outline) {
@@ -51,7 +52,7 @@ export async function POST(req: NextRequest) {
 
     return NextResponse.json({
       ok: true,
-      outline: EMPTY_OUTLINE,
+      outline: heuristicOutline(story),
       source: "fallback",
     });
   } catch (err) {
